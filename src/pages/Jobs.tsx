@@ -1,58 +1,57 @@
-
 import { motion } from "framer-motion";
 import { Briefcase, GraduationCap, Search, Building, Hospital } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/LandingNavbar";
 import Footer from "@/components/Footer";
 
-const internships = [
+const healthcareJobs = [
   {
-    title: "Medical Intern - Cardiology",
-    hospital: "Mayo Clinic",
-    location: "Rochester, MN",
+    title: "Senior Consultant - Cardiology",
+    hospital: "All India Institute of Medical Sciences (AIIMS)",
+    location: "New Delhi, India",
     type: "Full-time",
-    description: "Join our cardiology department for a comprehensive internship working with leading specialists in the field.",
+    description: "Lead the cardiology department with a team of specialists, manage patient care, and mentor junior doctors.",
     posted: "2 days ago"
   },
   {
-    title: "MBBS Internship - General Medicine",
-    hospital: "Johns Hopkins Hospital",
-    location: "Baltimore, MD",
+    title: "General Physician",
+    hospital: "Apollo Hospitals",
+    location: "Chennai, India",
     type: "Full-time",
-    description: "A structured internship program designed for MBBS graduates seeking practical experience in general medicine.",
+    description: "Provide comprehensive primary care, diagnose and treat a wide range of medical conditions.",
     posted: "1 week ago"
   },
   {
-    title: "Research Intern - Neurology",
-    hospital: "Cleveland Clinic",
-    location: "Cleveland, OH",
-    type: "Part-time",
-    description: "Work alongside neurology researchers on groundbreaking studies while completing your MBBS internship requirements.",
+    title: "Neurologist",
+    hospital: "National Institute of Mental Health and Neurosciences (NIMHANS)",
+    location: "Bengaluru, India",
+    type: "Contract",
+    description: "Specialize in the diagnosis and treatment of neurological disorders, participate in clinical research.",
     posted: "3 days ago"
   },
   {
-    title: "Surgical Internship",
-    hospital: "Massachusetts General Hospital",
-    location: "Boston, MA",
+    title: "Surgeon",
+    hospital: "Christian Medical College (CMC)",
+    location: "Vellore, India",
     type: "Full-time",
-    description: "Gain hands-on experience in various surgical procedures under the guidance of experienced surgeons.",
+    description: "Perform a variety of surgical procedures, supervise surgical teams, and ensure patient safety.",
     posted: "5 days ago"
   },
   {
-    title: "Pediatric MBBS Internship",
-    hospital: "Boston Children's Hospital",
-    location: "Boston, MA",
+    title: "Pediatrician",
+    hospital: "Kasturba Medical College (KMC)",
+    location: "Manipal, India",
     type: "Full-time",
-    description: "A specialized internship focused on pediatric care for MBBS graduates looking to specialize in children's health.",
+    description: "Provide expert care for children, manage pediatric wards, and collaborate with multidisciplinary teams.",
     posted: "Just now"
   },
   {
-    title: "Emergency Medicine Intern",
-    hospital: "Stanford Medical Center",
-    location: "Palo Alto, CA",
+    title: "Emergency Medicine Specialist",
+    hospital: "Sir Ganga Ram Hospital",
+    location: "New Delhi, India",
     type: "Full-time",
-    description: "Fast-paced internship in our emergency department, perfect for MBBS graduates seeking critical care experience.",
+    description: "Lead the emergency department, manage acute cases, and coordinate with critical care teams.",
     posted: "1 day ago"
   }
 ];
@@ -72,10 +71,10 @@ const Jobs = () => {
               transition={{ duration: 0.6 }}
             >
               <h1 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-6">
-                Find Your Perfect MBBS Internship
+                Find Your Perfect Healthcare Job
               </h1>
               <p className="text-lg md:text-xl text-gray-600 mb-8">
-                Connect with top medical institutions offering internships tailored for medical professionals like you.
+                Connect with top Indian medical institutions offering roles tailored for healthcare professionals like you.
               </p>
               
               <div className="bg-white p-4 rounded-lg shadow-md">
@@ -108,7 +107,7 @@ const Jobs = () => {
         {/* Job Categories Section */}
         <section className="py-12 bg-white">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-serif font-bold text-center mb-8">Popular Internship Categories</h2>
+            <h2 className="text-3xl font-serif font-bold text-center mb-8">Popular Healthcare Job Categories</h2>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <motion.div 
@@ -118,7 +117,7 @@ const Jobs = () => {
                 <div className="w-12 h-12 rounded-full bg-medical-blue/20 flex items-center justify-center mb-3">
                   <GraduationCap className="h-6 w-6 text-medical-blue" />
                 </div>
-                <h3 className="font-medium">General Medicine</h3>
+                <h3 className="font-medium">Physician</h3>
                 <p className="text-sm text-gray-500">142 positions</p>
               </motion.div>
               
@@ -158,18 +157,18 @@ const Jobs = () => {
           </div>
         </section>
         
-        {/* Featured Internships */}
+        {/* Featured Healthcare Jobs */}
         <section className="py-12 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-serif font-bold">Featured MBBS Internships</h2>
+              <h2 className="text-3xl font-serif font-bold">Featured Healthcare Jobs</h2>
               <Button variant="outline" className="text-medical-blue border-medical-blue hover:bg-medical-lightBlue">
                 View All Positions
               </Button>
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {internships.map((job, index) => (
+              {healthcareJobs.map((job, index) => (
                 <motion.div 
                   key={index}
                   initial={{ opacity: 0, y: 20 }}

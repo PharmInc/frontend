@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/LandingNavbar";
 import Footer from "@/components/Footer";
 
 const Research = () => {

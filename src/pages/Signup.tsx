@@ -242,11 +242,11 @@ const Signup = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="firstName">First Name</Label>
-                      <Input id="firstName" name="firstName" placeholder="John" required disabled={isLoading} />
+                      <Input id="firstName" name="firstName" placeholder="Dr. Anil" required disabled={isLoading} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lastName">Last Name</Label>
-                      <Input id="lastName" name="lastName" placeholder="Doe" required disabled={isLoading} />
+                      <Input id="lastName" name="lastName" placeholder="Kumar" required disabled={isLoading} />
                     </div>
                   </div>
 

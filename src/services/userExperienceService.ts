@@ -1,32 +1,12 @@
-
 import { apiClient } from './apiClient';
 import { CreateUserExperienceRequest, UserExperience, UpdateUserExperienceRequest } from '../types/api';
 
-/**
- * User Experience service for handling user experience operations
- */
 export class UserExperienceService {
   /**
    * Add experience to user profile
    * @param experienceData - Experience data
    * @returns Promise containing the created experience record
    * @throws ApiError if creation fails
-   * 
-   * @example
-   * ```typescript
-   * try {
-   *   const experience = await userExperienceService.createUserExperience({
-   *     title: 'Resident Physician',
-   *     description: 'Internal medicine residency program',
-   *     startDate: '2024-06-01',
-   *     endDate: '2027-05-31',
-   *     institutionId: '789'
-   *   });
-   *   console.log('Experience added:', experience);
-   * } catch (error) {
-   *   console.error('Experience creation failed:', error.message);
-   * }
-   * ```
    */
   async createUserExperience(experienceData: CreateUserExperienceRequest): Promise<UserExperience> {
     return apiClient.post<UserExperience>('/user/experience', experienceData);
@@ -39,7 +19,8 @@ export class UserExperienceService {
    * @throws ApiError if experience not found or request fails
    */
   async getUserExperienceById(id: string): Promise<UserExperience> {
-    return apiClient.get<UserExperience>(`/user/experience/${id}`);
+    // Use the endpoint as per your API docs (with a hyphen)
+    return apiClient.get<UserExperience>(`/user-experience/${id}`);
   }
 
   /**
@@ -50,7 +31,10 @@ export class UserExperienceService {
    * @throws ApiError if update fails
    */
   async updateUserExperience(id: string, updateData: UpdateUserExperienceRequest): Promise<UserExperience> {
+    // Check with your backend: is this /private/user/experience/{id} or /private/user-experience/{id}?
+    // If slash:
     return apiClient.put<UserExperience>(`/user/experience/${id}`, updateData);
+   
   }
 
   /**
@@ -60,7 +44,15 @@ export class UserExperienceService {
    * @throws ApiError if deletion fails
    */
   async deleteUserExperience(id: string): Promise<void> {
+    
     await apiClient.delete<void>(`/user/experience/${id}`);
+    // If hyphen:
+    // await apiClient.delete<void>(`/private/user-experience/${id}`);
+  }
+
+  // (Optional) If you want to fetch all experiences (public)
+  async getAllUserExperiences(): Promise<UserExperience[]> {
+    return apiClient.get<UserExperience[]>(`/user/experience`);
   }
 }
 

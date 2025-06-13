@@ -1,4 +1,3 @@
-
 import { apiClient } from './apiClient';
 import { CreateUserEducationRequest, UserEducation, UpdateUserEducationRequest } from '../types/api';
 
@@ -13,7 +12,7 @@ export class UserEducationService {
    * @throws ApiError if creation fails
    * 
    * @example
-   * ```typescript
+   * ```
    * try {
    *   const education = await userEducationService.createUserEducation({
    *     title: 'Doctor of Medicine',
@@ -39,6 +38,9 @@ export class UserEducationService {
    * @throws ApiError if education not found or request fails
    */
   async getUserEducationById(id: string): Promise<UserEducation> {
+    // If your backend supports public GETs, use `/public/user/education/${id}`
+    // If not, use `/private/user/education/${id}`
+    // Check your API docs: if education is only accessible to the user or admins, use private
     return apiClient.get<UserEducation>(`/user/education/${id}`);
   }
 

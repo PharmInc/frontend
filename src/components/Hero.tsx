@@ -52,14 +52,24 @@ const Hero = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.7 }}
             >
-              Join a growing community of doctors building professional profiles, sharing ideas, and supporting each other.
+              Join a trusted network of healthcare professionals advancing care through collaboration.
             </motion.p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <motion.div whileHover={{ scale: 1.05, boxShadow: "0 0 16px #3B82F6" }}>
-                <Button size="lg" className="bg-[#3B82F6] hover:bg-[#3B82F6]/90 shadow-lg">
-                  Get Started
-                </Button>
-              </motion.div>
+              <motion.div
+  whileHover={{ scale: 1.05, boxShadow: "0 0 16px #3B82F6" }}
+  onClick={() =>
+    window.open(
+      "https://docs.google.com/forms/d/e/1FAIpQLSdXDIwqebo7ClSm04_1UWdJhAfLxI_PO7XtGxrf2HhmhgU-Nw/viewform?usp=dialog",
+      "_blank"
+    )
+  }
+  className="cursor-pointer"
+>
+  <Button size="lg" className="bg-[#3B82F6] hover:bg-[#3B82F6]/90 shadow-lg">
+    Join The Waitlist
+  </Button>
+</motion.div>
+
               <motion.div whileHover={{ scale: 1.05, boxShadow: "0 0 16px #3B82F6" }}>
                 <Button size="lg" variant="outline" className="border-[#3B82F6] text-[#3B82F6] hover:bg-[#3B82F6]/5 shadow">
                   See How It Works
@@ -84,7 +94,7 @@ const Hero = () => {
                 <div className="w-3 h-3 rounded-full bg-red-400 mr-2"></div>
                 <div className="w-3 h-3 rounded-full bg-yellow-400 mr-2"></div>
                 <div className="w-3 h-3 rounded-full bg-green-400 mr-auto"></div>
-                <span className="text-sm font-medium">Dr. Sarah Chen - Cardiology Profile</span>
+                <span className="text-sm font-medium">Dr. Priya Sharma - Oncology Profile</span>
               </div>
               <div className="p-6">
                 <div className="flex items-start gap-4">
@@ -95,10 +105,10 @@ const Hero = () => {
                     <span className="text-[#3B82F6] font-bold text-xl">SC</span>
                   </motion.div>
                   <div>
-                    <h3 className="font-bold text-xl">Dr. Sarah Chen</h3>
-                    <p className="text-gray-600">Cardiology Specialist</p>
+                    <h3 className="font-bold text-xl">Dr. Priya Sharma</h3>
+                    <p className="text-gray-600">Oncologist</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <div className="px-2 py-0.5 text-xs bg-[#EFF6FF] text-[#1D4ED8] rounded-full">Mayo Clinic</div>
+                      <div className="px-2 py-0.5 text-xs bg-[#EFF6FF] text-[#1D4ED8] rounded-full">AIIMS Delhi</div>
                       <div className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">412 connections</div>
                     </div>
                   </div>
@@ -109,14 +119,14 @@ const Hero = () => {
                     whileHover={{ scale: 1.02, backgroundColor: "#EFF6FF" }}
                   >
                     <h4 className="font-medium text-sm text-gray-600">Recent Activity</h4>
-                    <p className="text-gray-800 mt-1">Published new research on cardiac arrhythmias in young adults</p>
+                    <p className="text-gray-800 mt-1">Co-led cancer awareness drive in Lucknow's govt hospital</p>
                   </motion.div>
                   <motion.div
                     className="p-3 rounded-lg bg-[#EFF6FF] border border-[#3B82F6]/20 shadow"
                     whileHover={{ scale: 1.02, backgroundColor: "#DBEAFE" }}
                   >
                     <h4 className="font-medium text-sm text-[#1D4ED8]">Upcoming Conference</h4>
-                    <p className="text-gray-800 mt-1">Presenting at American Heart Association 2025</p>
+                    <p className="text-gray-800 mt-1">Panel speaker at Indian Public Health Conference 2025</p>
                   </motion.div>
                 </div>
               </div>
@@ -133,11 +143,11 @@ const Hero = () => {
         <div className="flex flex-wrap justify-center gap-4 md:gap-8 items-center text-gray-400 text-sm">
           <span>Trusted by medical professionals from:</span>
           <div className="flex flex-wrap justify-center gap-6 md:gap-12">
-            <div className="font-medium text-gray-600">Mayo Clinic</div>
-            <div className="font-medium text-gray-600">Johns Hopkins</div>
-            <div className="font-medium text-gray-600">Cleveland Clinic</div>
-            <div className="font-medium text-gray-600">Massachusetts General</div>
-            <div className="font-medium text-gray-600">Stanford Medicine</div>
+            <div className="font-medium text-gray-600">AIIMS Delhi</div>
+            <div className="font-medium text-gray-600">Apollo Hospitals</div>
+            <div className="font-medium text-gray-600">Fortis Healthcare</div>
+            <div className="font-medium text-gray-600">Christian Medical College (CMC)</div>
+            <div className="font-medium text-gray-600">PGIMER</div>
           </div>
         </div>
       </motion.div>

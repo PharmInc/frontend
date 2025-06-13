@@ -13,92 +13,92 @@ const Societies = () => {
   const featuredSocieties = [
     {
       id: 1,
-      name: "American Heart Association",
-      description: "Leading organization dedicated to fighting heart disease and stroke through research, education, and advocacy.",
-      members: 45672,
-      category: "Cardiology",
-      location: "Global",
-      founded: "1924",
-      image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?q=80&w=300&auto=format&fit=crop",
-      features: ["CME Credits", "Research Grants", "Global Network", "Annual Conference"],
-      rating: 4.9,
-      isVerified: true
-    },
-    {
-      id: 2,
-      name: "International Society of Pediatrics",
-      description: "Global community of pediatric healthcare professionals dedicated to improving child health worldwide.",
-      members: 32589,
-      category: "Pediatrics", 
-      location: "International",
-      founded: "1912",
-      image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?q=80&w=300&auto=format&fit=crop",
-      features: ["Specialized Training", "Research Collaboration", "Global Health Initiatives", "Mentorship Programs"],
+      name: "Indian Medical Association (IMA)",
+      description: "India's largest organization of doctors of modern medicine, advocating for medical professionals and community health.",
+      members: 350000,
+      category: "General Medicine",
+      location: "Pan-India",
+      founded: "1928",
+      image: "/ima.png", // Official vector logo from brandsoftheworld[5]
+      features: ["Continuing Medical Education", "Legal Support", "Community Health Initiatives", "Annual Conferences"],
       rating: 4.8,
       isVerified: true
     },
     {
-      id: 3,
-      name: "Society for Emergency Medicine",
-      description: "Professional organization advancing emergency medicine through education, research, and clinical excellence.",
-      members: 28943,
-      category: "Emergency Medicine",
-      location: "North America",
-      founded: "1970",
-      image: "https://images.unsplash.com/photo-1551190822-a9333d879b1f?q=80&w=300&auto=format&fit=crop",
-      features: ["24/7 Resources", "Rapid Response Training", "Crisis Management", "Peer Support"],
+      id: 2,
+      name: "Indian Academy of Pediatrics (IAP)",
+      description: "Leading association of pediatricians in India, dedicated to improving child health and advancing pediatric science.",
+      members: 23000,
+      category: "Pediatrics",
+      location: "Pan-India",
+      founded: "1963",
+      image: "/iap.png", // Official logo from IAP website
+      features: ["Pediatric Training", "Research Collaboration", "Child Health Advocacy", "Mentorship Programs"],
       rating: 4.7,
       isVerified: true
     },
     {
-      id: 4,
-      name: "Global Neurology Research Alliance",
-      description: "Collaborative network of neurologists and researchers working to advance understanding of neurological disorders.",
-      members: 19876,
-      category: "Neurology",
-      location: "Worldwide",
-      founded: "1995",
-      image: "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?q=80&w=300&auto=format&fit=crop",
-      features: ["Research Database", "Clinical Trials", "Innovation Hub", "Patient Advocacy"],
+      id: 3,
+      name: "Cardiological Society of India (CSI)",
+      description: "Premier organization of cardiologists in India, focused on prevention and management of cardiovascular diseases.",
+      members: 5400,
+      category: "Cardiology",
+      location: "Pan-India",
+      founded: "1948",
+      image: "https://www.csiindia.org/wp-content/uploads/2020/04/csi-logo.png", // Official logo from CSI website[3]
+      features: ["Interventional Cardiology Workshops", "Annual Conferences", "Research Database", "Guidelines Development"],
       rating: 4.6,
+      isVerified: true
+    },
+    {
+      id: 4,
+      name: "Neurological Society of India (NSI)",
+      description: "Apex body for neurologists and neurosurgeons in India, promoting research, education, and standards in neurology.",
+      members: 2000,
+      category: "Neurology",
+      location: "Pan-India",
+      founded: "1951",
+      image: "https://www.neurosi.org/images/logo.jpg", // Official logo from NSI website[4]
+      features: ["Research Collaboration", "Annual Conferences", "Postgraduate Education", "Public Awareness Campaigns"],
+      rating: 4.5,
       isVerified: true
     }
   ];
 
   const categories = [
-    { name: "Cardiology", count: 23, color: "bg-red-100 text-red-700" },
+    { name: "General Medicine", count: 35, color: "bg-red-100 text-red-700" },
     { name: "Neurology", count: 18, color: "bg-blue-100 text-blue-700" },
-    { name: "Pediatrics", count: 15, color: "bg-green-100 text-green-700" },
-    { name: "Emergency Medicine", count: 12, color: "bg-orange-100 text-orange-700" },
+    { name: "Pediatrics", count: 22, color: "bg-green-100 text-green-700" },
+    { name: "Cardiology", count: 17, color: "bg-orange-100 text-orange-700" },
     { name: "Oncology", count: 11, color: "bg-purple-100 text-purple-700" },
-    { name: "General Practice", count: 9, color: "bg-gray-100 text-gray-700" }
+    { name: "Emergency Medicine", count: 8, color: "bg-gray-100 text-gray-700" }
   ];
 
   const upcomingEvents = [
     {
       id: 1,
-      title: "Global Cardiology Summit 2024",
-      society: "American Heart Association",
-      date: "March 15-17, 2024",
-      location: "Boston, MA",
-      attendees: 2400,
+      title: "IMA NATCON 2024",
+      society: "Indian Medical Association",
+      date: "December 27-28, 2024",
+      location: "Hyderabad, Telangana",
+      attendees: 5000,
       type: "Conference"
     },
     {
       id: 2,
       title: "Pediatric Innovation Workshop",
-      society: "International Society of Pediatrics",
-      date: "April 8-9, 2024",
-      location: "Virtual Event",
+      society: "Indian Academy of Pediatrics",
+      date: "December 11-12, 2024",
+      location: "Chennai, Tamil Nadu",
       attendees: 850,
       type: "Workshop"
     },
     {
       id: 3,
-      title: "Emergency Medicine Symposium",
-      society: "Society for Emergency Medicine", 
-      date: "May 3-5, 2024",
-      location: "Chicago, IL",
+      title: "EMCON 2025",
+      society: "Society for Emergency Medicine India",
+      date: "November 1-3, 2025",
+      location: "New Delhi",
       attendees: 1200,
       type: "Symposium"
     }
@@ -112,17 +112,17 @@ const Societies = () => {
       <section className="pt-20 pb-16 bg-gradient-to-r from-blue-600 to-indigo-700">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Medical Societies & Organizations
+            Indian Medical Societies & Organizations
           </h1>
           <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            Connect with leading medical societies, access exclusive resources, and advance your professional development
+            Connect with India's top medical societies, access exclusive resources, and advance your professional development
           </p>
           
           <div className="flex justify-center gap-4">
             <Button className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3">
               Browse Societies
             </Button>
-            <Button variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3">
+            <Button variant="outline" className="border-blue text-blue hover:bg-white hover:text-blue-600 px-8 py-3">
               Create Society
             </Button>
           </div>
@@ -177,7 +177,7 @@ const Societies = () => {
           {/* Main Content */}
           <div className="col-span-9">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900">Featured Medical Societies</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Featured Indian Medical Societies</h2>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
                   <Star className="h-4 w-4 mr-2" />
@@ -189,8 +189,6 @@ const Societies = () => {
                 </Button>
               </div>
             </div>
-
-            {/* Societies Grid */}
             <div className="grid grid-cols-2 gap-6">
               {featuredSocieties.map((society) => (
                 <div key={society.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">

@@ -1,4 +1,3 @@
-
 import { apiClient } from './apiClient';
 import { CreateInstitutionRequest, Institution, UpdateInstitutionRequest } from '../types/api';
 
@@ -13,7 +12,7 @@ export class InstitutionService {
    * @throws ApiError if creation fails
    * 
    * @example
-   * ```typescript
+   * ```
    * try {
    *   const institution = await institutionService.createInstitution({
    *     name: 'Harvard Medical School',
