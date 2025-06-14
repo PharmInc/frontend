@@ -17,6 +17,8 @@ import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
 import Chat from "./pages/Chat";
 import Notifications from "./pages/Notifications";
+import FindJobs from "./pages/FindJobs";
+import PostJob from "./pages/PostJob";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +41,9 @@ const App = () => (
           <Route path="/messages" element={<Messages />} />
           <Route path="/messages/:id" element={<Chat />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/" element={<Index />} />
+          <Route path="/find-jobs" element={<FindJobs />} />
+          <Route path="/post-job" element={<PostJob />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
