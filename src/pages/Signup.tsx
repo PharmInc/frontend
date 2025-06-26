@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Stethoscope, HeartPulse, Users } from "lucide-react";
+import { Stethoscope, HeartPulse, Users, Building } from "lucide-react";
 import { motion } from "framer-motion";
 import { authService, SignupRequest } from "@/services/authService";
 import { tokenStorage } from "@/utils/tokenStorage";
 import { useToast } from "@/hooks/use-toast";
-import { apiClient } from '../services/apiClient';
+import { userApiClient } from "@/services/apiClient";
+import { institutionService } from "@/services/institutionService";
 
 const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +33,7 @@ const Signup = () => {
 
       if (response.token) {
         tokenStorage.setToken(response.token);
+        tokenStorage.setUser({ userId: response.userId });
 
         toast({
           title: "Login successful",
@@ -76,6 +78,7 @@ const Signup = () => {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const specialty = formData.get("specialty") as string;
+    const location = formData.get("location") as string || "";
 
     try {
       const signupData: SignupRequest = {
@@ -87,32 +90,26 @@ const Signup = () => {
         userType: userType as "doctor" | "healthcare",
       };
 
-      // 1. Register user (auth)
       await authService.signup(signupData);
-
-      // 2. Immediately log in to get JWT token
-      const loginResponse = await authService.login({ email, password });
+      
+      const loginResponse = await authService.login({ email, password, type: userType });
       if (!loginResponse.token) {
         throw new Error("Login failed after signup. Please try logging in manually.");
       }
       tokenStorage.setToken(loginResponse.token);
+      userApiClient.setToken(loginResponse.token);
 
-      // 3. Now create the user profile (with JWT token set)
-      await apiClient.post('/user', {
-        firstName,
-        lastName,
-        specialization: specialty
-      });
+      const profileResponse = await userApiClient.post(
+        '/private/user',
+        {
+          name: `${firstName} ${lastName}`.trim(),
+          location: location,
+          role: userType,
+        },
+        true // includeAuth (use true to send the token)
+      );
 
-      // 4. Store user info with userId for onboarding
-      tokenStorage.setUser({
-        userId: loginResponse.userId,
-        firstName,
-        lastName,
-        email,
-        specialty,
-        userType
-      });
+      tokenStorage.setUser(profileResponse);
 
       toast({
         title: "Account created successfully",
@@ -135,10 +132,71 @@ const Signup = () => {
           errorMessage = error.message;
         }
       }
-
       toast({
         title: "Signup failed",
         description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // UPDATED: Now uses the same endpoint as user signup, with correct payload
+  const handleInstitutionSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const name = formData.get("name") as string;
+    const location = formData.get("location") as string;
+
+    // NOTE: Your form must have "email" and "password" fields for this to work!
+    // Add them to your form if not already present.
+    const email = formData.get("email") as string; // REQUIRED
+    const password = formData.get("password") as string; // REQUIRED
+
+    try {
+      // Use the standard authService.signup endpoint with "type": "institution"
+      await authService.signup({
+        name, // or firstName if your backend expects it
+        email,
+        password,
+        location,
+        type: "institution",
+        userType: "institution", // Only if your backend requires it
+      });
+
+      // Optionally, you may want to login the institution right away, similar to how user signup works:
+      const loginResponse = await authService.login({ email, password, type: "institution" });
+      if (!loginResponse.token) {
+        throw new Error("Login failed after signup. Please try logging in manually.");
+      }
+      tokenStorage.setToken(loginResponse.token);
+      userApiClient.setToken(loginResponse.token);
+
+      const profileResponse = await userApiClient.post(
+        '/private/user',
+        {
+          name: name,
+          location: location,
+          role: "institution",
+        },
+        true // includeAuth (use true to send the token)
+      );
+
+      tokenStorage.setUser(profileResponse);
+
+      toast({
+        title: "Institution registered",
+        description: `Welcome, ${name}!`,
+      });
+
+      navigate("/onboarding");
+    } catch (error: any) {
+      toast({
+        title: "Signup failed",
+        description: error.message || "Could not register institution.",
         variant: "destructive",
       });
     } finally {
@@ -152,7 +210,6 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-blue-50 to-white flex">
-      {/* Left column - Form */}
       <div className="flex-1 flex flex-col justify-center items-center p-8">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
@@ -180,6 +237,23 @@ const Signup = () => {
                   <div>
                     <h3 className="font-semibold text-lg">For Doctors</h3>
                     <p className="text-gray-600 text-sm">Medical practitioners, specialists, and physicians</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleUserTypeSelect("institution")}
+                className="border-2 border-gray-200 rounded-lg p-6 cursor-pointer hover:border-[#3B82F6] transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Building className="h-6 w-6 text-[#3B82F6]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">For Institutions</h3>
+                    <p className="text-gray-600 text-sm">Hospitals, clinics, research centers, and more</p>
                   </div>
                 </div>
               </motion.div>
@@ -217,12 +291,16 @@ const Signup = () => {
                 <div className="flex items-center gap-2">
                   {userType === "doctor" ? (
                     <Stethoscope className="h-5 w-5 text-[#3B82F6]" />
+                  ) : userType === "institution" ? (
+                    <Building className="h-5 w-5 text-[#3B82F6]" />
                   ) : (
                     <Users className="h-5 w-5 text-[#3B82F6]" />
                   )}
                   <span className="text-sm text-gray-600">
                     {userType === "doctor"
                       ? "Doctor Registration"
+                      : userType === "institution"
+                      ? "Institution Registration"
                       : "Healthcare Professional Registration"}
                   </span>
                 </div>
@@ -238,95 +316,193 @@ const Signup = () => {
               </TabsList>
 
               <TabsContent value="signup">
-                <form onSubmit={handleSignupSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                {userType === "institution" ? (
+                  <form onSubmit={handleInstitutionSignup} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input id="firstName" name="firstName" placeholder="Dr. Anil" required disabled={isLoading} />
+                      <Label htmlFor="name">Institution Name</Label>
+                      <Input
+                        id="name"
+                        name="name"
+                        placeholder="e.g. ABC Hospital"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                    {/* ADD EMAIL FIELD */}
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="admin@institution.org"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                    {/* ADD PASSWORD FIELD */}
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        name="password"
+                        type="password"
+                        placeholder="••••••••"
+                        required
+                        disabled={isLoading}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input id="lastName" name="lastName" placeholder="Kumar" required disabled={isLoading} />
+                      <Label htmlFor="location">Location</Label>
+                      <Input
+                        id="location"
+                        name="location"
+                        placeholder="City, Country"
+                        required
+                        disabled={isLoading}
+                      />
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder={userType === "doctor" ? "doctor@hospital.org" : "professional@healthcare.org"}
-                      required
+                    <input type="hidden" name="type" value="institution" />
+                    <div className="flex items-center space-x-2 pt-2">
+                      <Checkbox id="terms" required disabled={isLoading} />
+                      <label
+                        htmlFor="terms"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        I agree to the{" "}
+                        <Link to="/terms" className="text-[#3B82F6] hover:underline">
+                          Terms of Service
+                        </Link>{" "}
+                        and{" "}
+                        <Link to="/privacy" className="text-[#3B82F6] hover:underline">
+                          Privacy Policy
+                        </Link>
+                      </label>
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full bg-[#3B82F6] hover:bg-[#3B82F6]/90"
                       disabled={isLoading}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input id="password" name="password" type="password" placeholder="••••••••" required disabled={isLoading} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="specialty">
-                      {userType === "doctor" ? "Medical Specialty" : "Professional Area"}
-                    </Label>
-                    <select
-                      id="specialty"
-                      name="specialty"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isLoading ? "Creating your account..." : "Create Account"}
+                    </Button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleSignupSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input
+                          id="firstName"
+                          name="firstName"
+                          placeholder="Dr. Anil"
+                          required
+                          disabled={isLoading}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          name="lastName"
+                          placeholder="Kumar"
+                          required
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder={userType === "doctor" ? "doctor@hospital.org" : "professional@healthcare.org"}
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        name="password"
+                        type="password"
+                        placeholder="••••••••"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Location</Label>
+                      <Input
+                        id="location"
+                        name="location"
+                        placeholder="City, Country"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="specialty">
+                        {userType === "doctor" ? "Medical Specialty" : "Professional Area"}
+                      </Label>
+                      <select
+                        id="specialty"
+                        name="specialty"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={isLoading}
+                        required
+                      >
+                        <option value="">
+                          Select your {userType === "doctor" ? "specialty" : "area"}
+                        </option>
+                        {userType === "doctor" ? (
+                          <>
+                            <option value="cardiology">Cardiology</option>
+                            <option value="neurology">Neurology</option>
+                            <option value="oncology">Oncology</option>
+                            <option value="pediatrics">Pediatrics</option>
+                            <option value="surgery">Surgery</option>
+                            <option value="other">Other</option>
+                          </>
+                        ) : (
+                          <>
+                            <option value="nursing">Nursing</option>
+                            <option value="pharmacy">Pharmacy</option>
+                            <option value="research">Research</option>
+                            <option value="administration">Administration</option>
+                            <option value="therapy">Therapy</option>
+                            <option value="other">Other</option>
+                          </>
+                        )}
+                      </select>
+                    </div>
+                    <div className="flex items-center space-x-2 pt-2">
+                      <Checkbox id="terms" required disabled={isLoading} />
+                      <label
+                        htmlFor="terms"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        I agree to the{" "}
+                        <Link to="/terms" className="text-[#3B82F6] hover:underline">
+                          Terms of Service
+                        </Link>{" "}
+                        and{" "}
+                        <Link to="/privacy" className="text-[#3B82F6] hover:underline">
+                          Privacy Policy
+                        </Link>
+                      </label>
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full bg-[#3B82F6] hover:bg-[#3B82F6]/90"
                       disabled={isLoading}
-                      required
                     >
-                      <option value="">
-                        Select your {userType === "doctor" ? "specialty" : "area"}
-                      </option>
-                      {userType === "doctor" ? (
-                        <>
-                          <option value="cardiology">Cardiology</option>
-                          <option value="neurology">Neurology</option>
-                          <option value="oncology">Oncology</option>
-                          <option value="pediatrics">Pediatrics</option>
-                          <option value="surgery">Surgery</option>
-                          <option value="other">Other</option>
-                        </>
-                      ) : (
-                        <>
-                          <option value="nursing">Nursing</option>
-                          <option value="pharmacy">Pharmacy</option>
-                          <option value="research">Research</option>
-                          <option value="administration">Administration</option>
-                          <option value="therapy">Therapy</option>
-                          <option value="other">Other</option>
-                        </>
-                      )}
-                    </select>
-                  </div>
-                  <div className="flex items-center space-x-2 pt-2">
-                    <Checkbox id="terms" required disabled={isLoading} />
-                    <label
-                      htmlFor="terms"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      I agree to the{" "}
-                      <Link to="/terms" className="text-[#3B82F6] hover:underline">
-                        Terms of Service
-                      </Link>{" "}
-                      and{" "}
-                      <Link to="/privacy" className="text-[#3B82F6] hover:underline">
-                        Privacy Policy
-                      </Link>
-                    </label>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full bg-[#3B82F6] hover:bg-[#3B82F6]/90"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Creating your account..." : "Create Account"}
-                  </Button>
-                </form>
+                      {isLoading ? "Creating your account..." : "Create Account"}
+                    </Button>
+                  </form>
+                )}
               </TabsContent>
 
               <TabsContent value="login">
@@ -342,7 +518,6 @@ const Signup = () => {
                       disabled={isLoading}
                     />
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="login-password">Password</Label>
@@ -350,9 +525,15 @@ const Signup = () => {
                         Forgot password?
                       </Link>
                     </div>
-                    <Input id="login-password" name="password" type="password" placeholder="••••••••" required disabled={isLoading} />
+                    <Input
+                      id="login-password"
+                      name="password"
+                      type="password"
+                      placeholder="••••••••"
+                      required
+                      disabled={isLoading}
+                    />
                   </div>
-
                   <div className="flex items-center space-x-2">
                     <Checkbox id="remember" disabled={isLoading} />
                     <label
@@ -362,7 +543,6 @@ const Signup = () => {
                       Remember me
                     </label>
                   </div>
-
                   <Button
                     type="submit"
                     className="w-full bg-[#3B82F6] hover:bg-[#3B82F6]/90"
@@ -370,9 +550,8 @@ const Signup = () => {
                   >
                     {isLoading ? "Logging in..." : "Log In"}
                   </Button>
-
                   <div className="text-center mt-4">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-6">
                       Don't have an account?{" "}
                       <button
                         type="button"
@@ -399,17 +578,14 @@ const Signup = () => {
                   <span className="px-2 bg-white text-gray-500">Or continue with</span>
                 </div>
               </div>
-
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <Button variant="outline" type="button" className="w-full">
-                  {/* Google SVG */}
                   <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972a6.033 6.033 0 110-12.064c1.545 0 2.939.58 4.02 1.525L19 5.009A10.14 10.14 0 0012.545 2C6.795 2 2 6.795 2 12.546c0 5.752 4.795 10.546 10.545 10.546 6.066 0 10.06-4.267 10.06-10.272 0-.544-.044-1.053-.13-1.545h-9.93z"></path>
                   </svg>
                   Google
                 </Button>
                 <Button variant="outline" type="button" className="w-full">
-                  {/* Facebook SVG */}
                   <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M9.95263 22H14.0526C14.5711 22 15 21.5711 15 21.0526V14.211H17.8801C18.3475 14.211 18.7418 13.863 18.8001 13.3995L18.9695 11.5995C19.0391 11.042 18.6075 10.5263 18.0495 10.5263H15V8.21053C15 7.51216 15.5121 7.00001 16.2105 7.00001H18.1579C18.6764 7.00001 19.1053 6.57106 19.1053 6.05264V4.59106C19.1053 4.10264 18.7354 3.6926 18.2532 3.6158C17.25 3.45528 16.2337 3.37553 15.2159 3.37659C12.0317 3.37659 9.95263 5.45569 9.95263 8.63985V10.5263H7.10527C6.5868 10.5263 6.15789 10.9552 6.15789 11.4737V13.2631C6.15789 13.7816 6.5868 14.2105 7.10527 14.2105H9.95263V21.0526C9.95263 21.5711 10.3816 22 10.9 22"></path>
                   </svg>
@@ -421,10 +597,9 @@ const Signup = () => {
         </div>
       </div>
 
-      {/* Right column - Illustration */}
       <div className="hidden lg:flex flex-1 bg-[#3B82F6]/5 justify-center items-center p-8 relative overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <svg width="100%" height="100%" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="100%" height="100%" viewBox="0 0 400 400" fill="none" xmlns="http://www3.org/0/svg">
             <g opacity="0.1">
               <path d="M400 200C400 310.457 310.457 400 200 400C89.5431 400 0 310.457 0 200C0 89.5431 89.5431 0 200 0C310.457 0 400 89.5431 400 200Z" fill="#3B82F6"/>
             </g>
@@ -467,11 +642,10 @@ const Signup = () => {
                   <p className="text-gray-600 text-sm">Latest research and case studies</p>
                 </div>
               </div>
-              <p className="text-gray-600">
+              <p className="text-gray-6">
                 Access cutting-edge research and participate in case discussions with specialists worldwide.
               </p>
             </motion.div>
-
             <motion.div
               className="bg-white rounded-xl p-6 shadow-lg border border-gray-100"
               initial={{ opacity: 0, y: 20 }}
@@ -503,7 +677,6 @@ const Signup = () => {
               </div>
             </motion.div>
           </motion.div>
-
           <div className="text-center">
             <p className="text-gray-600 mb-2">Trusted by leading medical institutions</p>
             <div className="flex justify-center space-x-6 opacity-70">

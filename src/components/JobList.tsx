@@ -1,130 +1,73 @@
-
+import { useEffect, useState } from "react";
 import JobCard from "./JobCard";
+import { jobApiClient } from "../services/apiClient"; // Adjust import path as needed
 
-const dummyJobs = [
-  {
-    jobTitle: "Cardiologist",
-    location: "Mumbai, MH",
-    hospital: "Apollo Hospital",
-    tags: ["Full-time", "Residency Friendly"],
-  },
-  {
-    jobTitle: "Family Medicine Physician",
-    location: "Delhi, DL",
-    hospital: "Fortis Healthcare",
-    tags: ["Full-time", "Remote", "Residency Friendly"],
-  },
-  {
-    jobTitle: "Pediatrician",
-    location: "Bangalore, KA",
-    hospital: "Manipal Hospital",
-    tags: ["Full-time", "On-Site"],
-  },
-  {
-    jobTitle: "Emergency Medicine Doctor",
-    location: "Chennai, TN",
-    hospital: "Global Hospitals",
-    tags: ["Part-time", "Residency Friendly"],
-  },
-  {
-    jobTitle: "Dermatologist",
-    location: "Hyderabad, TS",
-    hospital: "Yashoda Hospitals",
-    tags: ["Full-time", "Remote"],
-  },
-  {
-    jobTitle: "Internal Medicine",
-    location: "Pune, MH",
-    hospital: "Ruby Hall Clinic",
-    tags: ["Full-time", "Residency Friendly", "On-Site"],
-  },
-  {
-    jobTitle: "Anesthesiologist",
-    location: "Kolkata, WB",
-    hospital: "AMRI Hospitals",
-    tags: ["Full-time", "On-Site"],
-  },
-  {
-    jobTitle: "Psychiatrist",
-    location: "Ahmedabad, GJ",
-    hospital: "Sterling Hospitals",
-    tags: ["Full-time", "Remote", "Residency Friendly"],
-  },
-  {
-    jobTitle: "Radiologist",
-    location: "Jaipur, RJ",
-    hospital: "Narayana Health",
-    tags: ["Full-time", "On-Site"],
-  },
-  {
-    jobTitle: "Orthopedic Surgeon",
-    location: "Lucknow, UP",
-    hospital: "Medanta Hospital",
-    tags: ["Full-time"],
-  },
-  {
-    jobTitle: "Neurologist",
-    location: "Chandigarh, CH",
-    hospital: "PGIMER",
-    tags: ["Full-time", "Residency Friendly"],
-  },
-  {
-    jobTitle: "OB-GYN",
-    location: "Indore, MP",
-    hospital: "Choithram Hospital",
-    tags: ["Part-time"],
-  },
-  {
-    jobTitle: "Pathologist",
-    location: "Nagpur, MH",
-    hospital: "Wockhardt Hospitals",
-    tags: ["Full-time", "On-Site"],
-  },
-  {
-    jobTitle: "Endocrinologist",
-    location: "Kochi, KL",
-    hospital: "Aster Medcity",
-    tags: ["Remote"],
-  },
-  {
-    jobTitle: "General Surgeon",
-    location: "Bhopal, MP",
-    hospital: "AIIMS Bhopal",
-    tags: ["Full-time", "On-Site"],
-  },
-  {
-    jobTitle: "Nephrologist",
-    location: "Surat, GJ",
-    hospital: "Kiran Hospital",
-    tags: ["Full-time"],
-  },
-  {
-    jobTitle: "Urologist",
-    location: "Patna, BR",
-    hospital: "Paras HMRI Hospital",
-    tags: ["Residency Friendly", "Full-time"],
-  },
-  {
-    jobTitle: "Ophthalmologist",
-    location: "Visakhapatnam, AP",
-    hospital: "LV Prasad Eye Institute",
-    tags: ["Full-time", "Remote"],
-  },
-];
+interface ApiJob {
+  id: string;
+  title: string;
+  description: string;
+  payRange: string;
+  benefits: string;
+  category: string;
+  location: string;
+  createdAt: string;
+  updatedAt: string;
+  instituteId: string;
+  instituteName: string;
+  instituteLocation: string;
+}
 
-const JobList = () => (
-  <section className="max-w-3xl mx-auto px-4 py-8 flex flex-col bg-[#f3f7fb] rounded-2xl border border-[#e1e9f2] mt-10 shadow-sm">
-    <h2 className="text-xl font-extrabold text-[#23497d] mb-4">Featured Doctor Jobs in India</h2>
-    {dummyJobs.map((job, idx) => (
-      <JobCard
-        key={idx}
-        jobTitle={job.jobTitle + " - " + job.hospital}
-        location={job.location}
-        hospital={job.hospital}
-        tags={job.tags}
-      />
-    ))}
-  </section>
-);
+interface DisplayJob {
+  jobTitle: string;
+  location: string;
+  hospital: string;
+  tags: string[];
+}
+
+const JobList = () => {
+  const [jobs, setJobs] = useState<DisplayJob[]>([]);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const response = await jobApiClient.get<ApiJob[]>("/public/job");
+        // Map the API response to the format expected by your JobCard
+        const mappedJobs = response.map((job) => ({
+          jobTitle: job.title,
+          location: job.location,
+          hospital: job.instituteName,
+          tags: [
+            // Split benefits into individual tags
+            ...(job.benefits ? job.benefits.split(", ") : []),
+            // Add category as a tag (optional)
+            job.category,
+          ],
+        }));
+        setJobs(mappedJobs);
+      } catch (error) {
+        console.error("Failed to fetch jobs:", error);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
+  return (
+    <section className="max-w-3xl mx-auto px-4 py-8 flex flex-col bg-[#f3f7fb] rounded-2xl border border-[#e1e9f2] mt-10 shadow-sm">
+      <h2 className="text-xl font-extrabold text-[#23497d] mb-4">
+        Featured Doctor Jobs in India
+      </h2>
+      {jobs.map((job, idx) => (
+        <JobCard
+          key={idx}
+          jobTitle={job.jobTitle + " - " + job.hospital}
+          location={job.location}
+          hospital={job.hospital}
+          tags={job.tags}
+        />
+      ))}
+    </section>
+  );
+};
 
 export default JobList;

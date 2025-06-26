@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { authApiClient } from './apiClient';
 import { LoginRequest, RegisterRequest } from '../types/api';
 
 export interface SignupRequest {
@@ -31,58 +31,79 @@ export class AuthService {
   /**
    * Login user with email and password
    */
-async login(credentials: LoginRequest): Promise<{ token: string; userId: string }> {
-  try {
-    const response = await apiClient.post<{ token: string; userId: string }>('/auth/login', credentials, false);
+  async login(credentials: LoginRequest): Promise<{ token: string; userId: string }> {
+    try {
+      // Adjusted endpoint to new API
+      const response = await authApiClient.post<{ token: string; userId: string }>(
+        '/public/login',
+        {
+          email: credentials.email,
+          password: credentials.password,
+          type: credentials.type || 'user', // default to 'user' if not provided
+        },
+        false
+      );
 
-    if (response && response.token) {
-      apiClient.setToken(response.token);
-      return response; // { token, userId }
+      if (response && response.token) {
+        authApiClient.setToken(response.token);
+        return response; // { token, userId }
+      }
+      throw new Error('Invalid email or password. Please check your credentials and try again.');
+    } catch (error: any) {
+      throw new Error(error?.message || 'Login error');
     }
-    throw new Error('Invalid email or password. Please check your credentials and try again.');
-  } catch (error: any) {
-    throw new Error(error?.message || 'Login error');
   }
-}
+
   /**
    * Register a new user (sign up)
    * Accepts any 200/201 or message as success, does NOT expect token or success field
    */
- async signup(userData: SignupRequest): Promise<void> {
-  try {
-    const response = await apiClient.post('/auth/register', userData, false);
+  async signup(userData: SignupRequest): Promise<void> {
+    try {
+      // Map SignupRequest to new API expected fields
+      const requestBody = {
+        email: userData.email,
+        password: userData.password,
+        type: userData.userType || 'user', // map userType to type
+      };
 
-    // Accept empty response, string, or message as success
-    if (
-      response === undefined ||
-      response === null ||
-      (typeof response === 'object' && Object.keys(response).length === 0) ||
-      typeof response === 'string' ||
-      (typeof response === 'object' && 'message' in response)
-    ) {
-      return;
-    } else {
-      throw new Error('Signup failed');
+      const response = await authApiClient.post('/public/register', requestBody, false);
+
+      // Accept empty response, string, or message as success
+      if (
+        response === undefined ||
+        response === null ||
+        (typeof response === 'object' && Object.keys(response).length === 0) ||
+        typeof response === 'string' ||
+        (typeof response === 'object' && 'message' in response)
+      ) {
+        return;
+      } else {
+        throw new Error('Signup failed');
+      }
+    } catch (error: any) {
+      throw new Error(error?.message || 'Signup error');
     }
-  } catch (error: any) {
-    throw new Error(error?.message || 'Signup error');
   }
-}
-
-
 
   /**
    * Register a new user (legacy method name for compatibility)
    */
   async register(userData: RegisterRequest): Promise<void> {
-    await apiClient.post<void>('/auth/register', userData, false);
+    // Assuming RegisterRequest has email, password, and type
+    const requestBody = {
+      email: userData.email,
+      password: userData.password,
+      type: userData.type || 'user',
+    };
+    await authApiClient.post<void>('/public/register', requestBody, false);
   }
 
   /**
    * Logout user by clearing the stored JWT token
    */
   logout(): void {
-    apiClient.clearToken(); // Clears 'pharminc_auth_token'
+    authApiClient.clearToken(); // Clears 'pharminc_auth_token'
   }
 
   /**

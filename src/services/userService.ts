@@ -1,97 +1,122 @@
-
-import { apiClient } from './apiClient';
+import { userApiClient } from './apiClient';
 import { CreateUserRequest, User, UpdateUserRequest } from '../types/api';
+import { validate as isUuid } from 'uuid';
 
-/**
- * User service for handling user profile operations
- */
+// Define the expected API response structure for user search
+interface SearchUsersResponse {
+  data: User[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+  filters: {
+    query: string;
+    name?: string;
+    role?: string;
+    location?: string;
+  };
+}
+
 export class UserService {
-  /**
-   * Create a new user profile
-   * @param userData - User profile data
-   * @returns Promise containing the created user
-   * @throws ApiError if creation fails
-   * 
-   * @example
-   * ```typescript
-   * try {
-   *   const user = await userService.createUser({
-   *     firstName: 'John',
-   *     lastName: 'Doe',
-   *     specialization: 'Cardiology'
-   *   });
-   *   console.log('User created:', user);
-   * } catch (error) {
-   *   console.error('User creation failed:', error.message);
-   * }
-   * ```
-   */
+  // Create user (authenticated)
   async createUser(userData: CreateUserRequest): Promise<User> {
-    return apiClient.post<User>('/user', userData);
+    try {
+      return await userApiClient.post<User>('/private/user', userData);
+    } catch (error) {
+      console.error('Failed to create user:', error);
+      throw error;
+    }
   }
 
-  /**
-   * Get user by ID
-   * @param id - User ID
-   * @returns Promise containing user data
-   * @throws ApiError if user not found or request fails
-   * 
-   * @example
-   * ```typescript
-   * try {
-   *   const user = await userService.getUserById('123');
-   *   console.log('User found:', user);
-   * } catch (error) {
-   *   console.error('User not found:', error.message);
-   * }
-   * ```
-   */
+  // Get current authenticated user
+  async getCurrentUser(): Promise<User> {
+    try {
+      return await userApiClient.get<User>('/private/user');
+    } catch (error) {
+      console.error('Failed to get current user:', error);
+      throw error;
+    }
+  }
+
+  // Update current authenticated user
+  async updateCurrentUser(updateData: UpdateUserRequest): Promise<User> {
+    try {
+      return await userApiClient.put<User>('/private/user', updateData);
+    } catch (error) {
+      console.error('Failed to update user:', error);
+      throw error;
+    }
+  }
+
+  // Delete current authenticated user
+  async deleteCurrentUser(): Promise<void> {
+    try {
+      await userApiClient.delete<void>('/private/user');
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      throw error;
+    }
+  }
+
+  // Get public user by ID
   async getUserById(id: string): Promise<User> {
-    return apiClient.get<User>(`/user/${id}`);
+    if (!isUuid(id)) {
+      throw new Error('Invalid user ID: must be a valid UUID');
+    }
+    try {
+      return await userApiClient.get<User>(`/public/user/${id}`, false);
+    } catch (error) {
+      console.error('Failed to get user by ID:', error);
+      throw error;
+    }
   }
 
-  /**
-   * Update user profile
-   * @param id - User ID
-   * @param updateData - Data to update
-   * @returns Promise containing updated user data
-   * @throws ApiError if update fails
-   * 
-   * @example
-   * ```typescript
-   * try {
-   *   const updatedUser = await userService.updateUser('123', {
-   *     firstName: 'Jane',
-   *     specialization: 'Neurology'
-   *   });
-   *   console.log('User updated:', updatedUser);
-   * } catch (error) {
-   *   console.error('User update failed:', error.message);
-   * }
-   * ```
-   */
-  async updateUser(id: string, updateData: UpdateUserRequest): Promise<User> {
-    return apiClient.put<User>(`/user/${id}`, updateData);
+  // List all public users
+  async listUsers(): Promise<User[]> {
+    try {
+      return await userApiClient.get<User[]>('/public/users', false);
+    } catch (error) {
+      console.error('Failed to list users:', error);
+      throw error;
+    }
   }
 
-  /**
-   * Delete user profile
-   * @param id - User ID
-   * @returns Promise that resolves when deletion is successful
-   * @throws ApiError if deletion fails
-   * 
-   * @example
-   * ```typescript
-   * try {
-   *   await userService.deleteUser('123');
-   *   console.log('User deleted successfully');
-   * } catch (error) {
-   *   console.error('User deletion failed:', error.message);
-   * }
-   * ```
-   */
-  async deleteUser(id: string): Promise<void> {
-    await apiClient.delete<void>(`/user/${id}`);
+  // Search public users
+  async searchUsers(
+    q: string,
+    name?: string,
+    location?: string,
+    role?: string,
+    page?: number,
+    limit?: number,
+    sortBy?: string,
+    sortOrder?: 'asc' | 'desc',
+    fields?: string
+  ): Promise<SearchUsersResponse> {
+    const params = new URLSearchParams();
+    params.append('q', q);
+    if (name) params.append('name', name);
+    if (location) params.append('location', location);
+    if (role) params.append('role', role);
+    if (page !== undefined) params.append('page', page.toString());
+    if (limit !== undefined) params.append('limit', limit.toString());
+    if (sortBy) params.append('sortBy', sortBy);
+    if (sortOrder) params.append('sortOrder', sortOrder);
+    if (fields) params.append('fields', fields);
+
+    try {
+      return await userApiClient.get<SearchUsersResponse>(
+        `/public/user/search?${params.toString()}`,
+        false
+      );
+    } catch (error) {
+      console.error('Failed to search users:', error);
+      throw error;
+    }
   }
 }
 

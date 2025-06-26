@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { backgroundApiClient } from './apiClient';
 import { CreateUserEducationRequest, UserEducation, UpdateUserEducationRequest } from '../types/api';
 
 /**
@@ -10,38 +10,29 @@ export class UserEducationService {
    * @param educationData - Education data
    * @returns Promise containing the created education record
    * @throws ApiError if creation fails
-   * 
-   * @example
-   * ```
-   * try {
-   *   const education = await userEducationService.createUserEducation({
-   *     title: 'Doctor of Medicine',
-   *     description: 'MD program with focus on internal medicine',
-   *     startDate: '2020-09-01',
-   *     endDate: '2024-05-31',
-   *     institutionId: '789'
-   *   });
-   *   console.log('Education added:', education);
-   * } catch (error) {
-   *   console.error('Education creation failed:', error.message);
-   * }
-   * ```
    */
   async createUserEducation(educationData: CreateUserEducationRequest): Promise<UserEducation> {
-    return apiClient.post<UserEducation>('/user/education', educationData);
+    return backgroundApiClient.post<UserEducation>('/private/education', educationData);
   }
 
   /**
-   * Get education by ID
+   * Get education by ID (public endpoint)
    * @param id - Education ID
    * @returns Promise containing education data
    * @throws ApiError if education not found or request fails
    */
   async getUserEducationById(id: string): Promise<UserEducation> {
-    // If your backend supports public GETs, use `/public/user/education/${id}`
-    // If not, use `/private/user/education/${id}`
-    // Check your API docs: if education is only accessible to the user or admins, use private
-    return apiClient.get<UserEducation>(`/user/education/${id}`);
+    return backgroundApiClient.get<UserEducation>(`/public/education/${id}`);
+  }
+
+  /**
+   * Get all education records for a user (public endpoint)
+   * @param userId - User ID
+   * @returns Promise containing array of education data
+   * @throws ApiError if request fails
+   */
+  async getUserEducationsByUserId(userId: string): Promise<UserEducation[]> {
+    return backgroundApiClient.get<UserEducation[]>(`/public/education/user/${userId}`);
   }
 
   /**
@@ -52,7 +43,7 @@ export class UserEducationService {
    * @throws ApiError if update fails
    */
   async updateUserEducation(id: string, updateData: UpdateUserEducationRequest): Promise<UserEducation> {
-    return apiClient.put<UserEducation>(`/user/education/${id}`, updateData);
+    return backgroundApiClient.put<UserEducation>(`/private/education/${id}`, updateData);
   }
 
   /**
@@ -62,7 +53,7 @@ export class UserEducationService {
    * @throws ApiError if deletion fails
    */
   async deleteUserEducation(id: string): Promise<void> {
-    await apiClient.delete<void>(`/user/education/${id}`);
+    await backgroundApiClient.delete<void>(`/private/education/${id}`);
   }
 }
 

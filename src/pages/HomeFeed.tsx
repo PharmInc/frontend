@@ -3,14 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Home, BookOpen, MessageCircle, FileText, Bell, Network,
   Filter, Image, FileIcon, Link2, MoreVertical, Heart,
-  MessageSquare, Share2, Bookmark
+  MessageSquare, Share2, Search, Bookmark
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BiLogOut } from 'react-icons/bi';
 import { tokenStorage } from "@/utils/tokenStorage";
 
-// Mock posts and rightSidebar data (unchanged from your original)
+// Mock posts and rightSidebar data
 const mockPosts = [
   {
     id: 1,
@@ -97,44 +97,31 @@ const rightSidebar = [
 
 export default function HomeFeed() {
   const [liked, setLiked] = useState({});
+  const [likedCount, setLikedCount] = useState({});
   const [userData, setUserData] = useState(null);
-  const [expInstitution, setExpInstitution] = useState(null);
-  const [eduInstitution, setEduInstitution] = useState(null);
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
+  const [postTitle, setPostTitle] = useState("");
   const [postContent, setPostContent] = useState("");
+  const [postAttachmentId, setPostAttachmentId] = useState("");
   const [posting, setPosting] = useState(false);
+  const [userCache, setUserCache] = useState({});
   const navigate = useNavigate();
 
-  // Fetch user profile data
+  // Fetch user profile data (current user)
   useEffect(() => {
     const userObj = tokenStorage.getUser();
     const userId = userObj?.userId || userObj?.id;
     if (!userId) return;
 
     setLoading(true);
-    fetch(`https://api.pharminc.in/user/${userId}`, {
+    fetch(`https://user.api.pharminc.in/public/user/${userId}`, {
       headers: { Authorization: `Bearer ${tokenStorage.getToken()}` }
     })
       .then(res => res.ok ? res.json() : Promise.reject('Could not load user'))
       .then(data => {
         const userInfo = Array.isArray(data) ? data[0] : data;
         setUserData(userInfo);
-        // Fetch institutions for experience and education
-        if (userInfo?.experiences?.institutionId) {
-          fetch(`https://api.pharminc.in/institution/${userInfo.experiences.institutionId}`, {
-            headers: { Authorization: `Bearer ${tokenStorage.getToken()}` }
-          })
-            .then(res => res.ok ? res.json() : null)
-            .then(inst => setExpInstitution(inst));
-        }
-        if (userInfo?.educations?.institutionId) {
-          fetch(`https://api.pharminc.in/institution/${userInfo.educations.institutionId}`, {
-            headers: { Authorization: `Bearer ${tokenStorage.getToken()}` }
-          })
-            .then(res => res.ok ? res.json() : null)
-            .then(inst => setEduInstitution(inst));
-        }
       })
       .catch(err => {
         console.error(err);
@@ -143,65 +130,151 @@ export default function HomeFeed() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Fetch posts from backend
+  // Fetch posts from backend, sorted by createdAt (newest first)
   useEffect(() => {
-    fetch(`https://api.pharminc.in/public/post`, {
-      headers: { Authorization: `Bearer ${tokenStorage.getToken()}` }
-    })
-      .then(res => res.ok ? res.json() : Promise.reject('Could not load posts'))
-      .then(data => {
-        setPosts(data || []); // If data is null/undefined, set empty array
+  fetch(`https://content.api.pharminc.in/public/post`, {
+    headers: { Authorization: `Bearer ${tokenStorage.getToken()}` }
+  })
+    .then(res => res.ok ? res.json() : Promise.reject('Could not load posts'))
+    .then(response => {
+      // Use response.data, and sort by created_at
+      const sortedPosts = (response.data || []).sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setPosts(sortedPosts);
+        // Initialize likedCount for each post
+        const initialLikedCount = {};
+        sortedPosts.forEach(post => {
+          initialLikedCount[post.id] = parseInt(post.reactions) || 0;
+        });
+        mockPosts.forEach(post => {
+          if (!initialLikedCount[post.id]) {
+            initialLikedCount[post.id] = post.likes;
+          }
+        });
+        setLikedCount(initialLikedCount);
       })
       .catch(err => {
         console.error(err);
-        setPosts([]); // On error, set empty array
+        setPosts([]);
       });
   }, []);
 
+  // Fetch user info for a post's userId and cache it
+  const fetchUserInfo = async (userId) => {
+    if (userCache[userId]) return userCache[userId];
+    try {
+      const res = await fetch(`https://user.api.pharminc.in/public/user/${userId}`, {
+        headers: { Authorization: `Bearer ${tokenStorage.getToken()}` }
+      });
+      if (!res.ok) throw new Error('Could not load user');
+      const data = await res.json();
+      const userInfo = Array.isArray(data) ? data[0] : data;
+      setUserCache(prev => ({ ...prev, [userId]: userInfo }));
+      return userInfo;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  };
+
+  // Handle logout
   const handleLogout = () => {
     localStorage.clear();
     navigate("/signup");
   };
 
+  // Handle post creation
   const handlePostSubmit = (e) => {
     e.preventDefault();
-    const userObj = tokenStorage.getUser();
-    const userId = userObj?.userId || userObj?.id;
-    if (!userId || !postContent) return;
+    if (!postTitle || !postContent) return alert("Title and Content are required!");
 
     setPosting(true);
-    fetch(`https://api.pharminc.in/post`, {
+    fetch(`https://content.api.pharminc.in/private/post`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${tokenStorage.getToken()}`
       },
       body: JSON.stringify({
+        title: postTitle,
         content: postContent,
-        userId: userId
+        attachmentId: postAttachmentId || undefined
       })
     })
       .then(res => res.ok ? res.json() : Promise.reject('Failed to create post'))
       .then(newPostId => {
-        // Optionally, refresh the posts list to show the new post
-        fetch(`https://api.pharminc.in/public/post`, {
+        fetch(`https://content.api.pharminc.in/public/post`, {
           headers: { Authorization: `Bearer ${tokenStorage.getToken()}` }
         })
           .then(res => res.ok ? res.json() : Promise.reject('Could not refresh posts'))
-          .then(data => setPosts(data || []));
+          .then(data => {
+            const sortedPosts = (data || []).sort((a, b) =>
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+            setPosts(sortedPosts);
+            const newLikedCount = {};
+            sortedPosts.forEach(post => {
+              newLikedCount[post.id] = parseInt(post.reactions) || 0;
+            });
+            setLikedCount(newLikedCount);
+          });
+        setPostTitle("");
         setPostContent("");
+        setPostAttachmentId("");
       })
       .catch(err => {
         console.error(err);
+        alert("Failed to create post: " + err);
       })
       .finally(() => {
         setPosting(false);
       });
   };
 
+  // Handle like (client-side only, for demo)
+  const handleLike = (postId) => {
+    setLiked(prev => ({ ...prev, [postId]: !prev[postId] }));
+    setLikedCount(prev => ({
+      ...prev,
+      [postId]: (prev[postId] || 0) + (liked[postId] ? -1 : 1)
+    }));
+  };
+
+  // Map posts for display
   const user = userData?.user || userData;
-  const experience = userData?.experiences;
-  const education = userData?.educations;
+  const displayPosts = posts.length > 0 ? posts : mockPosts;
+  const [mappedDisplayPosts, setMappedDisplayPosts] = useState([]);
+
+  useEffect(() => {
+    const mapAllPosts = async () => {
+      const mapped = await Promise.all(
+        displayPosts.map(async post => {
+          if (post.author) return post; // Mock post
+          let userInfo = userCache[post.userId];
+          if (!userInfo && post.userId) {
+            userInfo = await fetchUserInfo(post.userId);
+          }
+          return {
+            ...post,
+            author: userInfo && userInfo.user ? `Dr ${userInfo.user.firstName} ${userInfo.user.lastName}` : `User ${post.userId}`,
+            role: userInfo && userInfo.user ? userInfo.user.specialization : "User",
+            avatar: userInfo && userInfo.user && userInfo.user.profilePicture ? userInfo.user.profilePicture : "/pp.png",
+            time: post.createdAt ? new Date(post.createdAt).toLocaleString() : post.time,
+            tags: post.tags || [],
+            type: post.type || "Post",
+            likes: likedCount[post.id] || parseInt(post.reactions) || 0,
+            comments: post.comments || 0,
+            shares: post.shares || 0,
+            saves: post.saves || 0,
+            image: post.imageId ? `https://content.api.pharminc.in/image/${post.imageId}` : post.image
+          };
+        })
+      );
+      setMappedDisplayPosts(mapped);
+    };
+    mapAllPosts();
+  }, [displayPosts, userCache, likedCount]);
 
   if (loading && !userData) {
     return (
@@ -210,32 +283,6 @@ export default function HomeFeed() {
       </div>
     );
   }
-
-  // If there are NO backend posts, show mock posts (for now)
-  const displayPosts = posts.length > 0 ? posts : mockPosts;
-
-  // Helper to map backend post structure to mock post structure for UI
-  const mapBackendPostToUIPost = (post) => {
-    // If post is from backend, map to mock post structure for UI consistency
-    if (!post.author) {
-      return {
-        ...post,
-        author: `Dr ${user?.firstName} ${user?.lastName}`,
-        avatar: user?.profilePicture || "/pp.png",
-        role: user?.specialization,
-        time: new Date(post.createdAt).toLocaleString(),
-        tags: [],
-        type: "Post",
-        likes: parseInt(post.reactions) || 0,
-        comments: 0, // Not available in backend post
-        shares: parseInt(post.shares) || 0,
-        saves: parseInt(post.saves) || 0,
-        image: post.imageId ? `https://api.pharminc.in/image/${post.imageId}` : null // Adjust as per your image API
-      };
-    }
-    // If it's a mock post, leave as is
-    return post;
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -250,58 +297,59 @@ export default function HomeFeed() {
         style={{ minHeight: 0 }}
       >
         {/* Updated Profile Card - LinkedIn Style */}
-        <div className="relative w-full bg-white rounded-xl shadow border border-gray-100 overflow-visible mb-6">
-          {/* Banner/Header */}
-          <div className="w-full h-20 bg-gray-200 rounded-t-xl overflow-hidden">
-            <img
-              src="/banner.png"
-              alt="Profile Banner"
-              className="w-full h-full object-cover"
-              style={{ objectPosition: "center" }}
-            />
+        <Link to="/profile">
+          <div className="relative w-full bg-white rounded-xl shadow border border-gray-100 overflow-visible mb-6">
+            {/* Banner/Header */}
+            <div className="w-full h-20 bg-gray-200 rounded-t-xl overflow-hidden">
+              <img
+                src="/banner.png"
+                alt="Profile Banner"
+                className="w-full h-full object-cover"
+                style={{ objectPosition: "center" }}
+              />
+            </div>
+            {/* Profile Picture: Overlapping the banner, LinkedIn style */}
+            <div
+              className="absolute left-1/2"
+              style={{
+                transform: "translate(-50%, -50%)",
+                top: "90px",
+                zIndex: 10
+              }}
+            >
+              <img
+                src={user?.profilePicture || "/pp.png"}
+                alt="Profile"
+                className="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover"
+              />
+            </div>
+            {/* Profile Info */}
+            <div className="pt-14 pb-4 flex flex-col items-center">
+              {loading ? (
+                <p className="text-sm text-gray-500">Loading profile...</p>
+              ) : (
+                <>
+                  <h2 className="text-lg font-bold text-gray-900">Dr {user?.name}</h2>
+                  <div className="text-blue-700 text-sm font-medium mt-1">{user?.role}</div>
+                </>
+              )}
+            </div>
           </div>
-          {/* Profile Picture: Overlapping the banner, LinkedIn style */}
-          <div
-            className="absolute left-1/2"
-            style={{
-              transform: "translate(-50%, -50%)",
-              top: "90px",
-              zIndex: 10
-            }}
-          >
-            <img
-              src={user?.profilePicture || "/pp.png"}
-              alt="Profile"
-              className="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover"
-            />
-          </div>
-          {/* Profile Info */}
-          <div className="pt-14 pb-4 flex flex-col items-center">
-            {loading ? (
-              <p className="text-sm text-gray-500">Loading profile...</p>
-            ) : (
-              <>
-                <h2 className="text-lg font-bold text-gray-900">Dr {user?.firstName} {user?.lastName}</h2>
-                <div className="text-blue-700 text-sm font-medium mt-1">{user?.specialization}</div>
-              </>
-            )}
-          </div>
-        </div>
-
+        </Link>
         {/* Navigation */}
         <nav className="mt-2 space-y-0">
           {[
             { name: "Home", icon: <Home className="h-4 w-4" />, path: "/" },
-            { name: "Profile", icon: <BookOpen className="h-4 w-4" />, path: "/profile" },
+            { name: "Explore", icon: <Search className="h-4 w-4" />, path: "/profile" },
             { name: "Messages", icon: <MessageCircle className="h-4 w-4" />, path: "/messages" },
-            { name: "Research", icon: <FileText className="h-4 w-4" />, path: "/research" },
+            { name: "Jobs", icon: <FileText className="h-4 w-4" />, path: "/jobs" },
             { name: "Notifications", icon: <Bell className="h-4 w-4" />, path: "/notifications" },
             { name: "Societies", icon: <Network className="h-4 w-4" />, path: "/societies" },
           ].map(item => (
             <Link
               key={item.name}
               to={item.path}
-              className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-blue-50 text-sm text-gray-7"
+              className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-blue-50 text-sm text-gray-700"
             >
               {item.icon}
               <span>{item.name}</span>
@@ -319,7 +367,6 @@ export default function HomeFeed() {
           </button>
         </div>
       </aside>
-
       {/* Main Content and Right Sidebar */}
       <div
         className="flex flex-row"
@@ -347,13 +394,30 @@ export default function HomeFeed() {
                   alt={user?.firstName || "User"}
                   className="w-10 h-10 rounded-full object-cover"
                 />
-                <Input
-                  type="text"
-                  placeholder="Share your medical insights, research, or case studies…"
-                  className="flex-1 bg-gray-50 border-gray-200 h-10 text-sm"
-                  value={postContent}
-                  onChange={(e) => setPostContent(e.target.value)}
-                />
+                <div className="flex-1 flex flex-col gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Post title (required)"
+                    value={postTitle}
+                    onChange={(e) => setPostTitle(e.target.value)}
+                    required
+                    className="bg-gray-50 border-gray-200 h-10 text-sm"
+                  />
+                  <Input
+                    type="text"
+                    placeholder="Attachment ID (optional)"
+                    value={postAttachmentId}
+                    onChange={(e) => setPostAttachmentId(e.target.value)}
+                    className="bg-gray-50 border-gray-200 h-10 text-sm"
+                  />
+                  <textarea
+                    placeholder="Share your medical insights, research, or case studies…"
+                    className="flex-1 bg-gray-50 border-gray-200 h-20 p-2 text-sm rounded"
+                    value={postContent}
+                    onChange={(e) => setPostContent(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
               <div className="flex gap-2 mt-3">
                 <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
@@ -386,68 +450,64 @@ export default function HomeFeed() {
           </div>
           {/* Posts */}
           <div className="w-full max-w-2xl mt-4 flex flex-col gap-4">
-            {displayPosts.map(post => {
-              const mappedPost = mapBackendPostToUIPost(post);
-              return (
-                <div key={mappedPost.id} className="bg-white rounded-xl shadow border border-gray-100 px-6 py-4 flex flex-col gap-2">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={mappedPost.avatar}
-                      alt={mappedPost.author}
-                      className="w-9 h-9 rounded-full object-cover"
-                    />
-                    <div className="flex flex-col leading-tight">
-                      <span className="font-semibold text-sm text-gray-900">{mappedPost.author}</span>
-                      <span className="text-xs text-gray-500">{mappedPost.role} • {mappedPost.time}</span>
-                    </div>
-                    <div className="ml-auto">
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-gray-7">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </div>
+            {mappedDisplayPosts.map(post => (
+              <div key={post.id} className="bg-white rounded-xl shadow border border-gray-100 px-6 py-4 flex flex-col gap-2">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={post.avatar}
+                    alt={post.author}
+                    className="w-9 h-9 rounded-full object-cover"
+                  />
+                  <div className="flex flex-col leading-tight">
+                    <span className="font-semibold text-sm text-gray-900">{post.author}</span>
+                    <span className="text-xs text-gray-500">{post.role} • {post.time}</span>
                   </div>
-                  <div className="text-sm text-gray-800">{mappedPost.content}</div>
-                  {mappedPost.image && (
-                    <div className="rounded-lg overflow-hidden border border-gray-100">
-                      <img src={mappedPost.image} alt="post" className="w-full h-auto" />
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-1">
-                    {mappedPost.tags?.map(tag => (
-                      <span key={tag} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">#{tag}</span>
-                    ))}
-                  </div>
-                  <div className="text-xs text-blue-700 font-medium">
-                    {mappedPost.type === "Research Paper" ? "📄 Research Paper" : "🩺 Case Study"}
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-2">
-                    <div className="flex items-center gap-1 cursor-pointer" onClick={() => setLiked(l => ({ ...l, [mappedPost.id]: !l[mappedPost.id] }))}>
-                      <Heart className={`h-3.5 w-3.5 ${liked[mappedPost.id] ? "fill-red-500 text-red-500" : ""}`} />
-                      <span>{mappedPost.likes} likes</span>
-                    </div>
-                    <span>{mappedPost.comments} comments</span>
-                    <span>{mappedPost.shares} shares</span>
-                  </div>
-                  <div className="flex border-t border-gray-100 mt-2 pt-2 gap-1">
-                    <Button variant="ghost" size="sm" className="flex-1 text-gray-600 hover:text-red-600 hover:bg-red-50 py-1">
-                      <Heart className="h-4 w-4 mr-1" /> Like
-                    </Button>
-                    <Button variant="ghost" size="sm" className="flex-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 py-1">
-                      <MessageSquare className="h-4 w-4 mr-1" /> Comment
-                    </Button>
-                    <Button variant="ghost" size="sm" className="flex-1 text-gray-600 hover:text-green-600 hover:bg-green-50 py-1">
-                      <Share2 className="h-4 w-4 mr-1" /> Share
-                    </Button>
-                    <Button variant="ghost" size="sm" className="flex-1 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 py-1">
-                      <Bookmark className="h-4 w-4 mr-1" /> Save
+                  <div className="ml-auto">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-gray-700">
+                      <MoreVertical className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-              );
-            })}
+                <div className="text-sm text-gray-800">{post.content}</div>
+                {post.image && (
+                  <div className="rounded-lg overflow-hidden border border-gray-100">
+                    <img src={post.image} alt="post" className="w-full h-auto" />
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-1">
+                  {post.tags?.map(tag => (
+                    <span key={tag} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">#{tag}</span>
+                  ))}
+                </div>
+                <div className="text-xs text-blue-700 font-medium">
+                  {post.type === "Research Paper" ? "📄 Research Paper" : "🩺 Case Study"}
+                </div>
+                <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-2">
+                  <div className="flex items-center gap-1 cursor-pointer" onClick={() => handleLike(post.id)}>
+                    <Heart className={`h-3.5 w-3.5 ${liked[post.id] ? "fill-red-500 text-red-500" : ""}`} />
+                    <span>{post.likes} likes</span>
+                  </div>
+                  <span>{post.comments} comments</span>
+                  <span>{post.shares} shares</span>
+                </div>
+                <div className="flex border-t border-gray-100 mt-2 pt-2 gap-1">
+                  <Button variant="ghost" size="sm" className="flex-1 text-gray-600 hover:text-red-600 hover:bg-red-50 py-1">
+                    <Heart className="h-4 w-4 mr-1" /> Like
+                  </Button>
+                  <Button variant="ghost" size="sm" className="flex-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 py-1">
+                    <MessageSquare className="h-4 w-4 mr-1" /> Comment
+                  </Button>
+                  <Button variant="ghost" size="sm" className="flex-1 text-gray-600 hover:text-green-600 hover:bg-green-50 py-1">
+                    <Share2 className="h-4 w-4 mr-1" /> Share
+                  </Button>
+                  <Button variant="ghost" size="sm" className="flex-1 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 py-1">
+                    <Bookmark className="h-4 w-4 mr-1" /> Save
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         </main>
-
         {/* Right Sidebar */}
         <aside
           className="w-72 flex-shrink-0 bg-white border-l border-gray-200 p-4"
@@ -488,7 +548,7 @@ export default function HomeFeed() {
                     <span className="text-xs bg-green-50 border border-green-200 text-green-700 rounded px-2">{item.mode}</span>
                     <span className="text-xs bg-blue-50 border border-blue-200 text-blue-700 rounded px-2">CME: {item.cme}</span>
                   </div>
-                  <Button size="sm" className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-7 text-white shadow-sm">
+                  <Button size="sm" className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm">
                     Register Now
                   </Button>
                 </div>
@@ -502,13 +562,13 @@ export default function HomeFeed() {
               </div>
               {rightSidebar[2].items.map((event, idx) => (
                 <div key={idx} className="flex gap-2 mb-3">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p=2 text-center min-w-10 shadow-sm border border-blue-200">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-2 text-center min-w-10 shadow-sm border border-blue-200">
                     <span className="block text-xs text-blue-600 font-medium">{event.month}</span>
                     <span className="block text-sm font-bold text-blue-700">{event.day}</span>
                   </div>
                   <div>
                     <h4 className="font-medium text-xs text-gray-900 mb-1">{event.title}</h4>
-                    <p className="text-xs text-gray-600 mb=1">{event.time}</p>
+                    <p className="text-xs text-gray-600 mb-1">{event.time}</p>
                     <p className="text-xs text-gray-500">{event.location}</p>
                   </div>
                 </div>

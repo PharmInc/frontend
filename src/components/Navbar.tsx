@@ -1,65 +1,61 @@
-
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, Briefcase, Home, Users, MessageSquare, Bell } from "lucide-react";
+import { Search, Briefcase, Home, Users } from "lucide-react";
+import { userService } from "@/services/userService";
+import { User } from "@/types/api"; // Import your User type
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
-  const recentMessages = [
-    {
-      id: 1,
-      name: "Dr. Robert Kim",
-      avatar: "https://i.pravatar.cc/300?img=1",
-      message: "Thanks for the collaboration opportunity...",
-      time: "2h ago"
-    },
-    {
-      id: 2,
-      name: "Dr. Maria Lopez",
-      avatar: "https://i.pravatar.cc/300?img=5",
-      message: "Could you review my latest research paper?",
-      time: "5h ago"
-    },
-    {
-      id: 3,
-      name: "Dr. James Wilson",
-      avatar: "https://i.pravatar.cc/300?img=3",
-      message: "The conference was amazing! Let's discuss...",
-      time: "1d ago"
-    }
-  ];
+  const [searchTerm, setSearchTerm] = useState("");
+  const [results, setResults] = useState<User[]>([]); // Explicit type
+  const [loading, setLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const navigate = useNavigate();
 
-  const recentNotifications = [
-    {
-      id: 1,
-      user: "Dr. Mehta",
-      avatar: "https://i.pravatar.cc/300?img=12",
-      action: "commented on your post",
-      time: "2h ago",
-      type: "comment"
-    },
-    {
-      id: 2,
-      user: "Dr. Sarah Wilson",
-      avatar: "https://i.pravatar.cc/300?img=9",
-      action: "endorsed you for Pediatrics",
-      time: "4h ago",
-      type: "endorsement"
-    },
-    {
-      id: 3,
-      user: "Dr. Arya",
-      avatar: "https://i.pravatar.cc/300?img=8",
-      action: "sent you a connection request",
-      time: "6h ago",
-      type: "connection"
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) {
+      setResults([]);
+      setShowDropdown(false);
+      return;
     }
-  ];
+    setLoading(true);
+    setShowDropdown(true);
+    try {
+      const response = await userService.searchUsers(
+        searchTerm, // q (required)
+        searchTerm, // name (optional)
+        undefined,  // location
+        undefined   // role
+      );
+      setResults(response?.data || []); // Optional chaining
+    } catch (error) {
+      setResults([]);
+    }
+    setLoading(false);
+  };
+
+  const handleProfileClick = (userId: string) => {
+    setShowDropdown(false);
+    navigate(`/profile/${userId}`);
+  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        !event.target.closest(".search-dropdown") &&
+        !event.target.closest(".search-input")
+      ) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
-    <motion.header 
+    <motion.header
       className="fixed w-full top-0 z-50 bg-white/95 border-b border-gray-100 backdrop-blur-sm"
       initial={{ y: -100 }}
       animate={{ y: 0 }}
@@ -75,20 +71,59 @@ const Navbar = () => {
             />
           </Link>
         </div>
-        
+
         {/* Center Search Bar */}
-        <div className="flex-1 max-w-md mx-8">
-          <div className="relative rounded-full bg-gray-100 px-3 py-2 flex items-center w-full">
-            <Search className="h-4 w-4 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Search" 
-              className="ml-2 bg-transparent border-none outline-none text-sm w-full placeholder:text-gray-400"
-            />
-          </div>
+        <div className="flex-1 max-w-md mx-8 relative">
+          <form onSubmit={handleSearch}>
+            <div className="relative rounded-full bg-gray-100 px-3 py-2 flex items-center w-full">
+              <Search className="h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search users by name"
+                className="ml-2 bg-transparent border-none outline-none text-sm w-full placeholder:text-gray-400 search-input"
+                onFocus={() => searchTerm && setShowDropdown(true)}
+                autoComplete="off"
+              />
+              <button type="submit" className="ml-2 text-blue-600 font-semibold">
+                Search
+              </button>
+            </div>
+          </form>
+          {loading && (
+            <div className="text-sm mt-2 bg-white border rounded shadow p-2">
+              Loading...
+            </div>
+          )}
+          {showDropdown && results.length > 0 && (
+            <ul className="search-dropdown bg-white border rounded shadow mt-2 max-h-60 overflow-y-auto absolute w-full z-50">
+              {results.map((user) => (
+                <li
+                  key={user.id}
+                  onClick={() => handleProfileClick(user.id)}
+                  className="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                >
+                  {user.profile_picture && (
+                    <img
+                      src={user.profile_picture}
+                      alt={user.name}
+                      className="h-6 w-6 rounded-full object-cover"
+                    />
+                  )}
+                  <span>{user.name}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {showDropdown && !loading && results.length === 0 && (
+            <div className="search-dropdown bg-white border rounded shadow mt-2 absolute w-full z-50 p-2 text-gray-500">
+              No users found
+            </div>
+          )}
         </div>
-        
-        {/* Navigation Icons */}
+
+        {/* Navigation Icons and Profile */}
         <div className="flex items-center gap-2">
           <Link to="/home-feed">
             <Button variant="ghost" size="sm" className="p-2">
@@ -105,87 +140,7 @@ const Navbar = () => {
               <Briefcase className="h-5 w-5" />
             </Button>
           </Link>
-          
-          {/* Messages Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="relative p-2">
-                <MessageSquare className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center text-[10px]">3</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-80 p-0 bg-white border shadow-lg" align="end">
-              <div className="p-4 border-b">
-                <h3 className="font-semibold text-lg">Messages</h3>
-              </div>
-              <div className="max-h-80 overflow-y-auto">
-                {recentMessages.map((message) => (
-                  <DropdownMenuItem key={message.id} className="p-4 cursor-pointer hover:bg-gray-50">
-                    <Link to={`/messages/${message.id}`} className="flex items-center gap-3 w-full">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={message.avatar} alt={message.name} />
-                        <AvatarFallback>{message.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-gray-900 truncate">{message.name}</p>
-                        <p className="text-sm text-gray-600 truncate">{message.message}</p>
-                        <p className="text-xs text-gray-400">{message.time}</p>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </div>
-              <div className="p-3 border-t">
-                <Link to="/messages">
-                  <Button variant="ghost" className="w-full text-blue-600 hover:bg-blue-50">
-                    See More Messages
-                  </Button>
-                </Link>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Notifications Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="relative p-2">
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center text-[10px]">3</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-80 p-0 bg-white border shadow-lg" align="end">
-              <div className="p-4 border-b">
-                <h3 className="font-semibold text-lg">Notifications</h3>
-              </div>
-              <div className="max-h-80 overflow-y-auto">
-                {recentNotifications.map((notification) => (
-                  <DropdownMenuItem key={notification.id} className="p-4 cursor-pointer hover:bg-gray-50">
-                    <div className="flex items-center gap-3 w-full">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={notification.avatar} alt={notification.user} />
-                        <AvatarFallback>{notification.user.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-900">
-                          <span className="font-medium">{notification.user}</span>
-                          <span className="text-gray-600"> {notification.action}</span>
-                        </p>
-                        <p className="text-xs text-gray-400">{notification.time}</p>
-                      </div>
-                    </div>
-                  </DropdownMenuItem>
-                ))}
-              </div>
-              <div className="p-3 border-t">
-                <Link to="/notifications">
-                  <Button variant="ghost" className="w-full text-blue-600 hover:bg-blue-50">
-                    See All Notifications
-                  </Button>
-                </Link>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
+          {/* ...Messages and Notifications dropdowns... */}
           <Link to="/profile">
             <Avatar className="h-8 w-8 cursor-pointer">
               <AvatarImage src="/pp.png" alt="Profile" />

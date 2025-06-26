@@ -1,8 +1,8 @@
-
 // Authentication types
 export interface LoginRequest {
   email: string;
   password: string;
+  type?: string;
 }
 
 export interface LoginResponse {
@@ -13,6 +13,7 @@ export interface LoginResponse {
 export interface RegisterRequest {
   email: string;
   password: string;
+  type?: string;
 }
 
 // User types
@@ -30,7 +31,6 @@ export interface User {
   email?: string;
   createdAt?: string;
   updatedAt?: string;
-
   about?: string;
   location?: string;
   interests?: string;
@@ -102,7 +102,7 @@ export interface UpdateCommentRequest {
 // Institution types
 export interface CreateInstitutionRequest {
   name: string;
-  about: string;
+  type: string;
   location: string;
 }
 
@@ -215,6 +215,113 @@ export interface UserTag {
 export interface UpdateUserTagRequest {
   userId?: string;
   tagId?: string;
+}
+
+// Connection types
+export interface Connection {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  status: 'pending' | 'accepted';
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateConnectionRequest {
+  receiverId: string; // The user to whom the connection is sent
+}
+
+export interface AcceptConnectionRequest {
+  connectionId: string;
+}
+
+// Follow types
+export interface Follow {
+  id: string;
+  followerId: string;
+  followingId: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateFollowRequest {
+  followingId: string; // The user to follow
+}
+
+// Job types
+export interface Job {
+  id: string;
+  title: string;
+  description: string;
+  payRange: string;
+  benefits?: string;
+  category: string;
+  location: string;
+  createdAt: string;
+  updatedAt: string;
+  instituteId: string;
+  instituteName?: string;
+  institute2Location?: string;
+}
+
+export interface CreateJobRequest {
+  title: string;
+  description?: string;
+  payRange?: string;
+  benefits?: string;
+  category: string;
+  location: string;
+  instituteId: string;
+}
+
+export interface UpdateJobRequest {
+  title?: string;
+  description?: string;
+  payRange?: string;
+  benefits?: string;
+  category?: string;
+  location?: string;
+  instituteId?: string;
+}
+
+// Job search and filter types
+export interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface SearchFilters {
+  category?: string;
+  location?: string;
+  instituteId?: string;
+  minPay?: string;
+  maxPay?: string;
+}
+
+export interface SearchJobsResponse {
+  data: Job[];
+  search2Term?: string;
+  pagination: Pagination;
+  filters: SearchFilters;
+}
+
+// Job application types
+export interface JobApplication {
+  id: string;
+  jobId: string;
+  userId: string;
+  status?: 'pending' | 'accepted' | 'rejected';
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateJobApplicationRequest {
+  jobId: string;
+  userId: string;
 }
 
 // API Error type

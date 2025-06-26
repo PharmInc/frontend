@@ -1,5 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { useState, useEffect } from 'react';
+import InvitationPopup from '@/components/InvitationPopup';
+
 
 const cardVariants = {
   initial: { opacity: 0, y: 40, rotateY: 0 },
@@ -8,6 +11,14 @@ const cardVariants = {
 };
 
 const Hero = () => {
+  const [showPopup, setShowPopup] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowPopup(true);
+    }, 2000); 
+    return () => clearTimeout(timer);
+  }, []);
   return (
     <section className="relative pt-24 pb-16 hero-gradient overflow-hidden">
       <motion.div
@@ -65,9 +76,13 @@ const Hero = () => {
   }
   className="cursor-pointer"
 >
-  <Button size="lg" className="bg-[#3B82F6] hover:bg-[#3B82F6]/90 shadow-lg">
-    Join The Waitlist
-  </Button>
+  <Button 
+  onClick={() => setShowPopup(true)}
+  className="bg-[#3B82F6] hover:bg-[#3B82F6]/90 shadow-lg"
+  size="lg">
+  Join The Waitlist
+</Button>
+
 </motion.div>
 
               <motion.div whileHover={{ scale: 1.05, boxShadow: "0 0 16px #3B82F6" }}>
@@ -151,6 +166,11 @@ const Hero = () => {
           </div>
         </div>
       </motion.div>
+      <InvitationPopup 
+  isOpen={showPopup} 
+  onClose={() => setShowPopup(false)}
+/>
+
     </section>
   );
 };

@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { instituteApiClient } from './apiClient';
 import { CreateInstitutionRequest, Institution, UpdateInstitutionRequest } from '../types/api';
 
 /**
@@ -6,58 +6,49 @@ import { CreateInstitutionRequest, Institution, UpdateInstitutionRequest } from 
  */
 export class InstitutionService {
   /**
-   * Create a new institution
-   * @param institutionData - Institution data
-   * @returns Promise containing the created institution
-   * @throws ApiError if creation fails
-   * 
-   * @example
-   * ```
-   * try {
-   *   const institution = await institutionService.createInstitution({
-   *     name: 'Harvard Medical School',
-   *     about: 'Leading medical institution',
-   *     location: 'Boston, MA'
-   *   });
-   *   console.log('Institution created:', institution);
-   * } catch (error) {
-   *   console.error('Institution creation failed:', error.message);
-   * }
-   * ```
+   * Create a new institution (private endpoint)
    */
   async createInstitution(institutionData: CreateInstitutionRequest): Promise<Institution> {
-    return apiClient.post<Institution>('/institution', institutionData);
+    return instituteApiClient.post<Institution>('/private/institution', institutionData);
   }
 
   /**
-   * Get institution by ID
-   * @param id - Institution ID
-   * @returns Promise containing institution data
-   * @throws ApiError if institution not found or request fails
+   * Get institution by ID (public endpoint)
    */
   async getInstitutionById(id: string): Promise<Institution> {
-    return apiClient.get<Institution>(`/institution/${id}`);
+    return instituteApiClient.get<Institution>(`/public/institution/${id}`);
   }
 
   /**
-   * Update institution
-   * @param id - Institution ID
-   * @param updateData - Data to update
-   * @returns Promise containing updated institution data
-   * @throws ApiError if update fails
+   * Update institution (private endpoint)
+   * Note: The API spec shows PUT to /private/institution, so the ID may be in the body or as a query param.
+   * Here, we send the ID inside the updateData object.
    */
-  async updateInstitution(id: string, updateData: UpdateInstitutionRequest): Promise<Institution> {
-    return apiClient.put<Institution>(`/institution/${id}`, updateData);
+  async updateInstitution(updateData: UpdateInstitutionRequest & { id: string }): Promise<Institution> {
+    return instituteApiClient.put<Institution>('/private/institution', updateData);
   }
 
   /**
-   * Delete institution
-   * @param id - Institution ID
-   * @returns Promise that resolves when deletion is successful
-   * @throws ApiError if deletion fails
+   * Delete institution (private endpoint)
+   * Note: The API spec shows DELETE to /private/institution, so the ID may be in the body or as a query param.
+   * Here, we send the ID as a query parameter.
    */
   async deleteInstitution(id: string): Promise<void> {
-    await apiClient.delete<void>(`/institution/${id}`);
+    await instituteApiClient.delete<void>(`/private/institution?id=${encodeURIComponent(id)}`);
+  }
+
+  /**
+   * Search institutions (public endpoint)
+   */
+  async searchInstitutions(query: string): Promise<Institution[]> {
+    return instituteApiClient.get<Institution[]>(`/public/institution/search?q=${encodeURIComponent(query)}`);
+  }
+
+  /**
+   * Get all institutions (public endpoint)
+   */
+  async getAllInstitutions(): Promise<Institution[]> {
+    return instituteApiClient.get<Institution[]>('/public/institution');
   }
 }
 

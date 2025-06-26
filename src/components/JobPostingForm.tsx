@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
+import { jobApiClient } from "../services/apiClient"; 
 
 import { Button } from "@/components/ui/button";
 import {
@@ -60,17 +61,42 @@ const JobPostingForm = () => {
     },
   });
 
-  function onSubmit(data: JobPostingFormValues) {
-    console.log(data);
-    toast.success("Job posted successfully!");
-    form.reset();
+  async function onSubmit(data: JobPostingFormValues) {
+    try {
+      // Prepare the payload to match your backend's expected structure
+      const payload = {
+  title: data.jobTitle,
+  description: data.jobDescription,
+  payRange: data.salary,
+  workingHours: data.workingHours,
+  benefits: data.benefits.join(', '), // ← Convert array to string
+  location: data.location,
+  category: data.jobCategory,
+  skills: data.skills.join(', '),     // ← Also convert to string if needed
+  eligibility: data.eligibility,
+};
+
+
+      await jobApiClient.post("/private/job", payload);
+
+      toast.success("Job posted successfully!");
+      form.reset();
+    } catch (error: any) {
+      toast.error("Failed to post job: " + (error.message || "Unknown error"));
+      console.error(error);
+    }
   }
 
   return (
     <Card className="max-w-4xl mx-auto bg-white border border-[#e1e9f2] shadow-sm">
       <CardHeader>
-        <CardTitle className="text-2xl font-extrabold text-[#23497d]"><br></br>Post a New Job</CardTitle>
-        <CardDescription className="text-[#5471a6]">Fill out the form below to post a job opening.</CardDescription>
+        <CardTitle className="text-2xl font-extrabold text-[#23497d]">
+          <br />
+          Post a New Job
+        </CardTitle>
+        <CardDescription className="text-[#5471a6]">
+          Fill out the form below to post a job opening.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -111,7 +137,10 @@ const JobPostingForm = () => {
                 <FormItem>
                   <FormLabel>Job Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Briefly describe the responsibilities..." {...field} />
+                    <Textarea
+                      placeholder="Briefly describe the responsibilities..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -146,7 +175,7 @@ const JobPostingForm = () => {
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="jobCategory"
@@ -160,8 +189,10 @@ const JobPostingForm = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {jobCategories.map(category => (
-                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                      {jobCategories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -178,28 +209,28 @@ const JobPostingForm = () => {
                   <FormItem>
                     <FormLabel>Benefits Offered</FormLabel>
                     <div className="space-y-2">
-                    {benefits.map((benefit) => (
-                      <FormField
-                        key={benefit}
-                        control={form.control}
-                        name="benefits"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(benefit)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...field.value, benefit])
-                                    : field.onChange(field.value?.filter((value) => value !== benefit));
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">{benefit}</FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    ))}
+                      {benefits.map((benefit) => (
+                        <FormField
+                          key={benefit}
+                          control={form.control}
+                          name="benefits"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(benefit)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...field.value, benefit])
+                                      : field.onChange(field.value?.filter((value) => value !== benefit));
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">{benefit}</FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -212,28 +243,28 @@ const JobPostingForm = () => {
                   <FormItem>
                     <FormLabel>Required Skills</FormLabel>
                     <div className="space-y-2">
-                    {skills.map((skill) => (
-                      <FormField
-                        key={skill}
-                        control={form.control}
-                        name="skills"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(skill)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...field.value, skill])
-                                    : field.onChange(field.value?.filter((value) => value !== skill));
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">{skill}</FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    ))}
+                      {skills.map((skill) => (
+                        <FormField
+                          key={skill}
+                          control={form.control}
+                          name="skills"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(skill)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...field.value, skill])
+                                      : field.onChange(field.value?.filter((value) => value !== skill));
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">{skill}</FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -248,14 +279,22 @@ const JobPostingForm = () => {
                 <FormItem>
                   <FormLabel>Eligibility Criteria</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Specify qualifications, experience, etc." {...field} />
+                    <Textarea
+                      placeholder="Specify qualifications, experience, etc."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <Button type="submit" className="w-full md:w-auto bg-[#2763ed] hover:bg-[#1e51c3] font-bold rounded-md shadow text-white px-8">Post Job</Button>
+            <Button
+              type="submit"
+              className="w-full md:w-auto bg-[#2763ed] hover:bg-[#1e51c3] font-bold rounded-md shadow text-white px-8"
+            >
+              Post Job
+            </Button>
           </form>
         </Form>
       </CardContent>

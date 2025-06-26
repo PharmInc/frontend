@@ -1,5 +1,5 @@
 
-import Navbar from "@/components/LandingNavbar";
+import Navbar from "@/components/Navbar";
 import JobsLanding from "@/components/JobsLanding";
 
 const Index = () => {

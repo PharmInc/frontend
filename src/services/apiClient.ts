@@ -1,6 +1,6 @@
 import { ApiError } from '../types/api';
 
-const API_BASE_URL = 'https://api.pharminc.in';
+// Remove the old API_BASE_URL since it's no longer used
 const TOKEN_KEY = 'pharminc_auth_token';
 
 /**
@@ -9,8 +9,21 @@ const TOKEN_KEY = 'pharminc_auth_token';
 class ApiClient {
   private baseUrl: string;
 
-  constructor(baseUrl: string = API_BASE_URL) {
+  constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
+  }
+
+  /**
+   * Make a PATCH request
+   */
+  public async patch<T>(endpoint: string, data?: any, includeAuth: boolean = true): Promise<T> {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'PATCH',
+      headers: this.getHeaders(includeAuth),
+      body: data ? JSON.stringify(data) : undefined,
+      mode: 'cors',
+    });
+    return this.handleResponse<T>(response);
   }
 
   /**
@@ -139,4 +152,11 @@ class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient();
+// Export clients for each service using the new URLs
+export const authApiClient = new ApiClient('https://auth.api.pharminc.in');
+export const userApiClient = new ApiClient('https://user.api.pharminc.in');
+export const networkApiClient = new ApiClient('https://network.api.pharminc.in');
+export const backgroundApiClient = new ApiClient('https://background.api.pharminc.in');
+export const instituteApiClient = new ApiClient('https://institute.api.pharminc.in');
+export const jobApiClient = new ApiClient('https://job.api.pharminc.in');
+export const contentApiClient = new ApiClient('https://content.api.pharminc.in');

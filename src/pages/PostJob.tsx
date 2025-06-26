@@ -1,5 +1,5 @@
 
-import Navbar from "@/components/LandingNavbar";
+import Navbar from "@/components/Navbar";
 import JobPostingForm from "@/components/JobPostingForm";
 
 const PostJob = () => {
