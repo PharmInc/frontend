@@ -2,45 +2,61 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {Label } from "@/components/ui/label";
+import { Label } from "@/components/ui/label";
+import { User, Institution } from "@/types/api";
 import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
-import { userService, institutionService, userEducationService, userExperienceService } from "@/services";
+import {
+  userService,
+  institutionService,
+  userEducationService as userEducationService,
+  userExperienceService as userExperienceService,
+} from "@/services";
 import { tokenStorage } from "@/utils/tokenStorage";
 import { useToast } from "@/hooks/use-toast";
-import { User, MapPin, Camera } from "lucide-react";
+import { MapPin, Camera, User as UserIcon } from "lucide-react"; // <-- IMPORTANT: Use UserIcon for the icon
 
 const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
-  const [about, setAbout] = useState("");
-  const [location, setLocation] = useState("");
-  const [interests, setInterests] = useState("");
-  const [profilePicture, setProfilePicture] = useState(""); // URL or base64 string
+  const [profile, setProfile] = useState<User | Institution | null>(null);
 
-  // Institution
+  // Common state for all users
+  const [profilePicture, setProfilePicture] = useState(""); // <-- NOTE: Fixed state name
+
+  // Doctor/Healthcare state
+  const [about, setAbout] = useState("");
+  const [location, set2Location] = useState("");
+  const [interests, setInterests] = useState("");
+
+  // Institution state
   const [institutionName, setInstitutionName] = useState("");
   const [institutionAbout, setInstitutionAbout] = useState("");
   const [institutionLocation, setInstitutionLocation] = useState("");
   const [institutionId, setInstitutionId] = useState<string | null>(null);
+  const [bio, setBio] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+  const [employeesCount, setEmployeesCount] = useState("");
+  const [areaOfExpertise, setAreaOfExpertise] = useState("");
 
-  // Education
+  // Education state
   const [eduTitle, setEduTitle] = useState("");
   const [eduDescription, setEduDescription] = useState("");
   const [eduStartDate, setEduStartDate] = useState("");
   const [eduEndDate, setEduEndDate] = useState("");
 
-  // Experience
+  // Experience state
   const [expTitle, setExpTitle] = useState("");
   const [expDescription, setExpDescription] = useState("");
   const [expStartDate, setExpStartDate] = useState("");
-  const [expEndDate, setExpEndDate] = useState("");
+  const [expEndDate, set2ExpEndDate] = useState("");
 
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Get user object and userId from tokenStorage
   const userObj = tokenStorage.getUser && tokenStorage.getUser();
+  const userType = userObj?.type || profile?.type;
   const userId =
     userObj?.userId ||
     userObj?.id ||
@@ -63,9 +79,20 @@ const Onboarding = () => {
       .then((data) => {
         setProfile(data);
         setAbout(data.about || "");
-        setLocation(data.location || "");
+        set2Location(data.location || "");
         setInterests(data.interests || "");
         setProfilePicture(data.profilePicture || "");
+        // Prefill institution fields if user is an institution
+        if (data.type === "institution") {
+          setBio(data.bio || "");
+          setContactEmail(data.contact_email || "");
+          setContactNumber(data.contact_number || "");
+          setEmployeesCount(data.employees_count || "");
+          setAreaOfExpertise(data.area_of_expertise || "");
+          setInstitutionName(data.name || "");
+          setInstitutionAbout(data.about || "");
+          setInstitutionLocation(data.location || "");
+        }
       })
       .catch((error) => {
         toast({
@@ -77,7 +104,7 @@ const Onboarding = () => {
       .finally(() => setIsLoading(false));
   }, [userId]);
 
-  // Handle file input change (convert to base64 string for demo, or upload to server if you have an endpoint)
+  // Handle file input change (convert to base64 string for demo)
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -92,18 +119,23 @@ const Onboarding = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
       if (!userId) throw new Error("No user ID found");
 
       let createdInstitutionId = institutionId;
 
-      // 1. Create institution if needed (only if user entered something)
-      if (!createdInstitutionId && institutionName) {
+      // 1. Create institution if needed (only if user is an institution)
+      if (userType === "institution" && institutionName) {
         const institutionRes = await institutionService.createInstitution({
           name: institutionName,
           type: "institution",
           location: institutionLocation,
+          bio,
+          about: institutionAbout,
+          contact_email: contactEmail,
+          contact_number: contactNumber,
+          employees_count: employeesCount,
+          area_of_expertise: areaOfExpertise,
         });
         if (!institutionRes.id) {
           throw new Error("Institution creation failed: No ID returned.");
@@ -112,8 +144,11 @@ const Onboarding = () => {
         setInstitutionId(createdInstitutionId);
       }
 
-      // 2. POST education (only if user entered something)
-      if (eduTitle || eduDescription || eduStartDate || eduEndDate) {
+      // 2. POST education (only if user is not an institution)
+      if (
+        userType !== "institution" &&
+        (eduTitle || eduDescription || eduStartDate || eduEndDate)
+      ) {
         await userEducationService.createUserEducation({
           title: eduTitle,
           description: eduDescription,
@@ -123,8 +158,11 @@ const Onboarding = () => {
         });
       }
 
-      // 3. POST experience (only if user entered something)
-      if (expTitle || expDescription || expStartDate || expEndDate) {
+      // 3. POST experience (only if user is not an institution)
+      if (
+        userType !== "institution" &&
+        (expTitle || expDescription || expStartDate || expEndDate)
+      ) {
         await userExperienceService.createUserExperience({
           title: expTitle,
           description: expDescription,
@@ -134,12 +172,12 @@ const Onboarding = () => {
         });
       }
 
-      // 4. Update user profile (local storage only, as your logic)
+      // 4. Update user profile
       const existingUser = tokenStorage.getUser() || {};
       const updatedUser = {
         ...existingUser,
-        about,
-        location,
+        about: userType === "institution" ? institutionAbout : about,
+        location: userType === "institution" ? institutionLocation : location,
         interests,
         profilePicture: profilePicture || existingUser.profilePicture,
         userId: existingUser.userId || profile?.userId,
@@ -147,6 +185,16 @@ const Onboarding = () => {
         lastName: existingUser.lastName || profile?.lastName,
         email: existingUser.email || profile?.email,
         specialization: existingUser.specialization || profile?.specialization,
+        // Institution-specific fields
+        ...(userType === "institution"
+          ? {
+              bio,
+              contact_email: contactEmail,
+              contact_number: contactNumber,
+              employees_count: employeesCount,
+              area_of_expertise: areaOfExpertise,
+            }
+          : {}),
       };
       tokenStorage.setUser(updatedUser);
 
@@ -199,14 +247,18 @@ const Onboarding = () => {
                 className="w-16 h-16 rounded-full object-cover"
               />
             ) : (
-              <User className="h-8 w-8 text-blue-600" />
+              <UserIcon className="h-8 w-8 text-blue-600" /> // <-- IMPORTANT: Use UserIcon, not User
             )}
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Complete Your Profile</h1>
-          <p className="text-gray-600">Tell us more about yourself to get the most out of PharmInc</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            Complete Your Profile
+          </h1>
+          <p className="text-gray-600">
+            Tell us more about yourself to get the most out of PharmInc
+          </p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Profile Picture Section (Optional) */}
+          {/* Profile Picture Section */}
           <div className="space-y-2">
             <Label htmlFor="profilePicture" className="flex items-center gap-2">
               <Camera className="h-4 w-4" />
@@ -221,7 +273,7 @@ const Onboarding = () => {
                     className="w-20 h-20 rounded-full object-cover"
                   />
                 ) : (
-                  <User className="h-8 w-8 text-gray-400" />
+                  <UserIcon className="h-8 w-8 text-gray-400" /> // <-- IMPORTANT: Use UserIcon, not User
                 )}
               </div>
               <Input
@@ -236,87 +288,176 @@ const Onboarding = () => {
             </div>
           </div>
 
-          {/* About Section */}
-          <div className="space-y-2">
-            <Label htmlFor="about">About You</Label>
-            <Textarea
-              id="about"
-              name="about"
-              placeholder="Tell us about your professional background, interests, and what you're passionate about..."
-              rows={4}
-              disabled={isLoading}
-              value={about}
-              onChange={e => setAbout(e.target.value)}
-            />
-          </div>
-
-          {/* Location Section */}
-          <div className="space-y-2">
-            <Label htmlFor="location" className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Location
-            </Label>
-            <Input
-              id="location"
-              name="location"
-              placeholder="City, Country"
-              disabled={isLoading}
-              value={location}
-              onChange={e => setLocation(e.target.value)}
-            />
-          </div>
-
-          {/* Interests Section */}
-          <div className="space-y-2">
-            <Label htmlFor="interests">Professional Interests</Label>
-            <Input
-              id="interests"
-              name="interests"
-              placeholder="e.g., Cardiology research, Medical education, Healthcare technology"
-              disabled={isLoading}
-              value={interests}
-              onChange={e => setInterests(e.target.value)}
-            />
-          </div>
-
-          {/* Institution Section */}
-          <div>
-            <h2 className="text-xl font-bold mb-2">Institution</h2>
-            <Label>Name</Label>
-            <Input value={institutionName} onChange={e => setInstitutionName(e.target.value)} />
-            <Label>About</Label>
-            <Textarea value={institutionAbout} onChange={e => setInstitutionAbout(e.target.value)} />
-            <Label>Location</Label>
-            <Input value={institutionLocation} onChange={e => setInstitutionLocation(e.target.value)} />
-          </div>
-
-          {/* Education Section */}
-          <div>
-            <h2 className="text-xl font-bold mb-2">Education</h2>
-            <Label>Title</Label>
-            <Input value={eduTitle} onChange={e => setEduTitle(e.target.value)} />
-            <Label>Description</Label>
-            <Textarea value={eduDescription} onChange={e => setEduDescription(e.target.value)} />
-            <Label>Start Date</Label>
-            <Input type="date" value={eduStartDate} onChange={e => setEduStartDate(e.target.value)} />
-            <Label>End Date</Label>
-            <Input type="date" value={eduEndDate} onChange={e => setEduEndDate(e.target.value)} />
-          </div>
-
-          {/* Experience Section */}
-          <div>
-            <h2 className="text-xl font-bold mb-2">Experience</h2>
-            <Label>Title</Label>
-            <Input value={expTitle} onChange={e => setExpTitle(e.target.value)} />
-            <Label>Description</Label>
-            <Textarea value={expDescription} onChange={e => setExpDescription(e.target.value)} />
-            <Label>Start Date</Label>
-            <Input type="date" value={expStartDate} onChange={e => setExpStartDate(e.target.value)} />
-            <Label>End Date</Label>
-            <Input type="date" value={expEndDate} onChange={e => setExpEndDate(e.target.value)} />
-          </div>
-
-          {/* Submit Button */}
+          {/* Conditional Fields */}
+          {userType === "institution" ? (
+            <>
+              {/* Institution Name */}
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input
+                  value={institutionName}
+                  onChange={(e) => setInstitutionName(e.target.value)}
+                  placeholder="Institution Name"
+                  disabled={isLoading}
+                />
+              </div>
+              {/* Institution Location */}
+              <div className="space-y-2">
+                <Label>Location</Label>
+                <Input
+                  value={institutionLocation}
+                  onChange={(e) => setInstitutionLocation(e.target.value)}
+                  placeholder="City, Country"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Bio</Label>
+                <Textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Brief introduction about your institution"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>About</Label>
+                <Textarea
+                  value={institutionAbout}
+                  onChange={(e) => setInstitutionAbout(e.target.value)}
+                  placeholder="Detailed description about your institution"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Contact Email</Label>
+                <Input
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="contact@institution.com"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Contact Number</Label>
+                <Input
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value)}
+                  placeholder="+1234567890"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Number of Employees</Label>
+                <Input
+                  value={employeesCount}
+                  onChange={(e) => setEmployeesCount(e.target.value)}
+                  placeholder="e.g. 50"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Area of Expertise</Label>
+                <Input
+                  value={areaOfExpertise}
+                  onChange={(e) => setAreaOfExpertise(e.target.value)}
+                  placeholder="e.g. Healthcare, Education, Research"
+                  disabled={isLoading}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Doctor/Healthcare Fields */}
+              <div className="space-y-2">
+                <Label>About You</Label>
+                <Textarea
+                  value={about}
+                  onChange={(e) => setAbout(e.target.value)}
+                  placeholder="Tell us about your professional background..."
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Location</Label>
+                <Input
+                  value={location}
+                  onChange={(e) => set2Location(e.target.value)}
+                  placeholder="City, Country"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Professional Interests</Label>
+                <Input
+                  value={interests}
+                  onChange={(e) => setInterests(e.target.value)}
+                  placeholder="e.g., Cardiology research, Medical education..."
+                  disabled={isLoading}
+                />
+              </div>
+              {/* Education Section */}
+              <div>
+                <h2 className="text-xl font-bold mb-2">Education</h2>
+                <Label>Title</Label>
+                <Input
+                  value={eduTitle}
+                  onChange={(e) => setEduTitle(e.target.value)}
+                  disabled={isLoading}
+                />
+                <Label>Description</Label>
+                <Textarea
+                  value={eduDescription}
+                  onChange={(e) => setEduDescription(e.target.value)}
+                  disabled={isLoading}
+                />
+                <Label>Start Date</Label>
+                <Input
+                  type="date"
+                  value={eduStartDate}
+                  onChange={(e) => setEduStartDate(e.target.value)}
+                  disabled={isLoading}
+                />
+                <Label>End Date</Label>
+                <Input
+                  type="date"
+                  value={eduEndDate}
+                  onChange={(e) => setEduEndDate(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+              {/* Experience Section */}
+              <div>
+                <h2 className="text-xl font-bold mb-2">Experience</h2>
+                <Label>Title</Label>
+                <Input
+                  value={expTitle}
+                  onChange={(e) => setExpTitle(e.target.value)}
+                  disabled={isLoading}
+                />
+                <Label>Description</Label>
+                <Textarea
+                  value={expDescription}
+                  onChange={(e) => setExpDescription(e.target.value)}
+                  disabled={isLoading}
+                />
+                <Label>Start Date</Label>
+                <Input
+                  type="date"
+                  value={expStartDate}
+                  onChange={(e) => setExpStartDate(e.target.value)}
+                  disabled={isLoading}
+                />
+                <Label>End Date</Label>
+                <Input
+                  type="date"
+                  value={expEndDate}
+                  onChange={(e) => setEduEndDate(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+            </>
+          )}
           <Button
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg"

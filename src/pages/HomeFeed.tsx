@@ -115,7 +115,7 @@ export default function HomeFeed() {
     if (!userId) return;
 
     setLoading(true);
-    fetch(`https://user.api.pharminc.in/public/user/${userId}`, {
+    fetch(`https://user.api.pharminc.in/public/user?ids=${userId}`, {
       headers: { Authorization: `Bearer ${tokenStorage.getToken()}` }
     })
       .then(res => res.ok ? res.json() : Promise.reject('Could not load user'))
@@ -251,16 +251,16 @@ export default function HomeFeed() {
       const mapped = await Promise.all(
         displayPosts.map(async post => {
           if (post.author) return post; // Mock post
-          let userInfo = userCache[post.userId];
-          if (!userInfo && post.userId) {
-            userInfo = await fetchUserInfo(post.userId);
+          let userInfo = userCache[post.auth];
+          if (!userInfo && post.auth) {
+            userInfo = await fetchUserInfo(post.auth);
           }
           return {
             ...post,
-            author: userInfo && userInfo.user ? `Dr ${userInfo.user.firstName} ${userInfo.user.lastName}` : `User ${post.userId}`,
+            author: userInfo && userInfo.user ? `Dr ${userInfo.user.firstName} ${userInfo.user.lastName}` : `User ${post.auth}`,
             role: userInfo && userInfo.user ? userInfo.user.specialization : "User",
             avatar: userInfo && userInfo.user && userInfo.user.profilePicture ? userInfo.user.profilePicture : "/pp.png",
-            time: post.createdAt ? new Date(post.createdAt).toLocaleString() : post.time,
+            time: post.created_at ? new Date(post.created_at).toLocaleString() : post.time,
             tags: post.tags || [],
             type: post.type || "Post",
             likes: likedCount[post.id] || parseInt(post.reactions) || 0,

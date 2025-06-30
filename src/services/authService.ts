@@ -7,7 +7,7 @@ export interface SignupRequest {
   email: string;
   password: string;
   specialty: string;
-  userType: 'doctor' | 'healthcare';
+  userType: 'doctor' | 'healthcare' | 'institution';
 }
 
 export interface AuthResponse {

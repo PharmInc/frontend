@@ -36,6 +36,17 @@ export interface User {
   interests?: string;
   profilePicture?: string;
 }
+export interface Institution extends User {
+  bio?: string;
+  contact_email?: string;
+  contact_number?: string;
+  employees_count?: string;
+  area_of_expertise?: string;
+  name?: string;
+  about?: string;
+  location?: string;
+}
+
 
 export interface UpdateUserRequest {
   firstName?: string;
@@ -104,16 +115,14 @@ export interface CreateInstitutionRequest {
   name: string;
   type: string;
   location: string;
+  bio?: string;
+  contact_email?: string;
+  contact_number?: string;
+  employees_count?: string;
+  area_of_expertise?: string;
+  about?: string;
 }
 
-export interface Institution {
-  id: string;
-  name: string;
-  about: string;
-  location: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
 
 export interface UpdateInstitutionRequest {
   name?: string;

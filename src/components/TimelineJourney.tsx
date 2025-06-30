@@ -5,31 +5,26 @@ const timelineItems = [
   {
     icon: UserPlus,
     title: "Join",
-    description: "Create your medical professional account and complete your profile to begin your journey.",
     delay: 0
   },
   {
     icon: Building,
     title: "Build Profile",
-    description: "Add your experience, publications, and areas of expertise to showcase your professional background.",
     delay: 0.2
   },
   {
     icon: Users,
     title: "Connect",
-    description: "Build your network with peers in your field and beyond for collaborations and opportunities.",
     delay: 0.4
   },
   {
     icon: Handshake,
     title: "Collaborate",
-    description: "Engage in discussions, case reviews, and research opportunities with specialists worldwide.",
     delay: 0.6
   },
   {
     icon: TrendingUp,
     title: "Grow",
-    description: "Advance your career with new connections, opportunities, and continuous learning.",
     delay: 0.8
   }
 ];
@@ -54,6 +49,7 @@ const TimelineJourney = () => {
             A unique path designed for excellence—grow, connect, and lead in your field.
           </p>
         </motion.div>
+
         <div className="relative flex flex-col md:flex-row md:items-center md:justify-center min-h-[28rem]">
           <svg
             className="absolute left-0 right-0 mx-auto md:top-1/2 md:transform md:-translate-y-1/2 w-full h-64 md:h-40 pointer-events-none z-0"
@@ -71,15 +67,17 @@ const TimelineJourney = () => {
               transition={{ duration: 2.5, ease: "easeInOut" }}
             />
           </svg>
-          <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-y-24 md:gap-y-0 md:gap-x-0 relative z-10">
+
+          <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-y-24 md:gap-y-0 md:gap-x-18 relative z-10">
             {timelineItems.map((item, idx) => (
               <div
                 key={idx}
-                className="relative flex flex-col items-center group"
+                className="relative flex flex-col items-center"
                 style={{
                   marginTop: idx % 2 === 0 ? 0 : '5rem',
                 }}
               >
+                {/* Icon Bubble */}
                 <motion.div
                   className="absolute -top-12 md:top-auto md:-bottom-14 left-1/2 -translate-x-1/2 z-20"
                   initial={{ scale: 0, opacity: 0 }}
@@ -94,15 +92,12 @@ const TimelineJourney = () => {
                     </span>
                   </div>
                 </motion.div>
-                <motion.div
-                  className="relative w-72 md:w-64 mx-auto bg-white/60 backdrop-blur-lg border border-[#3B82F6]/10 rounded-3xl shadow-2xl px-7 py-10 flex flex-col items-center transition-all duration-300 hover:scale-105 hover:shadow-[0_8px_32px_0_rgba(59,130,246,0.18)]"
-                  initial={{ opacity: 0, y: 60 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: item.delay }}
-                >
+
+                {/* Wrapper for Step + Box */}
+                <div className="relative w-60 md:w-48 mx-auto">
+                  {/* Step Label */}
                   <motion.span
-                    className="absolute -top-7 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#38bdf8] text-white text-xs font-bold shadow-lg"
+                    className="absolute -top-5 left-1/2 -translate-x-1/2 ml-[-20px] px-4 py-1 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#38bdf8] text-white text-xs font-bold shadow-lg z-10"
                     initial={{ scale: 0.7, opacity: 0 }}
                     whileInView={{ scale: 1, opacity: 1 }}
                     viewport={{ once: true }}
@@ -110,13 +105,26 @@ const TimelineJourney = () => {
                   >
                     Step {idx + 1}
                   </motion.span>
-                  <h3 className="font-serif text-2xl font-bold text-[#1e293b] mb-3 text-center">{item.title}</h3>
-                  <p className="text-gray-700 text-center text-base font-light">{item.description}</p>
-                </motion.div>
+
+                  {/* Box */}
+                  <motion.div
+                    className="bg-white/60 backdrop-blur-lg border border-[#3B82F6]/10 rounded-lg shadow-xl px-6 py-8 flex flex-col items-center transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_6px_28px_0_rgba(59,130,246,0.15)]"
+                    initial={{ opacity: 0, y: 60 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: item.delay }}
+                  >
+                    <h3 className="font-serif text-[1.5rem] md:text-[1.65rem] font-semibold text-[#1e293b] mb-2 text-center leading-tight">
+                      {item.title}
+                    </h3>
+                  </motion.div>
+                </div>
               </div>
             ))}
           </div>
         </div>
+
+        {/* CTA Section */}
         <motion.div
           className="flex justify-center mt-24"
           initial={{ opacity: 0, y: 30 }}
