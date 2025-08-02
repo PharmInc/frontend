@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import LeftSidebar from "@/components/homefeed/LeftSidebar";
+import { RightSidebar } from "@/components/homefeed/RightSidebar";
 import PostComposer from "@/components/homefeed/PostComposer";
 import PostCard from "@/components/homefeed/PostCard";
 import { User, Post } from "@/components/homefeed/types";
@@ -11,9 +12,7 @@ import { toast } from "sonner";
 
 export default function HomeFeed() {
   const [liked, setLiked] = useState<Record<string | number, boolean>>({});
-  const [likedCount, setLikedCount] = useState<Record<string | number, number>>(
-    {}
-  );
+  const [likedCount, setLikedCount] = useState<Record<string | number, number>>({});
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState({
     user: true,
@@ -37,7 +36,6 @@ export default function HomeFeed() {
           profilePicture: userData.profile_picture,
           location: userData.location,
         });
-        // Add current user to cache
         setUserCache((prev) => ({
           ...prev,
           [userData.id]: userData,
@@ -55,11 +53,9 @@ export default function HomeFeed() {
 
   const fetchUserForPost = async (userId: string) => {
     try {
-      // Check cache first
       if (userCache[userId]) {
         return userCache[userId];
       }
-
       const userData = await getUserById(userId);
       setUserCache((prev) => ({
         ...prev,
@@ -82,12 +78,9 @@ export default function HomeFeed() {
       try {
         const response = await listPosts(1, 20);
         const fetchedPosts = response.data || [];
-
-        // Fetch all author data first
         const authorIds = [...new Set(fetchedPosts.map((post) => post.auth))];
         const authorPromises = authorIds.map((id) => fetchUserForPost(id));
         const authors = await Promise.all(authorPromises);
-
         const authorsMap = authors.reduce((acc, author) => {
           if (author.id !== undefined) {
             acc[author.id] = author;
@@ -103,7 +96,6 @@ export default function HomeFeed() {
               role: "Unknown Role",
               profilePicture: "/pp.png",
             };
-
             return {
               id: post.id,
               author: author.name || "Unknown User",
@@ -140,6 +132,7 @@ export default function HomeFeed() {
     };
 
     fetchPosts();
+    // eslint-disable-next-line
   }, [fetchUserForPost]);
 
   const handleLogout = () => {
@@ -158,7 +151,6 @@ export default function HomeFeed() {
         ...postData,
         attachment_id: postData.attachment_id || undefined,
       };
-
       const newPost = await createPost(cleanedData);
 
       if (!user) {
@@ -188,11 +180,9 @@ export default function HomeFeed() {
         ...prev,
         [formattedPost.id]: formattedPost.likes,
       }));
-
       setPostTitle("");
       setPostContent("");
       setPostAttachmentId("");
-
       toast.success("Post created successfully!");
     } catch (error) {
       console.error("Error creating post:", error);
@@ -223,37 +213,44 @@ export default function HomeFeed() {
       <Head>
         <title>Medical Network | Home</title>
       </Head>
-
-      {user && <LeftSidebar user={user} handleLogout={handleLogout} />}
-
-      <div className="flex flex-row mx-auto min-h-screen">
-        <main className="flex-1 flex flex-col items-center px-4">
-          {user && (
-            <PostComposer
-              postTitle={postTitle}
-              setPostTitle={setPostTitle}
-              postContent={postContent}
-              setPostContent={setPostContent}
-              postAttachmentId={postAttachmentId}
-              setPostAttachmentId={setPostAttachmentId}
-              onPostCreated={handlePostCreated}
-              posting={posting}
-              setPosting={setPosting}
-              user={user}
-            />
-          )}
-
-          <div className="w-full max-w-2xl mt-4 flex flex-col gap-4">
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={{ ...post, likes: likedCount[post.id] || post.likes }}
-                handleLike={handleLike}
-                liked={liked}
-              />
-            ))}
+      <div className="max-w-7xl mx-auto px-4 py-8 min-h-screen">
+        <div className="grid grid-cols-12 gap-8 min-h-screen">
+          {/* Left Sidebar */}
+          <div className="col-span-3 h-full">
+            {user && <LeftSidebar user={user} handleLogout={handleLogout} />}
           </div>
-        </main>
+          {/* Main Content */}
+          <div className="col-span-6 flex flex-col items-center">
+            {user && (
+              <PostComposer
+                postTitle={postTitle}
+                setPostTitle={setPostTitle}
+                postContent={postContent}
+                setPostContent={setPostContent}
+                postAttachmentId={postAttachmentId}
+                setPostAttachmentId={setPostAttachmentId}
+                onPostCreated={handlePostCreated}
+                posting={posting}
+                setPosting={setPosting}
+                user={user}
+              />
+            )}
+            <div className="w-full max-w-2xl mt-4 flex flex-col gap-4">
+              {posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={{ ...post, likes: likedCount[post.id] || post.likes }}
+                  handleLike={handleLike}
+                  liked={liked}
+                />
+              ))}
+            </div>
+          </div>
+          {/* Right Sidebar (optional, empty for now) */}
+          <div className="col-span-3 h-full">
+              <RightSidebar />
+          </div>
+        </div>
       </div>
     </div>
   );

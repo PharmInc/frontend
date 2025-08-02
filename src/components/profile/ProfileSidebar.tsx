@@ -1,48 +1,109 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { User } from "@/lib/api";
+import Link from "next/link";
+import {
+  Home,
+  Search,
+  MessageCircle,
+  FileText,
+  Bell,
+  Network,
+} from "lucide-react";
+import { BiLogOut } from "react-icons/bi";
+import { User } from "@/components/homefeed/types";
 
-interface ProfileSidebarProps {
+interface LeftSidebarProps {
   user: User;
+  handleLogout: () => void;
 }
 
-export const ProfileSidebar = ({ user }: ProfileSidebarProps) => {
+export default function LeftSidebar({ user, handleLogout }: LeftSidebarProps) {
   return (
-    <Card className="mb-6 rounded-xl shadow-lg border-0 overflow-hidden bg-white/90 backdrop-blur-xs hover:shadow-xl transition-shadow duration-300">
-      <div className="relative">
-        <div className="h-20 bg-linear-to-r from-blue-500 via-blue-600 to-indigo-600 rounded-t-xl"></div>
-        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-          <Avatar className="h-16 w-16 border-4 border-white shadow-lg">
-            <AvatarImage
-              src={user?.profile_picture || "/pp.png"}
-              alt={user?.name || "User"}
-            />
-            <AvatarFallback className="bg-linear-to-br from-blue-100 to-indigo-100 text-blue-700 font-bold">
-              {user?.name?.[0] || "U"}
-            </AvatarFallback>
-          </Avatar>
-        </div>
+    <aside className="fixed top-0 left-0 h-screen w-56 md:w-64 bg-white border-r border-gray-200 shadow-xl flex flex-col p-2 md:p-3 z-40">
+      {/* Logo */}
+      <div className="w-full h-10 md:h-14 flex items-center justify-center border-b border-gray-200">
+        <img src="/logo.png" alt="Logo" className="h-8 md:h-10 w-auto" />
       </div>
-      <CardContent className="pt-12 pb-6 text-center">
-        <h3 className="font-bold text-lg text-gray-900 mb-1">
-          {user?.name || "Loading..."}
-        </h3>
-        <p className="text-sm text-gray-600 mb-4">
-          {user?.role || "Specialization not set"}
-        </p>
-        <Separator className="my-4" />
-        <div className="space-y-3 text-left text-sm">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">Profile viewers</span>
-            <span className="text-blue-600 font-semibold">142</span>
+
+      {/* Profile Card */}
+      <Link href="/profile" className="mt-1 md:mt-3 block">
+        <div className="relative w-full bg-white rounded-xl shadow-sm border border-gray-100 mb-2 md:mb-3 cursor-pointer hover:shadow-md transition-shadow">
+          <div className="w-full h-12 md:h-16 bg-gray-200 rounded-t-xl overflow-hidden">
+            <img src="/banner.png" alt="Profile Banner" className="w-full h-full object-cover" />
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">Post impressions</span>
-            <span className="text-blue-600 font-semibold">1,247</span>
+          <div className="absolute left-1/2 top-[48px] md:top-[64px] transform -translate-x-1/2 -translate-y-1/2 z-10">
+            <img
+              src={user?.profilePicture || "/pp.png"}
+              alt={user?.name || "User"}
+              className="w-10 h-10 md:w-14 md:h-14 rounded-full border-2 md:border-4 border-white shadow-lg object-cover"
+            />
+          </div>
+          <div className="pt-8 md:pt-10 pb-2 flex flex-col items-center px-2">
+            <div className="flex items-center gap-1">
+              <h2 className="text-sm md:text-base font-bold text-gray-900 truncate">{user?.name}</h2>
+              <span className="text-xs text-gray-500">• Online</span>
+            </div>
+            <div className="text-blue-700 text-xs font-medium mt-0.5 truncate">
+              {user?.speciality || "Doctor"}
+            </div>
+            <div className="text-[11px] text-gray-500 mt-0.5 truncate">
+              {user?.location || "Delhi, India"}
+            </div>
+            {/* User roles/tags */}
+            <div className="flex flex-wrap gap-1 mt-1 justify-center">
+              {user?.roles?.map((role, i) => (
+                <span key={i} className="bg-gray-100 text-[10px] px-2 py-0.5 rounded-full text-gray-700">
+                  {role}
+                </span>
+              ))}
+            </div>
+            {/* Action buttons */}
+            <div className="flex gap-2 mt-2 w-full">
+              <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded-full">
+                Connect
+              </button>
+              <button className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs py-1 px-2 rounded-full">
+                Message
+              </button>
+            </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </Link>
+
+      {/* Navigation & Logout */}
+      <nav className="flex flex-col gap-0.5">
+        <Link href="/home" className="flex items-center gap-2 px-2 py-2 rounded hover:bg-blue-50 text-xs md:text-sm text-gray-700">
+          <Home className="h-4 w-4" />
+          <span>Home</span>
+        </Link>
+        <Link href="/profile" className="flex items-center gap-2 px-2 py-2 rounded hover:bg-blue-50 text-xs md:text-sm text-gray-700">
+          <Search className="h-4 w-4" />
+          <span>Explore</span>
+        </Link>
+        <Link href="/messages" className="flex items-center gap-2 px-2 py-2 rounded hover:bg-blue-50 text-xs md:text-sm text-gray-700">
+          <MessageCircle className="h-4 w-4" />
+          <span>Messages</span>
+        </Link>
+        <Link href="/jobs" className="flex items-center gap-2 px-2 py-2 rounded hover:bg-blue-50 text-xs md:text-sm text-gray-700">
+          <FileText className="h-4 w-4" />
+          <span>Jobs</span>
+        </Link>
+        <Link href="/notifications" className="flex items-center gap-2 px-2 py-2 rounded hover:bg-blue-50 text-xs md:text-sm text-gray-700">
+          <Bell className="h-4 w-4" />
+          <span>Notifications</span>
+        </Link>
+        <Link href="/societies" className="flex items-center gap-2 px-2 py-2 rounded hover:bg-blue-50 text-xs md:text-sm text-gray-700">
+          <Network className="h-4 w-4" />
+          <span>Societies</span>
+        </Link>
+        {/* Logout is IMMEDIATELY below nav links */}
+        <button
+          onClick={handleLogout}
+          type="button"
+          className="flex items-center gap-2 px-2 py-2 rounded hover:bg-red-50 text-xs md:text-sm text-red-600 w-full mt-1"
+        >
+          <BiLogOut />
+          <span>Logout</span>
+        </button>
+      </nav>
+    </aside>
   );
-};
+}

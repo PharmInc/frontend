@@ -17,7 +17,7 @@ interface PostCardProps {
 
 export default function PostCard({ post, handleLike, liked }: PostCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const maxLength = 300; // Character limit before showing "Read more"
+  const maxLength = 300; 
   const shouldTruncate = post.content.length > maxLength;
   const displayContent = expanded
     ? post.content
