@@ -2,6 +2,7 @@
 export interface AuthParams {
   email: string;
   password: string;
+  name?: string;
   type?: string;
 }
 
@@ -20,6 +21,7 @@ export interface User {
   email: string;
   verified?: boolean;
   profile_picture?: string;
+  specialization?: string;
   banner_picture?: string;
   bio?: string;
   about?: string;

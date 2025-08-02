@@ -1,4 +1,4 @@
-import { apiRequest } from "@/lib/api/utils";
+import { contentApi } from "@/lib/api/axios/api";
 import {
   Post,
   PostCreateParams,
@@ -16,30 +16,25 @@ import {
 
 // Post endpoints
 export const createPost = async (postData: PostCreateParams): Promise<Post> => {
-  return apiRequest<Post>("content", "/private/post", {
-    method: "POST",
-    body: JSON.stringify(postData),
-  });
+  const response = await contentApi.post("/private/post", postData);
+  return response.data;
 };
 
 export const updatePost = async (
   id: string,
   postData: PostUpdateParams
 ): Promise<Post> => {
-  return apiRequest<Post>("content", `/private/post/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(postData),
-  });
+  const response = await contentApi.put(`/private/post/${id}`, postData);
+  return response.data;
 };
 
 export const deletePost = async (id: string): Promise<void> => {
-  return apiRequest<void>("content", `/private/post/${id}`, {
-    method: "DELETE",
-  });
+  await contentApi.delete(`/private/post/${id}`);
 };
 
 export const getPost = async (id: string): Promise<Post> => {
-  return apiRequest<Post>("content", `/public/post/${id}`, { method: "GET" });
+  const response = await contentApi.get(`/public/post/${id}`);
+  return response.data;
 };
 
 export const listPosts = async (
@@ -48,12 +43,10 @@ export const listPosts = async (
   sortBy: string = "created_at",
   sortOrder: "asc" | "desc" = "desc"
 ): Promise<PaginatedResponse<Post>> => {
-  return apiRequest<PaginatedResponse<Post>>(
-    "content",
-    "/public/post",
-    { method: "GET" },
-    { page, limit, sortBy, sortOrder }
-  );
+  const response = await contentApi.get("/public/post", {
+    params: { page, limit, sortBy, sortOrder }
+  });
+  return response.data;
 };
 
 export const getUserPosts = async (
@@ -63,23 +56,17 @@ export const getUserPosts = async (
   sortBy: string = "created_at",
   sortOrder: "asc" | "desc" = "desc"
 ): Promise<PaginatedResponse<Post>> => {
-  return apiRequest<PaginatedResponse<Post>>(
-    "content",
-    `/public/post/user/${auth}`,
-    { method: "GET" },
-    { page, limit, sortBy, sortOrder }
-  );
+  const response = await contentApi.get(`/public/post/user/${auth}`, {
+    params: { page, limit, sortBy, sortOrder }
+  });
+  return response.data;
 };
 
 export const searchPosts = async (
   params: PostSearchParams
 ): Promise<PaginatedResponse<Post>> => {
-  return apiRequest<PaginatedResponse<Post>>(
-    "content",
-    "/public/post/search",
-    { method: "GET" },
-    params as unknown as Record<string, unknown>
-  );
+  const response = await contentApi.get("/public/post/search", { params });
+  return response.data;
 };
 
 export const getTrendingPosts = async (
@@ -87,12 +74,10 @@ export const getTrendingPosts = async (
   page: number = 1,
   limit: number = 10
 ): Promise<PaginatedResponse<Post>> => {
-  return apiRequest<PaginatedResponse<Post>>(
-    "content",
-    "/public/post/trending",
-    { method: "GET" },
-    { timeframe, page, limit }
-  );
+  const response = await contentApi.get("/public/post/trending", {
+    params: { timeframe, page, limit }
+  });
+  return response.data;
 };
 
 export const getPopularPosts = async (
@@ -100,54 +85,43 @@ export const getPopularPosts = async (
   page: number = 1,
   limit: number = 10
 ): Promise<PaginatedResponse<Post>> => {
-  return apiRequest<PaginatedResponse<Post>>(
-    "content",
-    "/public/post/popular",
-    { method: "GET" },
-    { metric, page, limit }
-  );
+  const response = await contentApi.get("/public/post/popular", {
+    params: { metric, page, limit }
+  });
+  return response.data;
 };
 
 // Comment endpoints
 export const createComment = async (
   commentData: CommentCreateParams
 ): Promise<Comment> => {
-  return apiRequest<Comment>("content", "/private/comment", {
-    method: "POST",
-    body: JSON.stringify(commentData),
-  });
+  const response = await contentApi.post("/private/comment", commentData);
+  return response.data;
 };
 
 export const replyToComment = async (
   parent_id: string,
   content: string
 ): Promise<Comment> => {
-  return apiRequest<Comment>("content", `/private/comment/${parent_id}/reply`, {
-    method: "POST",
-    body: JSON.stringify({ content }),
-  });
+  const response = await contentApi.post(`/private/comment/${parent_id}/reply`, { content });
+  return response.data;
 };
 
 export const updateComment = async (
   id: string,
   commentData: CommentUpdateParams
 ): Promise<Comment> => {
-  return apiRequest<Comment>("content", `/private/comment/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(commentData),
-  });
+  const response = await contentApi.put(`/private/comment/${id}`, commentData);
+  return response.data;
 };
 
 export const deleteComment = async (id: string): Promise<void> => {
-  return apiRequest<void>("content", `/private/comment/${id}`, {
-    method: "DELETE",
-  });
+  await contentApi.delete(`/private/comment/${id}`);
 };
 
 export const getComment = async (id: string): Promise<Comment> => {
-  return apiRequest<Comment>("content", `/public/comment/${id}`, {
-    method: "GET",
-  });
+  const response = await contentApi.get(`/public/comment/${id}`);
+  return response.data;
 };
 
 export const listComments = async (
@@ -156,12 +130,10 @@ export const listComments = async (
   sortBy: string = "created_at",
   sortOrder: "asc" | "desc" = "desc"
 ): Promise<PaginatedResponse<Comment>> => {
-  return apiRequest<PaginatedResponse<Comment>>(
-    "content",
-    "/public/comment",
-    { method: "GET" },
-    { page, limit, sortBy, sortOrder }
-  );
+  const response = await contentApi.get("/public/comment", {
+    params: { page, limit, sortBy, sortOrder }
+  });
+  return response.data;
 };
 
 export const getPostComments = async (
@@ -172,12 +144,10 @@ export const getPostComments = async (
   sortOrder: "asc" | "desc" = "desc",
   includeReplies: boolean = true
 ): Promise<PaginatedResponse<Comment>> => {
-  return apiRequest<PaginatedResponse<Comment>>(
-    "content",
-    `/public/comment/post/${post_id}`,
-    { method: "GET" },
-    { page, limit, sortBy, sortOrder, includeReplies }
-  );
+  const response = await contentApi.get(`/public/comment/post/${post_id}`, {
+    params: { page, limit, sortBy, sortOrder, includeReplies }
+  });
+  return response.data;
 };
 
 export const getUserComments = async (
@@ -187,12 +157,10 @@ export const getUserComments = async (
   sortBy: string = "created_at",
   sortOrder: "asc" | "desc" = "desc"
 ): Promise<PaginatedResponse<Comment>> => {
-  return apiRequest<PaginatedResponse<Comment>>(
-    "content",
-    `/public/comment/user/${auth}`,
-    { method: "GET" },
-    { page, limit, sortBy, sortOrder }
-  );
+  const response = await contentApi.get(`/public/comment/user/${auth}`, {
+    params: { page, limit, sortBy, sortOrder }
+  });
+  return response.data;
 };
 
 export const getCommentReplies = async (
@@ -203,23 +171,17 @@ export const getCommentReplies = async (
   sortOrder: "asc" | "desc" = "asc",
   nested: boolean = false
 ): Promise<PaginatedResponse<Comment>> => {
-  return apiRequest<PaginatedResponse<Comment>>(
-    "content",
-    `/public/comment/${commentId}/replies`,
-    { method: "GET" },
-    { page, limit, sortBy, sortOrder, nested }
-  );
+  const response = await contentApi.get(`/public/comment/${commentId}/replies`, {
+    params: { page, limit, sortBy, sortOrder, nested }
+  });
+  return response.data;
 };
 
 export const searchComments = async (
   params: CommentSearchParams
 ): Promise<PaginatedResponse<Comment>> => {
-  return apiRequest<PaginatedResponse<Comment>>(
-    "content",
-    "/public/comment/search",
-    { method: "GET" },
-    params as unknown as Record<string, unknown>
-  );
+  const response = await contentApi.get("/public/comment/search", { params });
+  return response.data;
 };
 
 export const getCommentThread = async (
@@ -231,62 +193,45 @@ export const getCommentThread = async (
   replies: Comment[];
   totalReplies: number;
 }> => {
-  return apiRequest<{
-    comment: Comment;
-    replies: Comment[];
-    totalReplies: number;
-  }>(
-    "content",
-    `/public/comment/${commentId}/thread`,
-    { method: "GET" },
-    { depth, sortBy }
-  );
+  const response = await contentApi.get(`/public/comment/${commentId}/thread`, {
+    params: { depth, sortBy }
+  });
+  return response.data;
 };
 
 // Application endpoints
 export const createApplication = async (
   applicationData: ApplicationCreateParams
 ): Promise<Application> => {
-  return apiRequest<Application>("content", "/private/application", {
-    method: "POST",
-    body: JSON.stringify(applicationData),
-  });
+  const response = await contentApi.post("/private/application", applicationData);
+  return response.data;
 };
 
 export const updateApplication = async (
   id: string,
   applicationData: ApplicationUpdateParams
 ): Promise<Application> => {
-  return apiRequest<Application>("content", `/private/application/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(applicationData),
-  });
+  const response = await contentApi.put(`/private/application/${id}`, applicationData);
+  return response.data;
 };
 
 export const deleteApplication = async (id: string): Promise<void> => {
-  return apiRequest<void>("content", `/private/application/${id}`, {
-    method: "DELETE",
-  });
+  await contentApi.delete(`/private/application/${id}`);
 };
 
 export const getApplication = async (id: string): Promise<Application> => {
-  return apiRequest<Application>("content", `/private/application/${id}`, {
-    method: "GET",
-  });
+  const response = await contentApi.get(`/private/application/${id}`);
+  return response.data;
 };
 
 export const getUserApplications = async (): Promise<Application[]> => {
-  return apiRequest<Application[]>("content", "/private/application/my", {
-    method: "GET",
-  });
+  const response = await contentApi.get("/private/application/my");
+  return response.data;
 };
 
 export const getJobApplications = async (
   jobId: string
 ): Promise<Application[]> => {
-  return apiRequest<Application[]>(
-    "content",
-    `/private/application/job/${jobId}`,
-    { method: "GET" }
-  );
+  const response = await contentApi.get(`/private/application/job/${jobId}`);
+  return response.data;
 };

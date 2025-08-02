@@ -12,20 +12,27 @@ const API_BASE_URLS = {
 
 export const setAuthToken = (token: string) => {
   if (typeof window !== "undefined") {
-    localStorage.setItem("authToken", token);
+    // Set cookie with httpOnly flag for security
+    document.cookie = `authToken=${token}; path=/; secure; samesite=strict; max-age=${7 * 24 * 60 * 60}`; // 7 days
   }
 };
 
 export const getAuthToken = (): string | null => {
   if (typeof window !== "undefined") {
-    return localStorage.getItem("authToken");
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'authToken') {
+        return value;
+      }
+    }
   }
   return null;
 };
 
 export const clearAuthToken = () => {
   if (typeof window !== "undefined") {
-    localStorage.removeItem("authToken");
+    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   }
 };
 

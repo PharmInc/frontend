@@ -8,7 +8,7 @@ import {
   Network,
 } from "lucide-react";
 import { BiLogOut } from "react-icons/bi";
-import { User } from "@/components/homefeed/types";
+import { User } from "@/components/homefeed-old/types";
 
 interface LeftSidebarProps {
   user: User;

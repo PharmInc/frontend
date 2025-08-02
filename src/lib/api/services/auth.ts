@@ -1,16 +1,12 @@
-import { apiRequest } from "@/lib/api/utils";
+import { authApi } from "@/lib/api/axios/api";
 import { AuthParams, AuthResponse } from "@/lib/api/types";
 
 export const login = async (credentials: AuthParams): Promise<AuthResponse> => {
-  return apiRequest<AuthResponse>("auth", "/public/login", {
-    method: "POST",
-    body: JSON.stringify(credentials),
-  });
+  const response = await authApi.post<AuthResponse>("/public/login", credentials);
+  return response.data;
 };
 
-export const register = async (credentials: AuthParams): Promise<void> => {
-  return apiRequest<void>("auth", "/public/register", {
-    method: "POST",
-    body: JSON.stringify(credentials),
-  });
+export const register = async (credentials: AuthParams): Promise<number> => {
+  const response = await authApi.post("/public/register", credentials);
+  return response.status;
 };

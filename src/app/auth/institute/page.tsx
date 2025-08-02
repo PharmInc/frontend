@@ -1,273 +1,178 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Building } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building } from "lucide-react";
-import { SocialAuthButtons } from "@/components/auth/SocialButtons";
-import { SidePanel } from "@/components/auth/SidePanel";
-import { BackButton } from "@/components/auth/BackButton";
-import { useState } from "react";
-import {
-  login,
-  createInstitution,
-  setAuthToken,
-  register,
-  getInstitution,
-} from "@/lib/api";
-import { useRouter } from "next/navigation";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { login, createInstitution, setAuthToken, register } from "@/lib/api";
+import { useUserStore } from "@/store/userStore";
+import { AuthFormHeader, AuthFormTabs, SignInForm, SignUpForm } from "../_components";
 
 export default function InstitutionAuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [institutionName, setInstitutionName] = useState("");
   const [location, setLocation] = useState("");
-  const [type, setType] = useState("hospital"); // Default type
+  const [institutionType, setInstitutionType] = useState("");
+  const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const { fetchCurrentUser } = useUserStore();
 
-  const createAccount = async () => {
-    try {
-      // 1. Register
-      await register({
-        email: email,
-        password: password,
-        type: "institution",
-      });
-
-      // 2. Login to get token
-      const { token } = await login({
-        email: email,
-        password: password,
-        type: "institution",
-      });
-      setAuthToken(token);
-
-      // 3. Create institution profile
-      const { id } = await createInstitution({
-        name: name,
-        location: location,
-        type: type,
-      });
-
-      router.push(`/institute/${id}`);
-      // Redirect or show success message
-    } catch (error) {
-      console.error("API Error:", error);
-      alert("Account creation failed. Please try again.");
-    }
-  };
-
-  const loginUser = async () => {
+  const handleSignIn = async () => {
+    if (loading) return;
+    setLoading(true);
+    
     try {
       const { token } = await login({
         email: email,
         password: password,
         type: "institution",
       });
-
-      const { id } = await getInstitution();
+      
       setAuthToken(token);
-      router.push(`/institute/${id}`);
-      // Redirect to dashboard or home page
+      
+      await fetchCurrentUser();
+      
+      router.push("/home");
     } catch (error) {
-      console.error("API Error:", error);
-      alert("Login failed. Please try again.");
+      console.error("Sign in error:", error);
+      alert("Sign in failed. Please check your credentials.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-tr from-blue-50 to-white flex">
-      <div className="flex-1 flex flex-col justify-center items-center p-8">
-        <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
-            <Link href="/" className="inline-flex items-center gap-2 mb-8">
-              <img
-                src="/logo.png"
-                alt="PharmInc Logo"
-                className="h-12 w-auto rounded-md"
-              />
-            </Link>
-          </div>
+  const handleSignUp = async () => {
+    if (loading) return;
+    setLoading(true);
 
-          <Tabs defaultValue="signup" className="w-full">
-            <div className="flex items-center gap-3 mb-4">
-              <BackButton />
-              <div className="flex items-center gap-2">
-                <Building className="h-5 w-5 text-[#3B82F6]" />
-                <span className="text-sm text-gray-600">
-                  Institution Registration
-                </span>
-              </div>
-            </div>
+    try {
+      const status = await register({
+        email: email,
+        password: password,
+        name: `${firstName} ${lastName}`,
+        type: "institution",
+      });
 
-            <TabsList className="grid grid-cols-2 mb-8">
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              <TabsTrigger value="login">Log In</TabsTrigger>
-            </TabsList>
+      if (status === 201) {
+        const { token } = await login({
+          email: email,
+          password: password,
+          type: "institution",
+        });
 
-            <TabsContent value="signup">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Institution Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    placeholder="e.g. ABC Hospital"
-                    required
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="admin@institution.org"
-                    required
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    name="location"
-                    placeholder="City, Country"
-                    required
-                    onChange={(e) => setLocation(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="type">Institution Type</Label>
-                  <select
-                    id="type"
-                    name="type"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={type}
-                    onChange={(e) => setType(e.target.value)}
-                  >
-                    <option value="hospital">Hospital</option>
-                    <option value="clinic">Clinic</option>
-                    <option value="pharmacy">Pharmacy</option>
-                    <option value="research">Research Center</option>
-                  </select>
-                </div>
-                <div className="flex items-center space-x-2 pt-2">
-                  <Checkbox id="terms" required />
-                  <label
-                    htmlFor="terms"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    I agree to the{" "}
-                    <Link
-                      href="/terms"
-                      className="text-[#3B82F6] hover:underline"
-                    >
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link
-                      href="/privacy"
-                      className="text-[#3B82F6] hover:underline"
-                    >
-                      Privacy Policy
-                    </Link>
-                  </label>
-                </div>
-                <Button
-                  type="button"
-                  className="w-full bg-[#3B82F6] hover:bg-[#3B82F6]/90"
-                  onClick={createAccount}
-                >
-                  Create Account
-                </Button>
-              </div>
-            </TabsContent>
+        setAuthToken(token);
 
-            <TabsContent value="login">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    name="email"
-                    type="email"
-                    placeholder="admin@institution.org"
-                    required
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="login-password">Password</Label>
-                    <Link
-                      href="/forgot-password"
-                      className="text-xs text-[#3B82F6] hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <Input
-                    id="login-password"
-                    name="password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="remember" />
-                  <label
-                    htmlFor="remember"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Remember me
-                  </label>
-                </div>
-                <Button
-                  type="button"
-                  className="w-full bg-[#3B82F6] hover:bg-[#3B82F6]/90"
-                  onClick={loginUser}
-                >
-                  Log In
-                </Button>
-                <div className="text-center mt-4">
-                  <p className="text-sm text-gray-600">
-                    Don&apos;t have an account?{" "}
-                    <Link
-                      href="/auth/institution?tab=signup"
-                      className="text-[#3B82F6] hover:underline"
-                    >
-                      Sign up here
-                    </Link>
-                  </p>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+        const { id } = await createInstitution({
+          name: institutionName,
+          location: location,
+          type: institutionType,
+        });
 
-          <SocialAuthButtons />
-        </div>
+        await fetchCurrentUser();
+
+        router.push(`/institute/${id}`);
+      } else {
+        alert("Institution registration failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Sign up error:", error);
+      alert("Institution registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const institutionSpecificFields = (
+    <>
+      <div className="space-y-2">
+        <Label htmlFor="institutionName">Institution Name</Label>
+        <Input
+          id="institutionName"
+          placeholder="Hospital/Clinic name"
+          value={institutionName}
+          onChange={(e) => setInstitutionName(e.target.value)}
+          disabled={loading}
+        />
       </div>
 
-      <SidePanel />
+      <div className="space-y-2">
+        <Label htmlFor="institutionType">Institution Type</Label>
+        <Select value={institutionType} onValueChange={setInstitutionType}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select institution type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="hospital">Hospital</SelectItem>
+            <SelectItem value="clinic">Clinic</SelectItem>
+            <SelectItem value="research-center">Research Center</SelectItem>
+            <SelectItem value="university">Medical University</SelectItem>
+            <SelectItem value="pharmacy">Pharmacy</SelectItem>
+            <SelectItem value="laboratory">Laboratory</SelectItem>
+            <SelectItem value="nursing-home">Nursing Home</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Description (Optional)</Label>
+        <Textarea
+          id="description"
+          placeholder="Brief description of your institution"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          disabled={loading}
+          rows={3}
+        />
+      </div>
+    </>
+  );
+
+  return (
+    <div className="w-full max-w-md">
+      <AuthFormHeader
+        icon={Building}
+        title="Institution Portal"
+        subtitle="Register your medical institution"
+      />
+
+      <AuthFormTabs
+        signInContent={
+          <SignInForm
+            email={email}
+            password={password}
+            onEmailChange={setEmail}
+            onPasswordChange={setPassword}
+            onSubmit={handleSignIn}
+            loading={loading}
+          />
+        }
+        signUpContent={
+          <SignUpForm
+            firstName={firstName}
+            lastName={lastName}
+            email={email}
+            password={password}
+            location={location}
+            onFirstNameChange={setFirstName}
+            onLastNameChange={setLastName}
+            onEmailChange={setEmail}
+            onPasswordChange={setPassword}
+            onLocationChange={setLocation}
+            onSubmit={handleSignUp}
+            loading={loading}
+            roleSpecificFields={institutionSpecificFields}
+          />
+        }
+      />
     </div>
   );
 }

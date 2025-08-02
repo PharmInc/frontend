@@ -1,9 +1,8 @@
-import { motion } from "framer-motion";
 import { Stethoscope, HeartPulse } from "lucide-react";
 
 export function SidePanel() {
   return (
-    <div className="hidden lg:flex flex-1 bg-[#3B82F6]/5 justify-center items-center p-8 relative overflow-hidden">
+    <div className="hidden lg:flex h-full bg-[#3B82F6]/5 justify-center items-center p-8 relative overflow-hidden">
       <div className="absolute inset-0 z-0">
         <svg
           width="100%"
@@ -22,12 +21,7 @@ export function SidePanel() {
       </div>
 
       <div className="relative z-10 max-w-md">
-        <motion.div
-          className="mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <div className="mb-8">
           <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 mb-6">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
@@ -46,12 +40,7 @@ export function SidePanel() {
             </p>
           </div>
 
-          <motion.div
-            className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 mb-6">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
                 <HeartPulse className="h-6 w-6 text-[#3B82F6]" />
@@ -67,8 +56,8 @@ export function SidePanel() {
               Access cutting-edge research and participate in case discussions
               with specialists worldwide.
             </p>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </div>
     </div>
   );

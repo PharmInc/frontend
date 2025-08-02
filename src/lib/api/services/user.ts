@@ -1,4 +1,4 @@
-import { apiRequest } from "@/lib/api/utils";
+import { userApi } from "@/lib/api/axios/api";
 import {
   User,
   UserCreateParams,
@@ -9,40 +9,34 @@ import {
 
 export const createUser = async (userData: UserCreateParams): Promise<User> => {
   console.log("Creating user with data:", userData);
-  return apiRequest<User>("user", "/private/user", {
-    method: "POST",
-    body: JSON.stringify(userData),
-  });
+  const response = await userApi.post("/private/user", userData);
+  return response.data;
 };
 
 export const getUser = async (): Promise<User> => {
-  return apiRequest<User>("user", "/private/user", { method: "GET" });
+  const response = await userApi.get("/private/user");
+  return response.data;
 };
 
 export const getUserById = async (id: string): Promise<User> => {
-  return apiRequest<User>("user", `/public/user/${id}`, { method: "GET" });
+  const response = await userApi.get(`/public/user/${id}`);
+  return response.data;
 };
 
 export const updateUser = async (userData: UserUpdateParams): Promise<User> => {
-  return apiRequest<User>("user", "/private/user", {
-    method: "PUT",
-    body: JSON.stringify(userData),
-  });
+  const response = await userApi.put("/private/user", userData);
+  return response.data;
 };
 
 export const deleteUser = async (): Promise<void> => {
-  return apiRequest<void>("user", "/private/user", { method: "DELETE" });
+  await userApi.delete("/private/user");
 };
 
 export const searchUsers = async (
   params: UserSearchParams
 ): Promise<PaginatedResponse<User>> => {
-  return apiRequest<PaginatedResponse<User>>(
-    "user",
-    "/public/user/search",
-    { method: "GET" },
-    params as unknown as Record<string, unknown>
-  );
+  const response = await userApi.get("/public/user/search", { params });
+  return response.data;
 };
 
 export const listUsers = async (
@@ -50,10 +44,8 @@ export const listUsers = async (
   limit: number = 10,
   fields?: string
 ): Promise<PaginatedResponse<User>> => {
-  return apiRequest<PaginatedResponse<User>>(
-    "user",
-    "/public/user",
-    { method: "GET" },
-    { page, limit, fields }
-  );
+  const response = await userApi.get("/public/user", {
+    params: { page, limit, fields }
+  });
+  return response.data;
 };

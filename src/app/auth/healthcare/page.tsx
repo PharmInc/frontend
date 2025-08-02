@@ -1,19 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users } from "lucide-react";
-import { SidePanel } from "@/components/auth/SidePanel";
-import { SocialAuthButtons } from "@/components/auth/SocialButtons";
-import { BackButton } from "@/components/auth/BackButton";
-
-import { useState } from "react";
-import { login, createUser, setAuthToken, register, getUser } from "@/lib/api";
-import { useRouter } from "next/navigation";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { login, createUser, setAuthToken, register } from "@/lib/api";
+import { useUserStore } from "@/store/userStore";
+import { AuthFormHeader, AuthFormTabs, SignInForm, SignUpForm } from "../_components";
 
 export default function HealthcareAuthPage() {
   const [email, setEmail] = useState("");
@@ -21,244 +16,151 @@ export default function HealthcareAuthPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [location, setLocation] = useState("");
+  const [profession, setProfession] = useState("");
+  const [experience, setExperience] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const { fetchCurrentUser } = useUserStore();
 
-  const createAccount = async () => {
+  const handleSignIn = async () => {
+    if (loading) return;
+    setLoading(true);
+    
     try {
-      // 1. Register
-      await register({
-        email: email,
-        password: password,
-        type: "user", // Kept as "user" as requested
-      });
-
-      // 2. Login to get token
       const { token } = await login({
         email: email,
         password: password,
         type: "user",
       });
+      
       setAuthToken(token);
+      await fetchCurrentUser();
+      
+      router.push("/home");
+    } catch (error) {
+      console.error("Sign in error:", error);
+      alert("Sign in failed. Please check your credentials.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // 3. Create user profile with healthcare professional details
-      const { id } = await createUser({
+  const handleSignUp = async () => {
+    if (loading) return;
+    setLoading(true);
+
+    try {
+      const status = await register({
+        email: email,
+        password: password,
         name: `${firstName} ${lastName}`,
-        location: location,
-        role: "healthcare", // You might want to use this field to distinguish
-      });
-      router.push(`/profile/${id}`);
-      // Redirect or show success message
-    } catch (error) {
-      console.error("API Error:", error);
-      alert("Account creation failed. Please try again.");
-    }
-  };
-
-  const loginUser = async () => {
-    try {
-      const { token } = await login({
-        email: email,
-        password: password,
         type: "user",
       });
-      setAuthToken(token);
-      const { id } = await getUser();
-      setAuthToken(token);
-      router.push(`/profile/${id}`);
-      // Redirect to dashboard or home page
+
+      if (status === 201) {
+        const { token } = await login({
+          email: email,
+          password: password,
+          type: "user",
+        });
+
+        setAuthToken(token);
+
+        const { id } = await createUser({
+          name: `${firstName} ${lastName}`,
+          location: location,
+          role: "healthcare_professional",
+        });
+
+        await fetchCurrentUser();
+
+        router.push(`/profile/${id}`);
+      } else {
+        alert("Account creation failed. Please try again.");
+      }
     } catch (error) {
-      console.error("API Error:", error);
-      alert("Login failed. Please try again.");
+      console.error("Sign up error:", error);
+      alert("Account creation failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-tr from-blue-50 to-white flex">
-      <div className="flex-1 flex flex-col justify-center items-center p-8">
-        <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
-            <Link href="/" className="inline-flex items-center gap-2 mb-8">
-              <img
-                src="/logo.png"
-                alt="PharmInc Logo"
-                className="h-12 w-auto rounded-md"
-              />
-            </Link>
-          </div>
-
-          <Tabs defaultValue="signup" className="w-full">
-            <div className="flex items-center gap-3 mb-4">
-              <BackButton />
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-[#3B82F6]" />
-                <span className="text-sm text-gray-600">
-                  Healthcare Professional Registration
-                </span>
-              </div>
-            </div>
-
-            <TabsList className="grid grid-cols-2 mb-8">
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              <TabsTrigger value="login">Log In</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signup">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      name="firstName"
-                      placeholder="John"
-                      required
-                      onChange={(e) => setFirstName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      name="lastName"
-                      placeholder="Doe"
-                      required
-                      onChange={(e) => setLastName(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="professional@healthcare.org"
-                    required
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    name="location"
-                    placeholder="City, Country"
-                    required
-                    onChange={(e) => setLocation(e.target.value)}
-                  />
-                </div>
-                <div className="flex items-center space-x-2 pt-2">
-                  <Checkbox id="terms" required />
-                  <label
-                    htmlFor="terms"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    I agree to the{" "}
-                    <Link
-                      href="/terms"
-                      className="text-[#3B82F6] hover:underline"
-                    >
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link
-                      href="/privacy"
-                      className="text-[#3B82F6] hover:underline"
-                    >
-                      Privacy Policy
-                    </Link>
-                  </label>
-                </div>
-                <Button
-                  type="button"
-                  className="w-full bg-[#3B82F6] hover:bg-[#3B82F6]/90"
-                  onClick={createAccount}
-                >
-                  Create Account
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="login">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    name="email"
-                    type="email"
-                    placeholder="professional@healthcare.org"
-                    required
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="login-password">Password</Label>
-                    <Link
-                      href="/forgot-password"
-                      className="text-xs text-[#3B82F6] hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <Input
-                    id="login-password"
-                    name="password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="remember" />
-                  <label
-                    htmlFor="remember"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Remember me
-                  </label>
-                </div>
-                <Button
-                  type="button"
-                  className="w-full bg-[#3B82F6] hover:bg-[#3B82F6]/90"
-                  onClick={loginUser}
-                >
-                  Log In
-                </Button>
-                <div className="text-center mt-4">
-                  <p className="text-sm text-gray-600">
-                    Don&apos;t have an account?{" "}
-                    <Link
-                      href="/auth/healthcare?tab=signup"
-                      className="text-[#3B82F6] hover:underline"
-                    >
-                      Sign up here
-                    </Link>
-                  </p>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-
-          <SocialAuthButtons />
-        </div>
+  const healthcareSpecificFields = (
+    <>
+      <div className="space-y-2">
+        <Label htmlFor="profession">Profession</Label>
+        <Select value={profession} onValueChange={setProfession}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select your profession" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="nurse">Nurse</SelectItem>
+            <SelectItem value="pharmacist">Pharmacist</SelectItem>
+            <SelectItem value="physiotherapist">Physiotherapist</SelectItem>
+            <SelectItem value="nutritionist">Nutritionist</SelectItem>
+            <SelectItem value="medical-technician">Medical Technician</SelectItem>
+            <SelectItem value="lab-technician">Lab Technician</SelectItem>
+            <SelectItem value="radiologist">Radiologist</SelectItem>
+            <SelectItem value="paramedic">Paramedic</SelectItem>
+            <SelectItem value="researcher">Medical Researcher</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      <SidePanel />
+      <div className="space-y-2">
+        <Label htmlFor="experience">Years of Experience</Label>
+        <Input
+          id="experience"
+          type="number"
+          placeholder="Years in profession"
+          value={experience}
+          onChange={(e) => setExperience(e.target.value)}
+          disabled={loading}
+        />
+      </div>
+    </>
+  );
+
+  return (
+    <div className="w-full max-w-md">
+      <AuthFormHeader
+        icon={Users}
+        title="Healthcare Professionals"
+        subtitle="Join our network of healthcare experts"
+      />
+
+      <AuthFormTabs
+        signInContent={
+          <SignInForm
+            email={email}
+            password={password}
+            onEmailChange={setEmail}
+            onPasswordChange={setPassword}
+            onSubmit={handleSignIn}
+            loading={loading}
+          />
+        }
+        signUpContent={
+          <SignUpForm
+            firstName={firstName}
+            lastName={lastName}
+            email={email}
+            password={password}
+            location={location}
+            onFirstNameChange={setFirstName}
+            onLastNameChange={setLastName}
+            onEmailChange={setEmail}
+            onPasswordChange={setPassword}
+            onLocationChange={setLocation}
+            onSubmit={handleSignUp}
+            loading={loading}
+            roleSpecificFields={healthcareSpecificFields}
+          />
+        }
+      />
     </div>
   );
 }
