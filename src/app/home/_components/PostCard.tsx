@@ -37,7 +37,6 @@ export default function PostCard({ post }: PostCardProps) {
   };
 
   const handleCommentClick = () => {
-    // Navigate to post details/comments
     window.location.href = `/post/${post.id}#comments`;
   };
 
@@ -46,7 +45,6 @@ export default function PostCard({ post }: PostCardProps) {
     setIsSharing(true);
     try {
       await sharePost(post.id);
-      // Fallback to native share or copy to clipboard
       if (navigator.share) {
         await navigator.share({
           title: `Post by ${post.author}`,
@@ -83,7 +81,7 @@ export default function PostCard({ post }: PostCardProps) {
     : post.content;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-6 py-4 flex flex-col gap-2">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-6 py-4 flex flex-col gap-2 font-sans">
       <div className="flex items-center gap-3">
         <img
           src={post.avatar}
@@ -91,10 +89,10 @@ export default function PostCard({ post }: PostCardProps) {
           className="w-9 h-9 rounded-full object-cover"
         />
         <div className="flex flex-col leading-tight">
-          <span className="font-semibold text-sm text-gray-900">
+          <span className="font-semibold text-sm text-gray-900 font-sans">
             {post.author}
           </span>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-500 font-sans">
             {post.role} • {post.time}
           </span>
         </div>
@@ -106,13 +104,13 @@ export default function PostCard({ post }: PostCardProps) {
       </div>
 
       {post.title && (
-        <h3 className="font-semibold text-gray-900 text-sm">{post.title}</h3>
+        <h3 className="font-semibold text-gray-900 text-sm font-sans">{post.title}</h3>
       )}
 
-      <div className="text-sm text-gray-800 whitespace-pre-wrap break-words">
+      <div className="text-sm text-gray-800 whitespace-pre-wrap break-words font-sans">
         {displayContent}
         {shouldTruncate && (
-          <Link href={`/post/${post.id}`} className="text-blue-600 hover:text-blue-800 ml-1 text-sm font-medium">
+          <Link href={`/post/${post.id}`} className="text-blue-600 hover:text-blue-800 ml-1 text-sm font-medium font-sans">
             Read more
           </Link>
         )}
@@ -129,7 +127,7 @@ export default function PostCard({ post }: PostCardProps) {
           {post.tags.map((tag) => (
             <span
               key={tag}
-              className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full"
+              className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-sans"
             >
               #{tag}
             </span>
@@ -137,11 +135,11 @@ export default function PostCard({ post }: PostCardProps) {
         </div>
       )}
 
-      <div className="text-xs text-blue-700 font-medium">
+      <div className="text-xs text-blue-700 font-medium font-sans">
         {post.type === "Research Paper" ? "📄 Research Paper" : "🩺 Case Study"}
       </div>
 
-      <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-2">
+      <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-2 font-sans">
         <span>{post.likes} likes</span>
         <span>{post.comments} comments</span>
         <span>{post.shares} shares</span>
@@ -151,14 +149,14 @@ export default function PostCard({ post }: PostCardProps) {
         <button
           onClick={handleLikeClick}
           disabled={isLiking}
-          className="flex-1 text-gray-600 hover:text-red-600 hover:bg-red-50 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-70"
+          className="flex-1 text-gray-600 hover:text-red-600 hover:bg-red-50 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-70 font-sans"
         >
           <Heart className={`h-4 w-4 ${liked[post.id] ? "fill-red-500 text-red-500" : ""}`} />
           {isLiking ? "..." : "Like"}
         </button>
         <button
           onClick={handleCommentClick}
-          className="flex-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors"
+          className="flex-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors font-sans"
         >
           <MessageSquare className="h-4 w-4" />
           Comment
@@ -166,7 +164,7 @@ export default function PostCard({ post }: PostCardProps) {
         <button
           onClick={handleShareClick}
           disabled={isSharing}
-          className="flex-1 text-gray-600 hover:text-green-600 hover:bg-green-50 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-70"
+          className="flex-1 text-gray-600 hover:text-green-600 hover:bg-green-50 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-70 font-sans"
         >
           <Share2 className="h-4 w-4" />
           {isSharing ? "..." : "Share"}
@@ -174,7 +172,7 @@ export default function PostCard({ post }: PostCardProps) {
         <button
           onClick={handleSaveClick}
           disabled={isSaving}
-          className="flex-1 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-70"
+          className="flex-1 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-70 font-sans"
         >
           <Bookmark className={`h-4 w-4 ${saved[post.id] ? "fill-yellow-500 text-yellow-500" : ""}`} />
           {isSaving ? "..." : saved[post.id] ? "Saved" : "Save"}

@@ -58,78 +58,75 @@ const rightSidebarData = [
 export function RightSidebar() {
   return (
     <aside
-      className="w-72 flex-shrink-0 bg-white border-l border-gray-200 p-4"
-      style={{ position: "sticky", top: "1.8rem", alignSelf: "flex-start", height: "fit-content" }}
+      className="w-80 flex-shrink-0 bg-white px-4 font-sans"
+      style={{ position: "sticky", top: "0", alignSelf: "flex-start", height: "100vh", overflowY: "auto" }}
     >
-      <div className="flex flex-col gap-4">
-        {/* Journal Club */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-semibold text-sm text-gray-900">Journal Club</h3>
-            <Link href="#" className="text-xs text-blue-600 hover:underline">
+      <div className="flex flex-col gap-4 pt-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-semibold text-sm text-gray-900 font-sans">Journal Club</h3>
+            <Link href="#" className="text-xs text-blue-600 hover:underline font-sans">
               See all
             </Link>
           </div>
           {rightSidebarData[0].items.map((item, idx) => (
-            <div key={idx} className="mb-3 pb-3 border-b border-gray-100">
-              <h4 className="font-medium text-xs text-gray-900 mb-1">{item.title}</h4>
-              <p className="text-xs text-gray-600 mb-1">{item.desc}</p>
-              <p className="text-xs text-gray-500 mb-2">{item.doctors} doctors discussing</p>
+            <div key={idx} className="mb-3 pb-3 last:mb-0 last:pb-0 border-b border-gray-100 last:border-b-0">
+              <h4 className="font-medium text-xs text-gray-900 mb-1 font-sans">{item.title}</h4>
+              <p className="text-xs text-gray-600 mb-1 font-sans">{item.desc}</p>
+              <p className="text-xs text-gray-500 mb-2 font-sans">{item.doctors} doctors discussing</p>
               <div className="flex items-center gap-2">
-                <Link href="/journal-club" className="inline-block h-6 text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md">
+                <Link href="/journal-club" className="inline-block h-6 text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md font-sans">
                   Join Discussion
                 </Link>
-                <span className="text-xs text-gray-500">{item.time}</span>
+                <span className="text-xs text-gray-500 font-sans">{item.time}</span>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Featured Conferences */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-semibold text-sm text-gray-900">Featured Conferences</h3>
-            <Link href="#" className="text-xs text-blue-600 hover:underline">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-semibold text-sm text-gray-900 font-sans">Featured Conferences</h3>
+            <Link href="#" className="text-xs text-blue-600 hover:underline font-sans">
               More
             </Link>
           </div>
           {rightSidebarData[1].items.map((item, idx) => (
-            <div key={idx} className="mb-3 pb-3 border-b border-gray-100">
-              <h4 className="font-medium text-xs text-gray-900 mb-1">{item.title}</h4>
-              <p className="text-xs text-gray-600 mb-1">{item.date}</p>
+            <div key={idx} className="mb-3 pb-3 last:mb-0 last:pb-0 border-b border-gray-100 last:border-b-0">
+              <h4 className="font-medium text-xs text-gray-900 mb-1 font-sans">{item.title}</h4>
+              <p className="text-xs text-gray-600 mb-1 font-sans">{item.date}</p>
               <div className="flex gap-2 mb-2">
-                <span className="text-xs bg-green-50 border border-green-200 text-green-700 rounded px-2">
+                <span className="text-xs bg-green-50 border border-green-200 text-green-700 rounded px-2 font-sans">
                   {item.mode}
                 </span>
-                <span className="text-xs bg-blue-50 border border-blue-200 text-blue-700 rounded px-2">
+                <span className="text-xs bg-blue-50 border border-blue-200 text-blue-700 rounded px-2 font-sans">
                   CME: {item.cme}
                 </span>
               </div>
-              <Link href="/conferences/register" className="block w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm text-center py-2 px-4 rounded-md text-sm">
+              <Link href="/conferences/register" className="block w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm text-center py-2 px-4 rounded-md text-sm font-sans">
                 Register Now
               </Link>
             </div>
           ))}
         </div>
 
-        {/* Upcoming Events */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-semibold text-sm text-gray-900">Upcoming Events</h3>
-            <Link href="#" className="text-xs text-blue-600 hover:underline">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-semibold text-sm text-gray-900 font-sans">Upcoming Events</h3>
+            <Link href="#" className="text-xs text-blue-600 hover:underline font-sans">
               See all
             </Link>
           </div>
           {rightSidebarData[2].items.map((event, idx) => (
-            <div key={idx} className="flex gap-2 mb-3">
+            <div key={idx} className="flex gap-2 mb-3 last:mb-0">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-2 text-center min-w-10 shadow-sm border border-blue-200">
-                <span className="block text-xs text-blue-600 font-medium">{event.month}</span>
-                <span className="block text-sm font-bold text-blue-700">{event.day}</span>
+                <span className="block text-xs text-blue-600 font-medium font-sans">{event.month}</span>
+                <span className="block text-sm font-bold text-blue-700 font-sans">{event.day}</span>
               </div>
               <div>
-                <h4 className="font-medium text-xs text-gray-900 mb-1">{event.title}</h4>
-                <p className="text-xs text-gray-600 mb-1">{event.time}</p>
-                <p className="text-xs text-gray-500">{event.location}</p>
+                <h4 className="font-medium text-xs text-gray-900 mb-1 font-sans">{event.title}</h4>
+                <p className="text-xs text-gray-600 mb-1 font-sans">{event.time}</p>
+                <p className="text-xs text-gray-500 font-sans">{event.location}</p>
               </div>
             </div>
           ))}

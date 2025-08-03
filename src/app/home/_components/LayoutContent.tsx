@@ -17,24 +17,26 @@ export default function LayoutContent({ children }: LayoutContentProps) {
   }, [fetchCurrentUser])
 
   return (
-    <>
-      <div className="fixed top-0 left-0 h-full w-64 hidden lg:block z-10">
-        <LeftSidebar user={currentUser} />
-      </div>
-
-      <div className="fixed top-0 right-0 h-full w-80 hidden xl:block z-10">
-        <div className="h-full overflow-y-auto bg-white border-l border-gray-200">
-          <RightSidebar />
+    <div className="min-h-screen bg-white font-sans">
+      <div className="max-w-[1300px] mx-auto flex justify-center">
+        <div className="sticky top-0 h-screen flex-shrink-0">
+          <div className="w-16 xl:w-64 transition-all duration-200 h-full">
+            <LeftSidebar user={currentUser} />
+          </div>
         </div>
-      </div>
 
-      <div className="lg:ml-64 xl:mr-80">
-        <div className="min-h-screen bg-white">
-          <main className="max-w-2xl mx-auto">
+        <div className="flex-1 min-w-0 max-w-[600px] border-x border-gray-200">
+          <main className="w-full">
             {children}
           </main>
         </div>
+
+        <div className="hidden lg:block w-80 sticky top-0 h-screen flex-shrink-0">
+          <div className="h-full overflow-y-auto bg-white">
+            <RightSidebar />
+          </div>
+        </div>
       </div>
-    </>
+    </div>
   )
 }

@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import { useUserStore, usePostStore } from '@/store'
 import PostComposer from './_components/PostComposer';
 import PostCard from './_components/PostCard';
+import SearchBar from './_components/SearchBar';
 
 export default function HomeFeed() {
   const { 
@@ -26,11 +27,9 @@ export default function HomeFeed() {
 
   if (userLoading || postsLoading) {
     return (
-      <div className="p-4 space-y-6">
-        <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 -mx-4 mb-4">
-          <h1 className="text-xl font-bold">Home</h1>
-        </div>
-        <div className="flex justify-center items-center py-12">
+      <div className="space-y-6">
+        <SearchBar />
+        <div className="flex justify-center items-center py-12 p-4 ">
           <div className="text-lg text-gray-600">Loading...</div>
         </div>
       </div>
@@ -38,14 +37,17 @@ export default function HomeFeed() {
   }
 
   return (
-    <div className="p-4 space-y-6">
-      <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 -mx-4 mb-4">
-        <h1 className="text-xl font-bold">Home</h1>
-      </div>
+    <div className="space-y-4">
+      
+      <SearchBar />
 
-      {currentUser && <PostComposer user={currentUser} />}
+      {currentUser && (
+        <div className="px-4">
+          <PostComposer user={currentUser} />
+        </div>
+      )}
 
-      <div className="space-y-4">
+      <div className="space-y-4 p-4 ">
         {posts.map((post) => (
           <PostCard
             key={post.id}
