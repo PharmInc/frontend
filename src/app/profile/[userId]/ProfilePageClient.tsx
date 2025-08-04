@@ -32,7 +32,6 @@ export function ProfilePageClient({ profileData, currentUserId, userId }: Profil
 
   return (
     <div className="space-y-4">
-      {/* Profile Header */}
       <Card className="rounded-xl shadow-lg border-0 overflow-hidden bg-white/90 backdrop-blur-xs hover:shadow-xl transition-shadow duration-300">
         <ProfileHeader
           user={profileData}
@@ -41,10 +40,9 @@ export function ProfilePageClient({ profileData, currentUserId, userId }: Profil
         />
       </Card>
 
-      {/* Profile Tabs */}
+
       <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {/* Tab Content */}
       <div className="space-y-4">
         {activeTab === "About" && (
           <ProfileAboutTab userId={userId} />
