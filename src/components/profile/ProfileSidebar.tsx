@@ -15,7 +15,7 @@ interface LeftSidebarProps {
   handleLogout: () => void;
 }
 
-export default function LeftSidebar({ user, handleLogout }: LeftSidebarProps) {
+export default function ProfileSidebar({ user, handleLogout }: LeftSidebarProps) {
   return (
     <aside className="fixed top-0 left-0 h-screen w-56 md:w-64 bg-white border-r border-gray-200 shadow-xl flex flex-col p-2 md:p-3 z-40">
       {/* Logo */}

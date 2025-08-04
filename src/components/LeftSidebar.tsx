@@ -12,11 +12,11 @@ import {
   User as UserIcon,
   LogOut,
 } from "lucide-react";
-import { User, InstitutionEntity } from "./types";
+import { User, InstitutionEntity } from "../app/home/_components/types";
 import Logo from "@/components/logo";
 import { useUserStore, useInstitutionStore } from "@/store";
 import { clearAuthToken } from "@/lib/api/utils";
-import { getDisplayHandle, getProfilePicture } from "../_utils/utils";
+import { getDisplayHandle, getProfilePicture } from "../app/home/_utils/utils";
 
 interface LeftSidebarProps {
   user?: User | InstitutionEntity | null;
@@ -65,7 +65,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
       </div>
 
       <nav className="flex flex-col gap-1 flex-1 overflow-y-auto xl:px-3 px-2 min-h-0 mt-2 xl:mt-7">
-        <Link href="/" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
+        <Link href="/home" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
           <Home className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
           <span className="xl:block hidden text-xl text-gray-900 font-normal">Home</span>
         </Link>
@@ -131,7 +131,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
             {showProfileMenu && (
               <div className="absolute bottom-full left-0 mb-2 w-full min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-in slide-in-from-bottom-2 duration-200">
                 <Link 
-                  href="/profile"
+                  href={`/profile/${user.id}`}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
                   onClick={() => setShowProfileMenu(false)}
                 >

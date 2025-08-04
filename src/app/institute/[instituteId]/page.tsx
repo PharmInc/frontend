@@ -13,8 +13,8 @@ export default async function InstitutionProfilePage({
     return <InstitutionProfileClient institutionData={institutionData} instituteId={instituteId} />;
   } catch (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Institution not found
+      <div className="flex items-center justify-center py-12">
+        <div className="text-xl text-gray-700">Institution not found</div>
       </div>
     );
   }

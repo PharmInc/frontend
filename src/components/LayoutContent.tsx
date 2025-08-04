@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react'
 import LeftSidebar from './LeftSidebar'
-import { RightSidebar } from './RightSidebar'
+import { RightSidebar } from '../app/home/_components/RightSidebar'
 import { useUserStore, useInstitutionStore } from '@/store'
 import { getUserType } from '@/lib/api/utils'
 

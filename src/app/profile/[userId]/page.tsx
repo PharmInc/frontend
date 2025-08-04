@@ -44,7 +44,7 @@ export default async function ProfilePage({
     return <ProfilePageClient profileData={profileData} currentUserId={currentUserId} userId={userId} />;
   } catch (error) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-gray-50 to-blue-50/30 flex items-center justify-center">
+      <div className="flex items-center justify-center py-12">
         <div className="text-xl text-gray-700">Profile not found</div>
       </div>
     );

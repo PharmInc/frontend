@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "../globals.css";
 import { Inter } from "next/font/google";
-import LayoutContent from "../../components/LayoutContent";
+import InstituteLayoutContent from "./_components/InstituteLayoutContent";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -9,18 +9,18 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Pharminc",
-  description: "", 
+  title: "Institution - Pharminc",
+  description: "View and manage institution profiles", 
 };
 
-export default function RootLayout({
+export default function InstituteLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
     <div className={`${inter.className} min-h-screen bg-gray-50`}>
-      <LayoutContent>{children}</LayoutContent>
+      <InstituteLayoutContent>{children}</InstituteLayoutContent>
     </div>
   );
 }
