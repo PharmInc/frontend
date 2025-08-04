@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { login, createInstitution, setAuthToken, register } from "@/lib/api";
-import { useUserStore } from "@/store/userStore";
+import { useInstitutionStore } from "@/store/institutionStore";
 import { AuthFormHeader, AuthFormTabs, SignInForm, SignUpForm } from "../_components";
 
 export default function InstitutionAuthPage() {
@@ -23,7 +23,7 @@ export default function InstitutionAuthPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const { fetchCurrentUser } = useUserStore();
+  const { fetchCurrentInstitution } = useInstitutionStore();
 
   const handleSignIn = async () => {
     if (loading) return;
@@ -36,9 +36,9 @@ export default function InstitutionAuthPage() {
         type: "institution",
       });
       
-      setAuthToken(token);
+      setAuthToken(token, "institution");
       
-      await fetchCurrentUser();
+      await fetchCurrentInstitution();
       
       router.push("/home");
     } catch (error) {
@@ -51,6 +51,13 @@ export default function InstitutionAuthPage() {
 
   const handleSignUp = async () => {
     if (loading) return;
+    
+    // Validate required fields
+    if (!firstName || !lastName || !email || !password || !location || !institutionName || !institutionType) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -68,17 +75,17 @@ export default function InstitutionAuthPage() {
           type: "institution",
         });
 
-        setAuthToken(token);
+        setAuthToken(token, "institution");
 
-        const { id } = await createInstitution({
+        const institutionResponse = await createInstitution({
           name: institutionName,
           location: location,
           type: institutionType,
         });
 
-        await fetchCurrentUser();
+        await fetchCurrentInstitution();
 
-        router.push(`/institute/${id}`);
+        router.push(`/institute/${institutionResponse.id}`);
       } else {
         alert("Institution registration failed. Please try again.");
       }

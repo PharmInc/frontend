@@ -1,14 +1,25 @@
-export interface User {
+export interface BaseEntity {
   id?: string;
   name?: string;
+  location?: string;
+  profile_picture?: string;
+}
+
+export interface User extends BaseEntity {
   firstName?: string;
   lastName?: string;
   role?: string;
   specialization?: string;
   profilePicture?: string;
-  location?: string;
   speciality?: string;
   roles?: string[];
+}
+
+export interface InstitutionEntity extends BaseEntity {
+  type?: string;
+  verified?: boolean;
+  employees_count?: string;
+  area_of_expertise?: string;
 }
 
 export interface Post {

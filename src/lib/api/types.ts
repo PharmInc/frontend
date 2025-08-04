@@ -33,6 +33,7 @@ export interface UserCreateParams {
   name: string;
   location: string;
   role: string;
+  specialization?: string;
 }
 
 export interface UserUpdateParams {
@@ -47,6 +48,7 @@ export interface UserUpdateParams {
   about?: string;
   followers?: number;
   connections?: number;
+  specialization?: string;
 }
 
 export interface UserSearchParams {

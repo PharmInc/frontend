@@ -34,7 +34,7 @@ export default function DoctorAuthPage() {
         type: "user",
       });
       
-      setAuthToken(token);
+      setAuthToken(token, "user");
       await fetchCurrentUser();
       
       router.push("/home");
@@ -48,6 +48,12 @@ export default function DoctorAuthPage() {
 
   const handleSignUp = async () => {
     if (loading) return;
+    
+    if (!firstName || !lastName || !email || !password || !location || !specialization) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -65,7 +71,15 @@ export default function DoctorAuthPage() {
           type: "user",
         });
         
-        setAuthToken(token);
+        setAuthToken(token, "user");
+        
+        await createUser({
+          name: `${firstName} ${lastName}`,
+          location: location,
+          role: "user",
+          specialization: specialization,
+        });
+        
         await fetchCurrentUser();
         
         router.push("/home");

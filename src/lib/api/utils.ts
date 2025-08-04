@@ -10,10 +10,14 @@ const API_BASE_URLS = {
   content: process.env.NEXT_PUBLIC_API_CONTENT!,
 };
 
-export const setAuthToken = (token: string) => {
+export const setAuthToken = (token: string, userType?: string) => {
   if (typeof window !== "undefined") {
     // Set cookie with httpOnly flag for security
     document.cookie = `authToken=${token}; path=/; secure; samesite=strict; max-age=${7 * 24 * 60 * 60}`; // 7 days
+    
+    if (userType) {
+      document.cookie = `userType=${userType}; path=/; secure; samesite=strict; max-age=${7 * 24 * 60 * 60}`; // 7 days
+    }
   }
 };
 
@@ -23,6 +27,19 @@ export const getAuthToken = (): string | null => {
     for (const cookie of cookies) {
       const [name, value] = cookie.trim().split('=');
       if (name === 'authToken') {
+        return value;
+      }
+    }
+  }
+  return null;
+};
+
+export const getUserType = (): string | null => {
+  if (typeof window !== "undefined") {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'userType') {
         return value;
       }
     }

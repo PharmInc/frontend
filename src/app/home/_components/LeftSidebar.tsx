@@ -9,12 +9,12 @@ import {
   Bookmark,
   Crown,
 } from "lucide-react";
-import { BiLogOut } from "react-icons/bi";
-import { User } from "./types";
+import { User, InstitutionEntity } from "./types";
 import Logo from "@/components/logo";
+import { getDisplayHandle, getProfilePicture } from "../_utils/utils";
 
 interface LeftSidebarProps {
-  user?: User| null;
+  user?: User | InstitutionEntity | null;
 }
 
 export default function LeftSidebar({ user = null }: LeftSidebarProps) {
@@ -77,7 +77,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
         {user ? (
           <Link href="/profile" className="flex items-center gap-3 px-3 py-3 rounded-full hover:bg-gray-100 transition-colors w-full">
             <img
-              src={user?.profilePicture || "/pp.png"}
+              src={getProfilePicture(user)}
               alt="Profile"
               className="w-10 h-10 rounded-full border border-gray-200 object-cover flex-shrink-0"
             />
@@ -86,7 +86,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
                 {user?.name || "User"}
               </h3>
               <p className="text-sm text-gray-500 truncate">
-                @{user?.speciality?.toLowerCase().replace(/\s+/g, '') || "doctor"}
+                @{getDisplayHandle(user)}
               </p>
             </div>
           </Link>

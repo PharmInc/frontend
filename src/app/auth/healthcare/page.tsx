@@ -34,7 +34,7 @@ export default function HealthcareAuthPage() {
         type: "user",
       });
       
-      setAuthToken(token);
+      setAuthToken(token, "user");
       await fetchCurrentUser();
       
       router.push("/home");
@@ -65,7 +65,7 @@ export default function HealthcareAuthPage() {
           type: "user",
         });
 
-        setAuthToken(token);
+        setAuthToken(token, "user");
 
         const { id } = await createUser({
           name: `${firstName} ${lastName}`,

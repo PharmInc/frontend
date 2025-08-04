@@ -3,7 +3,8 @@
 import React, { useEffect } from 'react'
 import LeftSidebar from './LeftSidebar'
 import { RightSidebar } from './RightSidebar'
-import { useUserStore } from '@/store'
+import { useUserStore, useInstitutionStore } from '@/store'
+import { getUserType } from '@/lib/api/utils'
 
 interface LayoutContentProps {
   children: React.ReactNode
@@ -11,17 +12,43 @@ interface LayoutContentProps {
 
 export default function LayoutContent({ children }: LayoutContentProps) {
   const { currentUser, fetchCurrentUser } = useUserStore()
+  const { currentInstitution, fetchCurrentInstitution } = useInstitutionStore()
 
   useEffect(() => {
-    fetchCurrentUser()
-  }, [fetchCurrentUser])
+    const userType = getUserType()
+    
+    if (userType === 'institution') {
+      fetchCurrentInstitution()
+    } else {
+      fetchCurrentUser()
+    }
+  }, [fetchCurrentUser, fetchCurrentInstitution])
+
+  const currentEntity = (() => {
+    const userType = getUserType();
+    
+    if (userType === 'institution' && currentInstitution) {
+      return {
+        id: currentInstitution.id,
+        name: currentInstitution.name,
+        location: currentInstitution.location,
+        profile_picture: currentInstitution.profile_picture,
+        type: currentInstitution.type,
+        verified: currentInstitution.verified,
+        employees_count: currentInstitution.employees_count,
+        area_of_expertise: currentInstitution.area_of_expertise,
+      };
+    }
+    
+    return currentUser;
+  })();
 
   return (
     <div className="min-h-screen bg-white font-sans">
       <div className="max-w-[1300px] mx-auto flex justify-center">
         <div className="sticky top-0 h-screen flex-shrink-0">
           <div className="w-16 xl:w-64 transition-all duration-200 h-full">
-            <LeftSidebar user={currentUser} />
+            <LeftSidebar user={currentEntity} />
           </div>
         </div>
 
