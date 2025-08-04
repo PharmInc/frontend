@@ -78,7 +78,6 @@ export const useInstitutionStore = create<InstitutionState>()(
               updated_at: new Date().toISOString(),
             }
             
-            // Cache the fallback institution to avoid repeated failed requests
             set({ 
               institutionCache: { 
                 ...institutionCache, 

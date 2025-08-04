@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useState, useRef, useEffect } from "react";
 import {
   Home,
   Search,
@@ -8,9 +9,13 @@ import {
   Network,
   Bookmark,
   Crown,
+  User as UserIcon,
+  LogOut,
 } from "lucide-react";
 import { User, InstitutionEntity } from "./types";
 import Logo from "@/components/logo";
+import { useUserStore, useInstitutionStore } from "@/store";
+import { clearAuthToken } from "@/lib/api/utils";
 import { getDisplayHandle, getProfilePicture } from "../_utils/utils";
 
 interface LeftSidebarProps {
@@ -18,6 +23,34 @@ interface LeftSidebarProps {
 }
 
 export default function LeftSidebar({ user = null }: LeftSidebarProps) {
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const { clearUser } = useUserStore();
+  const { clearInstitution } = useInstitutionStore();
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    clearAuthToken();
+    clearUser();
+    clearInstitution();
+  };
+
+  const handleProfileClick = () => {
+    setShowProfileMenu(!showProfileMenu);
+  };
+
   return (
     <aside className="h-screen bg-white border-r border-gray-200 flex flex-col font-sans">
       <div className="p-4 pb-0 flex-shrink-0">
@@ -75,21 +108,47 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
 
       <div className="p-4 pt-0 border-t border-gray-100 flex-shrink-0">
         {user ? (
-          <Link href="/profile" className="flex items-center gap-3 px-3 py-3 rounded-full hover:bg-gray-100 transition-colors w-full">
-            <img
-              src={getProfilePicture(user)}
-              alt="Profile"
-              className="w-10 h-10 rounded-full border border-gray-200 object-cover flex-shrink-0"
-            />
-            <div className="xl:flex hidden flex-col flex-1 min-w-0">
-              <h3 className="text-base font-bold text-gray-900 truncate">
-                {user?.name || "User"}
-              </h3>
-              <p className="text-sm text-gray-500 truncate">
-                @{getDisplayHandle(user)}
-              </p>
-            </div>
-          </Link>
+          <div className="relative" ref={profileMenuRef}>
+            <button 
+              onClick={handleProfileClick}
+              className="flex items-center gap-3 px-3 py-3 rounded-full hover:bg-gray-100 transition-colors w-full text-left"
+            >
+              <img
+                src={getProfilePicture(user)}
+                alt="Profile"
+                className="w-10 h-10 rounded-full border border-gray-200 object-cover flex-shrink-0"
+              />
+              <div className="xl:flex hidden flex-col flex-1 min-w-0">
+                <h3 className="text-base font-bold text-gray-900 truncate">
+                  {user?.name || "User"}
+                </h3>
+                <p className="text-sm text-gray-500 truncate">
+                  @{getDisplayHandle(user)}
+                </p>
+              </div>
+            </button>
+
+            {showProfileMenu && (
+              <div className="absolute bottom-full left-0 mb-2 w-full min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-in slide-in-from-bottom-2 duration-200">
+                <Link 
+                  href="/profile"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                  onClick={() => setShowProfileMenu(false)}
+                >
+                  <UserIcon className="w-5 h-5 text-gray-600" />
+                  <span className="font-medium text-gray-900">Profile</span>
+                </Link>
+                <hr className="border-gray-100 my-1" />
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors w-full text-left"
+                >
+                  <LogOut className="w-5 h-5 text-gray-600" />
+                  <span className="font-medium text-gray-900">Logout</span>
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <div>
             <Link href="/auth" className="xl:block hidden w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-3 px-6 rounded-full font-bold transition-colors">
