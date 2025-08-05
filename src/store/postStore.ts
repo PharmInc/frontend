@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import { Post } from '@/app/home/_components/types'
+import { Post } from '@/app/(home)/home/_components/types'
 import { listPosts, createPost } from '@/lib/api/services/content'
 import { useUserStore } from './userStore'
 

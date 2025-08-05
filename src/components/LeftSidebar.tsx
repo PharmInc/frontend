@@ -12,11 +12,11 @@ import {
   User as UserIcon,
   LogOut,
 } from "lucide-react";
-import { User, InstitutionEntity } from "../app/home/_components/types";
+import { User, InstitutionEntity } from "../app/(home)/home/_components/types";
 import Logo from "@/components/logo";
 import { useUserStore, useInstitutionStore } from "@/store";
 import { clearAuthToken } from "@/lib/api/utils";
-import { getDisplayHandle, getProfilePicture } from "../app/home/_utils/utils";
+import { getDisplayHandle, getProfilePicture } from "../app/(home)/home/_utils/utils";
 
 interface LeftSidebarProps {
   user?: User | InstitutionEntity | null;

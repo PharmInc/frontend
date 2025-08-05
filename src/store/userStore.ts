@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
-import { User } from '@/app/home/_components/types'
+import { User } from '@/app/(home)/home/_components/types'
 import { getUser, getUserById } from '@/lib/api/services/user'
 
 interface UserState {
