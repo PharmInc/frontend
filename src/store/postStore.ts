@@ -7,12 +7,17 @@ import { useUserStore } from './userStore'
 interface PostState {
   posts: Post[]
   loading: boolean
+  loadingMore: boolean
   error: string | null
   liked: Record<string | number, boolean>
   likedCount: Record<string | number, number>
   saved: Record<string | number, boolean>
+  currentPage: number
+  hasMore: boolean
+  totalPages: number
   
-  fetchPosts: (page?: number, limit?: number) => Promise<void>
+  fetchPosts: (page?: number, limit?: number, append?: boolean) => Promise<void>
+  loadMorePosts: () => Promise<void>
   addPost: (post: Post) => void
   toggleLike: (postId: string | number) => void
   sharePost: (postId: string | number) => Promise<void>
@@ -26,17 +31,26 @@ export const usePostStore = create<PostState>()(
     (set, get) => ({
       posts: [],
       loading: false,
+      loadingMore: false,
       error: null,
       liked: {},
       likedCount: {},
       saved: {},
+      currentPage: 1,
+      hasMore: true,
+      totalPages: 0,
 
-      fetchPosts: async (page = 1, limit = 20) => {
-        set({ loading: true, error: null })
+      fetchPosts: async (page = 1, limit = 5, append = false) => {
+        if (append) {
+          set({ loadingMore: true, error: null })
+        } else {
+          set({ loading: true, error: null })
+        }
         
         try {
           const response = await listPosts(page, limit)
           const fetchedPosts = response.data || []
+          const pagination = response.pagination
           
           // Get user store to fetch authors
           const { fetchUserById } = useUserStore.getState()
@@ -77,8 +91,8 @@ export const usePostStore = create<PostState>()(
               likes: post.reactions || 0,
               comments: post.comments || 0,
               shares: post.shares || 0,
-              ...(post.imageId && {
-                image: `https://content.api.pharminc.in/image/${post.imageId}`,
+              ...(post.attachment_id && {
+                image: `https://content.api.pharminc.in/image/${post.attachment_id}`,
               }),
             }
           })
@@ -89,10 +103,17 @@ export const usePostStore = create<PostState>()(
             initialLikedCount[post.id] = post.likes
           })
 
+          const currentPosts = append ? get().posts : []
+          const newPosts = append ? [...currentPosts, ...transformedPosts] : transformedPosts
+
           set({ 
-            posts: transformedPosts,
+            posts: newPosts,
             likedCount: { ...get().likedCount, ...initialLikedCount },
-            loading: false 
+            currentPage: page,
+            hasMore: pagination?.hasNext || false,
+            totalPages: pagination?.totalPages || 0,
+            loading: false,
+            loadingMore: false
           })
         } catch (error) {
           console.error('Error fetching posts:', error)
@@ -100,12 +121,21 @@ export const usePostStore = create<PostState>()(
           const fallbackLikedCount: Record<string | number, number> = {}
 
           set({ 
-            posts: [],
+            posts: append ? get().posts : [],
             likedCount: { ...get().likedCount, ...fallbackLikedCount },
             error: 'Failed to fetch posts',
-            loading: false 
+            loading: false,
+            loadingMore: false
           })
         }
+      },
+
+      loadMorePosts: async () => {
+        const { currentPage, hasMore, loadingMore } = get()
+        
+        if (!hasMore || loadingMore) return
+        
+        await get().fetchPosts(currentPage + 1, 5, true)
       },
 
       addPost: (post: Post) => {
@@ -163,7 +193,10 @@ export const usePostStore = create<PostState>()(
           liked: {}, 
           likedCount: {},
           saved: {},
-          error: null 
+          error: null,
+          currentPage: 1,
+          hasMore: true,
+          totalPages: 0
         })
       },
 

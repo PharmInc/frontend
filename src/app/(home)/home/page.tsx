@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react'
+import { useInView } from 'react-intersection-observer'
 import { useUserStore, usePostStore } from '@/store'
 import PostComposer from './_components/PostComposer';
 import PostCard from './_components/PostCard';
@@ -16,14 +17,28 @@ export default function HomeFeed() {
   const { 
     posts, 
     loading: postsLoading, 
+    loadingMore,
+    hasMore,
     likedCount, 
-    fetchPosts
+    fetchPosts,
+    loadMorePosts
   } = usePostStore()
+
+  const { ref, inView } = useInView({
+    threshold: 0,
+    rootMargin: '100px'
+  })
 
   useEffect(() => {
     fetchCurrentUser()
     fetchPosts()
   }, [fetchCurrentUser, fetchPosts])
+
+  useEffect(() => {
+    if (inView && hasMore && !loadingMore) {
+      loadMorePosts()
+    }
+  }, [inView, hasMore, loadingMore, loadMorePosts])
 
   if (userLoading || postsLoading) {
     return (
@@ -54,6 +69,20 @@ export default function HomeFeed() {
             post={{ ...post, likes: likedCount[post.id] || post.likes }}
           />
         ))}
+        
+        {hasMore && (
+          <div ref={ref} className="flex justify-center py-4">
+            {loadingMore && (
+              <div className="text-lg text-gray-600">Loading more posts...</div>
+            )}
+          </div>
+        )}
+        
+        {!hasMore && posts.length > 0 && (
+          <div className="flex justify-center py-4">
+            <div className="text-lg text-gray-500">No more posts to load</div>
+          </div>
+        )}
       </div>
     </div>
   )
