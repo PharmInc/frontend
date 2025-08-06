@@ -2,7 +2,19 @@ import { useState, useEffect } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Camera, MessageSquare, UserPlus, Heart, Check, X } from "lucide-react";
+import { 
+  Camera, 
+  MessageSquare, 
+  UserPlus, 
+  Heart, 
+  Check, 
+  X, 
+  MapPin, 
+  Briefcase, 
+  GraduationCap, 
+  Link2, 
+  CheckCircle 
+} from "lucide-react";
 import Image from "next/image";
 import {
   followUser,
@@ -106,10 +118,10 @@ export const ProfileHeader = ({
     setIsLoading((prev) => ({ ...prev, follow: true }));
     try {
       if (isFollowing) {
-        await unfollowUser({ user2_id: user.id }); // Changed to user2_id
+        await unfollowUser({ user2_id: user.id });
         setFollowersCount((prev) => prev - 1);
       } else {
-        await followUser({ user2_id: user.id }); // Changed to user2_id
+        await followUser({ user2_id: user.id });
         setFollowersCount((prev) => prev + 1);
       }
       setIsFollowing((prev) => !prev);
@@ -149,7 +161,6 @@ export const ProfileHeader = ({
 
     setIsLoading((prev) => ({ ...prev, accept: true }));
     try {
-      // According to your API, we need to pass user1Id (the person who sent the request)
       await acceptConnection(user.id);
       setIsConnected(true);
       setHasIncomingRequest(false);
@@ -176,165 +187,172 @@ export const ProfileHeader = ({
   };
 
   return (
-    <div className="bg-white rounded-b-lg">
-      {/* banner  */}
-      <div className="relative mb-4">
-        <div className="h-52 relative overflow-hidden rounded-xl">
-          <Image
-            src="/banner.png"
-            alt="Medical Banner"
-            className="w-full h-full object-cover"
-            width={1200}
-            height={400}
-          />
-          <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent"></div>
-          {isOwnProfile && (
-            <button className="absolute top-6 right-6 bg-white/20 hover:bg-white/30 text-white backdrop-blur-xs px-4 py-2 text-sm rounded-md flex items-center">
-              <Camera className="h-4 w-4 mr-2" />
-              Edit cover photo
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Name and Online Status */}
-      <div className="flex items-center gap-4 mb-4 pl-4 pr-4">
-        {/* Profile Picture */}
-        <div className="">
-          <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
-            <AvatarImage
-              src={user?.profile_picture || "/pp.png"}
-              alt={user?.name || "User"}
-            />
-            <AvatarFallback className="text-xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 font-bold">
-              {user?.name?.[0] || "U"}
-            </AvatarFallback>
-          </Avatar>
-        </div>
-
-        {/* name and info */}
-        <div className="flex flex-col">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                {user?.name || "Loading..."}
-                <span className="flex items-center gap-1 text-sm font-normal text-green-600">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  Online
-                </span>
-              </h1>
-              <p className="text-lg text-gray-700 font-bold">
-                {user?.role || "Specialization not set"}
-              </p>
-            </div>
-          </div>
-          {/* location and stats */}
-          <div className="flex items-center gap-2 text-gray-600">
-            <span>{user?.location || "Location not set"}</span>
-            <span>•</span>
-            <span>{followersCount} followers</span>
-            <span>•</span>
-            <span>{connectionsCount} connections</span>
+    <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+      {/* Cover Photo */}
+      <div className="relative h-32 sm:h-36 md:h-40">
+        <Image
+          src={user?.banner_picture || "/banner.png"}
+          alt="Cover photo"
+          className="w-full h-full object-cover"
+          width={1200}
+          height={400}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+        {isOwnProfile && (
+          <button className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-black/50 hover:bg-black/60 text-white backdrop-blur-sm px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-full flex items-center transition-colors">
+            <Camera className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Edit cover</span>
+          </button>
+        )}
+        
+        {/* Profile Picture - Overlapping */}
+        <div className="absolute -bottom-12 sm:-bottom-16 left-4 sm:left-6">
+          <div className="relative">
+            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white shadow-lg">
+              <AvatarImage
+                src={user?.profile_picture || "/pp.png"}
+                alt={user?.name || "User"}
+              />
+              <AvatarFallback className="text-lg sm:text-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 font-bold">
+                {user?.name?.[0] || "U"}
+              </AvatarFallback>
+            </Avatar>
+            {isOwnProfile && (
+              <button className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-1 sm:p-2 shadow-sm transition-colors">
+                <Camera className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Badges */}
-      <div className="mb-6 pl-4 pr-4">
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="outline" className="px-3 py-1 text-sm">
-            {user?.role || "Doctor"}
-          </Badge>
-          <Badge variant="outline" className="px-3 py-1 text-sm">
-            Pharmacist
-          </Badge>
-          <Badge variant="outline" className="px-3 py-1 text-sm">
-            Researcher
-          </Badge>
-        </div>
-      </div>
-
-      {/* Institution */}
-      {institution && (
-        <div className="mb-6 pl-4 pr-4">
-          <p className="text-sm text-gray-600">{institution.name}</p>
-        </div>
-      )}
-
-      {/* Action Buttons - Only show if not viewing own profile */}
-      {!isOwnProfile && (
-        <div className="flex gap-3 pl-4 pr-4 pb-6">
-          {/* Connect Button */}
-          {hasIncomingRequest ? (
-            <div className="flex gap-2">
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleAcceptConnection}
-                disabled={isLoading.accept}
-              >
-                <Check className="h-4 w-4 mr-2" />
-                {isLoading.accept ? "Accepting..." : "Accept"}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRejectConnection}
-                disabled={isLoading.reject}
-              >
-                <X className="h-4 w-4 mr-2" />
-                {isLoading.reject ? "Rejecting..." : "Reject"}
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant={
-                isConnected
-                  ? "default"
-                  : hasPendingRequest
-                  ? "outline"
-                  : "default"
-              }
-              className="flex items-center gap-2"
-              onClick={handleConnect}
-              disabled={isLoading.connect}
-            >
-              <UserPlus className="h-4 w-4" />
-              {isLoading.connect
-                ? "Processing..."
-                : isConnected
-                ? "Connected"
-                : hasPendingRequest
-                ? "Request Sent"
-                : "Connect"}
+      <div className="pt-16 pb-4 px-6 relative">
+        {!isOwnProfile && (
+          <div className="absolute top-4 right-6 flex gap-2">
+            <Button variant="outline" size="sm" className="rounded-full">
+              <MessageSquare className="h-4 w-4" />
             </Button>
+
+            <Button
+              variant={isFollowing ? "default" : "outline"}
+              size="sm"
+              className="rounded-full"
+              onClick={handleFollow}
+              disabled={isLoading.follow}
+            >
+              <Heart
+                className="h-4 w-4 mr-2"
+                fill={isFollowing ? "currentColor" : "none"}
+              />
+              {isLoading.follow
+                ? "Processing..."
+                : isFollowing
+                ? "Following"
+                : "Follow"}
+            </Button>
+
+            {hasIncomingRequest ? (
+              <div className="flex gap-2">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={handleAcceptConnection}
+                  disabled={isLoading.accept}
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  {isLoading.accept ? "Accepting..." : "Accept"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={handleRejectConnection}
+                  disabled={isLoading.reject}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant={
+                  isConnected
+                    ? "default"
+                    : hasPendingRequest
+                    ? "outline"
+                    : "default"
+                }
+                size="sm"
+                className="rounded-full"
+                onClick={handleConnect}
+                disabled={isLoading.connect}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                {isLoading.connect
+                  ? "Processing..."
+                  : isConnected
+                  ? "Connected"
+                  : hasPendingRequest
+                  ? "Request Sent"
+                  : "Connect"}
+              </Button>
+            )}
+          </div>
+        )}
+        <div className="mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2 font-sans mt-4">
+            {user?.name || "Loading..."}
+            {user?.verified && (
+              <CheckCircle className="h-5 w-5 text-blue-500 fill-current" />
+            )}
+          </h1>
+          <p className="text-gray-500 text-sm">@{user?.email?.split('@')[0] || 'username'}</p>
+        </div>
+        {user?.bio && (
+          <div className="mb-3">
+            <p className="text-gray-900 leading-relaxed">{user.bio}</p>
+          </div>
+        )}
+
+        <div className="space-y-2 text-gray-500 text-sm mb-3">
+          {user?.location && (
+            <div className="flex items-center gap-1">
+              <MapPin className="h-4 w-4" />
+              <span>{user.location}</span>
+            </div>
           )}
 
-          {/* Follow Button */}
-          <Button
-            variant={isFollowing ? "default" : "outline"}
-            className="flex items-center gap-2"
-            onClick={handleFollow}
-            disabled={isLoading.follow}
-          >
-            <Heart
-              className="h-4 w-4"
-              fill={isFollowing ? "currentColor" : "none"}
-            />
-            {isLoading.follow
-              ? "Processing..."
-              : isFollowing
-              ? "Following"
-              : "Follow"}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Briefcase className="h-4 w-4" />
+            <span>{user?.role || "Healthcare Professional"}</span>
+            {user?.specialization && (
+              <>
+                <span className="mx-1">•</span>
+                <GraduationCap className="h-4 w-4" />
+                <span>{user.specialization}</span>
+              </>
+            )}
+          </div>
 
-          {/* Message Button */}
-          <Button variant="outline" className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" />
-            Message
-          </Button>
+          <div className="flex items-center gap-1">
+            <Link2 className="h-4 w-4" />
+            <a href="#" className="text-blue-500 hover:underline">
+              pharminc.com/profile
+            </a>
+          </div>
         </div>
-      )}
+
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-1">
+            <span className="font-bold text-gray-900">{connectionsCount}</span>
+            <span className="text-gray-500">Connections</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="font-bold text-gray-900">{followersCount}</span>
+            <span className="text-gray-500">Followers</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

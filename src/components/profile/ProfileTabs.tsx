@@ -4,10 +4,10 @@ interface ProfileTabsProps {
 }
 
 export const ProfileTabs = ({ activeTab, setActiveTab }: ProfileTabsProps) => {
-  const tabs = ["Posts", "About", "Activity", "Experience", "Education"];
+  const tabs = ["Posts", "Experience", "Education", "Activity"];
 
   return (
-    <div className="flex gap-8 border-b border-gray-200 mb-8 bg-white/50 backdrop-blur-xs rounded-t-xl px-6 py-2">
+    <div className="flex gap-8 border-b border-gray-200 bg-white/50 backdrop-blur-xs rounded-t-xl px-6 py-2">
       {tabs.map((tab) => (
         <button
           key={tab}

@@ -4,9 +4,6 @@ import { Calendar } from "lucide-react";
 export const ProfilePostsTab = () => {
   return (
     <Card className="rounded-xl shadow-lg border-0 bg-white/90 backdrop-blur-xs">
-      <CardHeader className="pb-6">
-        <CardTitle className="text-2xl">Posts</CardTitle>
-      </CardHeader>
       <CardContent>
         <div className="space-y-6">
           <div className="border rounded-xl p-4">

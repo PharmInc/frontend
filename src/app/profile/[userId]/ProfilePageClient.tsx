@@ -32,14 +32,11 @@ export function ProfilePageClient({ profileData, currentUserId, userId }: Profil
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-xl shadow-lg border-0 overflow-hidden bg-white/90 backdrop-blur-xs hover:shadow-xl transition-shadow duration-300">
-        <ProfileHeader
-          user={profileData}
-          institution={null}
-          currentUserId={currentUserId || ""}
-        />
-      </Card>
-
+      <ProfileHeader
+        user={profileData}
+        institution={null}
+        currentUserId={currentUserId || ""}
+      />
 
       <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 

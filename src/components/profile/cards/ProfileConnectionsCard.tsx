@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -11,6 +12,8 @@ interface ConnectionRequest {
 }
 
 export const ProfileConnectionsCard = () => {
+  const router = useRouter();
+  
   // Mock connection requests
   const [requests, setRequests] = useState<ConnectionRequest[]>([
     {
@@ -46,8 +49,8 @@ export const ProfileConnectionsCard = () => {
   };
 
   const seeAllRequests = () => {
-    // Replace with navigation or modal open
-    alert("Open 'All connection requests' component");
+    // Navigate to notifications page with connections tab
+    router.push('/notifications?tab=connections');
   };
 
   return (
