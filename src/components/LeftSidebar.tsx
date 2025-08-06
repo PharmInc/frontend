@@ -15,7 +15,7 @@ import {
 import { User, InstitutionEntity } from "../app/(home)/home/_components/types";
 import Logo from "@/components/logo";
 import { useUserStore, useInstitutionStore } from "@/store";
-import { clearAuthToken } from "@/lib/api/utils";
+import { clearAuthToken, getUserType } from "@/lib/api/utils";
 import { getDisplayHandle, getProfilePicture } from "../app/(home)/home/_utils/utils";
 
 interface LeftSidebarProps {
@@ -27,6 +27,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const { clearUser } = useUserStore();
   const { clearInstitution } = useInstitutionStore();
+  const userType = getUserType()
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -131,7 +132,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
             {showProfileMenu && (
               <div className="absolute bottom-full left-0 mb-2 w-full min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-in slide-in-from-bottom-2 duration-200">
                 <Link 
-                  href={`/profile/${user.id}`}
+                  href={`/${userType==='institution'?"institute":"profile"}/${user.id}`}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
                   onClick={() => setShowProfileMenu(false)}
                 >

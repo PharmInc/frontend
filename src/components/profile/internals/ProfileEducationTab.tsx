@@ -2,10 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,6 +71,7 @@ export const ProfileEducationTab = ({ userId }: ProfileEducationTabProps) => {
   const [isInstitutionLoading, setIsInstitutionLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showInstitutionDropdown, setShowInstitutionDropdown] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -256,6 +259,7 @@ export const ProfileEducationTab = ({ userId }: ProfileEducationTabProps) => {
         isCurrent: false,
       });
       setSearchQuery("");
+      setIsModalOpen(false);
     } catch (error) {
       console.error("Failed to add education:", error);
       toast.error("Failed to add education");
@@ -268,8 +272,8 @@ export const ProfileEducationTab = ({ userId }: ProfileEducationTabProps) => {
     <Card className="rounded-xl shadow-lg border-0 bg-white/90 backdrop-blur-xs">
       <CardHeader className="flex flex-row items-center justify-between pb-6">
         <CardTitle className="text-2xl">Education</CardTitle>
-        <Popover>
-          <PopoverTrigger asChild>
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
@@ -277,9 +281,11 @@ export const ProfileEducationTab = ({ userId }: ProfileEducationTabProps) => {
             >
               <Plus className="h-4 w-4" />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-96 p-6">
-            <h3 className="font-semibold text-lg mb-4">Add Education</h3>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="text-xl">Add Education</DialogTitle>
+            </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2 relative">
                 <Label htmlFor="institutionSearch">Institution</Label>
@@ -387,12 +393,22 @@ export const ProfileEducationTab = ({ userId }: ProfileEducationTabProps) => {
                 />
               </div>
 
-              <Button type="submit" className="w-full">
-                Add Education
-              </Button>
+              <div className="flex gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" className="flex-1">
+                  Add Education
+                </Button>
+              </div>
             </form>
-          </PopoverContent>
-        </Popover>
+          </DialogContent>
+        </Dialog>
       </CardHeader>
       <CardContent>
         {isLoading ? (
