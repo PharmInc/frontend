@@ -1,4 +1,4 @@
-import { apiRequest } from "@/lib/api/utils";
+import { jobApi } from "@/lib/api/axios/api";
 import {
   Job,
   JobCreateParams,
@@ -8,39 +8,32 @@ import {
 } from "@/lib/api/types";
 
 export const createJob = async (jobData: JobCreateParams): Promise<Job> => {
-  return apiRequest<Job>("job", "/private/job", {
-    method: "POST",
-    body: JSON.stringify(jobData),
-  });
+  const response = await jobApi.post("/private/job", jobData);
+  return response.data;
 };
 
 export const updateJob = async (
   id: string,
   jobData: JobUpdateParams
 ): Promise<Job> => {
-  return apiRequest<Job>("job", `/private/job/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(jobData),
-  });
+  const response = await jobApi.put(`/private/job/${id}`, jobData);
+  return response.data;
 };
 
 export const deleteJob = async (id: string): Promise<void> => {
-  return apiRequest<void>("job", `/private/job/${id}`, { method: "DELETE" });
+  await jobApi.delete(`/private/job/${id}`);
 };
 
 export const getJob = async (id: string): Promise<Job> => {
-  return apiRequest<Job>("job", `/public/job/${id}`, { method: "GET" });
+  const response = await jobApi.get(`/public/job/${id}`);
+  return response.data;
 };
 
 export const searchJobs = async (
   params: JobSearchParams
 ): Promise<PaginatedResponse<Job>> => {
-  return apiRequest<PaginatedResponse<Job>>(
-    "user",
-    "/public/job/search",
-    { method: "GET" },
-    params as unknown as Record<string, unknown>
-  );
+  const response = await jobApi.get("/public/job/search", { params });
+  return response.data;
 };
 
 export const listJobs = async (
@@ -50,12 +43,10 @@ export const listJobs = async (
   active?: boolean,
   institute_id?: string
 ): Promise<PaginatedResponse<Job>> => {
-  return apiRequest<PaginatedResponse<Job>>(
-    "job",
-    "/public/job",
-    { method: "GET" },
-    { page, limit, fields, active, institute_id }
-  );
+  const response = await jobApi.get("/public/job", {
+    params: { page, limit, fields, active, institute_id },
+  });
+  return response.data;
 };
 
 export const getInstituteJobs = async (
@@ -65,10 +56,8 @@ export const getInstituteJobs = async (
   fields?: string,
   active?: boolean
 ): Promise<PaginatedResponse<Job>> => {
-  return apiRequest<PaginatedResponse<Job>>(
-    "job",
-    `/public/job/institute/${institute_id}`,
-    { method: "GET" },
-    { page, limit, fields, active }
-  );
+  const response = await jobApi.get(`/public/job/institute/${institute_id}`, {
+    params: { page, limit, fields, active },
+  });
+  return response.data;
 };
