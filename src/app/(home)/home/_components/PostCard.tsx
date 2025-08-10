@@ -12,7 +12,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { usePostStore } from "@/store/postStore";
-import CommentsModal from "./CommentsModal";
+import ExpandedComments from "./ExpandedComments";
 
 interface PostCardProps {
   post: Post;
@@ -22,7 +22,7 @@ export default function PostCard({ post }: PostCardProps) {
   const [isLiking, setIsLiking] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   
   const { toggleLike, liked, sharePost, savePost, saved } = usePostStore();
@@ -40,7 +40,7 @@ export default function PostCard({ post }: PostCardProps) {
   };
 
   const handleCommentClick = () => {
-    setShowCommentsModal(true);
+    setShowComments(!showComments);
   };
 
   const handleShareClick = async () => {
@@ -189,11 +189,10 @@ export default function PostCard({ post }: PostCardProps) {
         </div>
       </div>
 
-      {/* Comments Modal */}
-      <CommentsModal
-        isOpen={showCommentsModal}
-        onClose={() => setShowCommentsModal(false)}
+      {/* Expanded Comments Section */}
+      <ExpandedComments
         post={post}
+        isVisible={showComments}
       />
     </>
   );
