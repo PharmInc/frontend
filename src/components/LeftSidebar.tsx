@@ -71,10 +71,10 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
           <span className="xl:block hidden text-xl text-gray-900 font-normal">Home</span>
         </Link>
         
-        <Link href="/explore" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
+        {/* <Link href="/explore" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
           <Search className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
           <span className="xl:block hidden text-xl text-gray-900 font-normal">Explore</span>
-        </Link>
+        </Link> */}
         
         <Link href="/notifications" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
           <Bell className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
@@ -101,9 +101,9 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
           <span className="xl:block hidden text-xl text-gray-900 font-normal">Societies</span>
         </Link>
         
-        <Link href="/premium" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
+        <Link href="/verifications" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
           <Crown className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
-          <span className="xl:block hidden text-xl text-gray-900 font-normal">Premium</span>
+          <span className="xl:block hidden text-xl text-gray-900 font-normal">Verifications</span>
         </Link>
       </nav>
 
