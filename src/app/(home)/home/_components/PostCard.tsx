@@ -13,12 +13,14 @@ import Image from "next/image";
 import { useState } from "react";
 import { usePostStore } from "@/store/postStore";
 import ExpandedComments from "./ExpandedComments";
+import { useRouter } from "next/navigation";
 
 interface PostCardProps {
   post: Post;
 }
 
 export default function PostCard({ post }: PostCardProps) {
+  const router = useRouter();
   const [isLiking, setIsLiking] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,6 +43,15 @@ export default function PostCard({ post }: PostCardProps) {
 
   const handleCommentClick = () => {
     setShowComments(!showComments);
+  };
+
+  const handlePostClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a')) {
+      return;
+    }
+    router.push(`/post/${post.id}`);
   };
 
   const handleShareClick = async () => {
@@ -87,7 +98,10 @@ export default function PostCard({ post }: PostCardProps) {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-6 py-4 flex flex-col gap-2 font-sans">
+      <div 
+        onClick={handlePostClick}
+        className="bg-white rounded-xl shadow-sm border border-gray-100 px-6 py-4 flex flex-col gap-2 font-sans cursor-pointer hover:bg-gray-50 transition-colors"
+      >
         <div className="flex items-center gap-3">
           <img
             src={post.avatar}
@@ -103,7 +117,10 @@ export default function PostCard({ post }: PostCardProps) {
             </span>
           </div>
           <div className="ml-auto">
-            <button className="h-7 w-7 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700">
+            <button 
+              onClick={(e) => e.stopPropagation()}
+              className="h-7 w-7 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700"
+            >
               <MoreVertical className="h-4 w-4" />
             </button>
           </div>
@@ -117,7 +134,10 @@ export default function PostCard({ post }: PostCardProps) {
           {displayContent}
           {shouldTruncate && (
             <button
-              onClick={toggleExpand}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleExpand();
+              }}
               className="text-blue-600 hover:text-blue-800 ml-1 text-sm font-medium font-sans"
             >
               {isExpanded ? "Show less" : "Read more"}
@@ -156,7 +176,10 @@ export default function PostCard({ post }: PostCardProps) {
 
         <div className="flex border-t border-gray-100 mt-2 pt-2 gap-1">
           <button
-            onClick={handleLikeClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleLikeClick();
+            }}
             disabled={isLiking}
             className="flex-1 text-gray-600 hover:text-red-600 hover:bg-red-50 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-70 font-sans"
           >
@@ -164,14 +187,20 @@ export default function PostCard({ post }: PostCardProps) {
             {isLiking ? "..." : "Like"}
           </button>
           <button
-            onClick={handleCommentClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCommentClick();
+            }}
             className="flex-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors font-sans"
           >
             <MessageSquare className="h-4 w-4" />
             Comment
           </button>
           <button
-            onClick={handleShareClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleShareClick();
+            }}
             disabled={isSharing}
             className="flex-1 text-gray-600 hover:text-green-600 hover:bg-green-50 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-70 font-sans"
           >
@@ -179,7 +208,10 @@ export default function PostCard({ post }: PostCardProps) {
             {isSharing ? "..." : "Share"}
           </button>
           <button
-            onClick={handleSaveClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSaveClick();
+            }}
             disabled={isSaving}
             className="flex-1 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-70 font-sans"
           >
@@ -190,10 +222,12 @@ export default function PostCard({ post }: PostCardProps) {
       </div>
 
       {/* Expanded Comments Section */}
-      <ExpandedComments
-        post={post}
-        isVisible={showComments}
-      />
+      <div onClick={(e) => e.stopPropagation()}>
+        <ExpandedComments
+          post={post}
+          isVisible={showComments}
+        />
+      </div>
     </>
   );
 }

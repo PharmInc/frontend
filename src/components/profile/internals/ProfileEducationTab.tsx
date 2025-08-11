@@ -22,6 +22,7 @@ import { toast } from "sonner";
 
 interface ProfileEducationTabProps {
   userId: string;
+  currentUserId?: string;
 }
 
 // Date formatting utility
@@ -34,7 +35,8 @@ const formatDate = (dateString: string | null, isCurrent?: boolean) => {
   });
 };
 
-export const ProfileEducationTab = ({ userId }: ProfileEducationTabProps) => {
+export const ProfileEducationTab = ({ userId, currentUserId }: ProfileEducationTabProps) => {
+  const isOwnProfile = currentUserId === userId;
   const [educations, setEducations] = useState<Array<{
     id: string;
     title: string;
@@ -271,16 +273,17 @@ export const ProfileEducationTab = ({ userId }: ProfileEducationTabProps) => {
     <Card className="rounded-xl shadow-lg border-0 bg-white/90 backdrop-blur-xs">
       <CardHeader className="flex flex-row items-center justify-between pb-6">
         <CardTitle className="text-2xl">Education</CardTitle>
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hover:bg-gray-100 rounded"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
+        {isOwnProfile && (
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-gray-100 rounded"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle className="text-xl">Add Education</DialogTitle>
@@ -408,6 +411,7 @@ export const ProfileEducationTab = ({ userId }: ProfileEducationTabProps) => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </CardHeader>
       <CardContent>
         {isLoading ? (

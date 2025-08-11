@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { Post } from '@/app/(home)/home/_components/types'
-import { listPosts, createPost } from '@/lib/api/services/content'
+import { listPosts, createPost, getPost } from '@/lib/api/services/content'
 import { useUserStore } from './userStore'
 
 interface PostState {
@@ -17,6 +17,7 @@ interface PostState {
   totalPages: number
   
   fetchPosts: (page?: number, limit?: number, append?: boolean) => Promise<void>
+  fetchSinglePost: (postId: string) => Promise<Post | null>
   loadMorePosts: () => Promise<void>
   addPost: (post: Post) => void
   toggleLike: (postId: string | number) => void
@@ -127,6 +128,40 @@ export const usePostStore = create<PostState>()(
             loading: false,
             loadingMore: false
           })
+        }
+      },
+
+      fetchSinglePost: async (postId: string) => {
+        try {
+          const response = await getPost(postId)
+          const { fetchUserById } = useUserStore.getState()
+          
+          // Fetch author
+          const author = await fetchUserById(response.auth)
+          
+          // Transform post to UI-ready format
+          const transformedPost: Post = {
+            id: response.id,
+            author: author.name || "Unknown User",
+            avatar: author.profilePicture || "/pp.png",
+            role: author.role || "Medical Professional",
+            time: new Date(response.created_at).toLocaleString(),
+            content: response.content,
+            title: response.title,
+            tags: [],
+            type: "Research Paper" as const,
+            likes: response.reactions || 0,
+            comments: 0,
+            shares: response.shares || 0,
+            ...(response.attachment_id && {
+              image: `https://content.api.pharminc.in/image/${response.attachment_id}`,
+            }),
+          }
+
+          return transformedPost
+        } catch (error) {
+          console.error('Error fetching single post:', error)
+          return null
         }
       },
 

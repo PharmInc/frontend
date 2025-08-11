@@ -50,10 +50,10 @@ export function ProfilePageClient({ profileData, currentUserId, userId }: Profil
           <ProfileAboutTab userId={userId} />
         )}
         {activeTab === "Experience" && (
-          <ProfileExperienceTab userId={userId} />
+          <ProfileExperienceTab userId={userId} currentUserId={currentUserId || ""} />
         )}
         {activeTab === "Education" && (
-          <ProfileEducationTab userId={userId} />
+          <ProfileEducationTab userId={userId} currentUserId={currentUserId || ""} />
         )}
         {activeTab === "Posts" && <ProfilePostsTab userId={userId} />}
         {activeTab === "Activity" && <ProfileActivityTab />}

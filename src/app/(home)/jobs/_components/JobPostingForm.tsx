@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import React from 'react';
+import { createJob } from "@/lib/api";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,19 +32,20 @@ import { FileText, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const jobCategories = ["Doctor", "Nurse", "Intern", "Dentist", "Orthodontist", "Surgeon", "Other"];
+const workLocations = ["On-site", "Remote", "Hybrid"];
+const experienceLevels = ["Entry Level", "Mid Level", "Senior Level", "Expert Level"];
 const benefits = ["Health Insurance", "Travel Allowance", "Housing", "Paid Time Off", "Bonuses"];
-const skills = ["Patient Care", "Medical-Surgical", "Emergency Medicine", "Communication Skills", "Electronic Health Records (EHR)"];
 
 const jobPostingSchema = z.object({
-  jobTitle: z.string().min(2, { message: "Job title must be at least 2 characters." }),
-  jobDescription: z.string().min(10, { message: "Description must be at least 10 characters." }),
-  salary: z.string().min(1, { message: "Salary is required." }),
-  workingHours: z.string().min(1, { message: "Working hours are required." }),
+  title: z.string().min(2, { message: "Job title must be at least 2 characters." }),
+  description: z.string().min(10, { message: "Description must be at least 10 characters." }),
+  pay_range: z.string().min(1, { message: "Pay range is required." }),
   benefits: z.array(z.string()).refine((value) => value.length > 0, { message: "Select at least one benefit." }),
+  category: z.string({ message: "Please select a job category." }),
   location: z.string().min(2, { message: "Location must be at least 2 characters." }),
-  jobCategory: z.string({ message: "Please select a job category." }),
-  skills: z.array(z.string()).refine((value) => value.length > 0, { message: "Select at least one skill." }),
-  eligibility: z.string().min(10, { message: "Eligibility must be at least 10 characters." }),
+  role: z.string().min(2, { message: "Role must be at least 2 characters." }),
+  work_location: z.string({ message: "Please select a work location." }),
+  experience_level: z.string({ message: "Please select an experience level." }),
 });
 
 type JobPostingFormValues = z.infer<typeof jobPostingSchema>;
@@ -53,32 +55,33 @@ const JobPostingForm = () => {
   const form = useForm<JobPostingFormValues>({
     resolver: zodResolver(jobPostingSchema),
     defaultValues: {
-      jobTitle: "",
-      jobDescription: "",
-      salary: "",
-      workingHours: "",
+      title: "",
+      description: "",
+      pay_range: "",
       benefits: [],
+      category: "",
       location: "",
-      skills: [],
-      eligibility: "",
+      role: "",
+      work_location: "",
+      experience_level: "",
     },
   });
 
   async function onSubmit(data: JobPostingFormValues) {
     try {
       const payload = {
-        title: data.jobTitle,
-        description: data.jobDescription,
-        payRange: data.salary,
-        workingHours: data.workingHours,
+        title: data.title,
+        description: data.description,
+        pay_range: data.pay_range,
         benefits: data.benefits.join(', '),
+        category: data.category,
         location: data.location,
-        category: data.jobCategory,
-        skills: data.skills.join(', '),
-        eligibility: data.eligibility,
+        role: data.role,
+        work_location: data.work_location,
+        experience_level: data.experience_level,
       };
 
-      // await jobApiClient.post("/private/job", payload);
+      await createJob(payload);
       toast.success("Job posted successfully!");
       form.reset();
       
@@ -126,7 +129,7 @@ const JobPostingForm = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
-                      name="jobTitle"
+                      name="title"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-gray-700 font-medium">Job Title</FormLabel>
@@ -162,7 +165,7 @@ const JobPostingForm = () => {
 
                   <FormField
                     control={form.control}
-                    name="jobDescription"
+                    name="description"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-gray-700 font-medium">Job Description</FormLabel>
@@ -181,10 +184,10 @@ const JobPostingForm = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
-                      name="salary"
+                      name="pay_range"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">Salary / Pay Range</FormLabel>
+                          <FormLabel className="text-gray-700 font-medium">Pay Range</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="e.g., ₹15-25 LPA" 
@@ -198,13 +201,13 @@ const JobPostingForm = () => {
                     />
                     <FormField
                       control={form.control}
-                      name="workingHours"
+                      name="role"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">Working Hours</FormLabel>
+                          <FormLabel className="text-gray-700 font-medium">Role</FormLabel>
                           <FormControl>
                             <Input 
-                              placeholder="e.g., 9 AM - 5 PM, 6 days a week" 
+                              placeholder="e.g., Cardiologist, Surgeon" 
                               className="h-11 bg-gray-50 border-gray-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
                               {...field} 
                             />
@@ -215,22 +218,73 @@ const JobPostingForm = () => {
                     />
                   </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-medium">Job Category</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-11 bg-gray-50 border-gray-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
+                                <SelectValue placeholder="Select a category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {jobCategories.map((category) => (
+                                <SelectItem key={category} value={category}>
+                                  {category}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="work_location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-medium">Work Location</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-11 bg-gray-50 border-gray-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
+                                <SelectValue placeholder="Select work location" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {workLocations.map((location) => (
+                                <SelectItem key={location} value={location}>
+                                  {location}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
-                    name="jobCategory"
+                    name="experience_level"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">Job Category</FormLabel>
+                        <FormLabel className="text-gray-700 font-medium">Experience Level</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger className="h-11 bg-gray-50 border-gray-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
-                              <SelectValue placeholder="Select a category" />
+                              <SelectValue placeholder="Select experience level" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {jobCategories.map((category) => (
-                              <SelectItem key={category} value={category}>
-                                {category}
+                            {experienceLevels.map((level) => (
+                              <SelectItem key={level} value={level}>
+                                {level}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -240,90 +294,36 @@ const JobPostingForm = () => {
                     )}
                   />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <FormField
-                      control={form.control}
-                      name="benefits"
-                      render={() => (
-                        <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">Benefits Offered</FormLabel>
-                          <div className="space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            {benefits.map((benefit) => (
-                              <FormField
-                                key={benefit}
-                                control={form.control}
-                                name="benefits"
-                                render={({ field }) => (
-                                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value?.includes(benefit)}
-                                        onCheckedChange={(checked) => {
-                                          return checked
-                                            ? field.onChange([...field.value, benefit])
-                                            : field.onChange(field.value?.filter((value) => value !== benefit));
-                                        }}
-                                      />
-                                    </FormControl>
-                                    <FormLabel className="font-normal text-gray-700">{benefit}</FormLabel>
-                                  </FormItem>
-                                )}
-                              />
-                            ))}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="skills"
-                      render={() => (
-                        <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">Required Skills</FormLabel>
-                          <div className="space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            {skills.map((skill) => (
-                              <FormField
-                                key={skill}
-                                control={form.control}
-                                name="skills"
-                                render={({ field }) => (
-                                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value?.includes(skill)}
-                                        onCheckedChange={(checked) => {
-                                          return checked
-                                            ? field.onChange([...field.value, skill])
-                                            : field.onChange(field.value?.filter((value) => value !== skill));
-                                        }}
-                                      />
-                                    </FormControl>
-                                    <FormLabel className="font-normal text-gray-700">{skill}</FormLabel>
-                                  </FormItem>
-                                )}
-                              />
-                            ))}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
                   <FormField
                     control={form.control}
-                    name="eligibility"
-                    render={({ field }) => (
+                    name="benefits"
+                    render={() => (
                       <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">Eligibility Criteria</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Specify required qualifications, experience, certifications, etc."
-                            className="min-h-[100px] bg-gray-50 border-gray-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
-                            {...field}
-                          />
-                        </FormControl>
+                        <FormLabel className="text-gray-700 font-medium">Benefits Offered</FormLabel>
+                        <div className="space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          {benefits.map((benefit) => (
+                            <FormField
+                              key={benefit}
+                              control={form.control}
+                              name="benefits"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(benefit)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, benefit])
+                                          : field.onChange(field.value?.filter((value) => value !== benefit));
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal text-gray-700">{benefit}</FormLabel>
+                                </FormItem>
+                              )}
+                            />
+                          ))}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}

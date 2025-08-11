@@ -72,8 +72,8 @@ export function InstitutionProfileClient({ institutionData, instituteId }: Insti
         {activeTab === "Education" && (
           <ProfileEducationTab userId={instituteId} />
         )}
-        {activeTab === "Posts" && <ProfilePostsTab />}
-        {activeTab === "Activity" && <ProfileActivityTab />}
+        {activeTab === "Posts" && <ProfilePostsTab userId={instituteId} />}
+        {activeTab === "Activity" && <ProfileActivityTab/>}
       </div>
     </div>
   );
