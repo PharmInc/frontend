@@ -7,7 +7,6 @@ import { ProfileExperienceTab } from "@/components/profile/internals/ProfileExpe
 import { ProfileEducationTab } from "@/components/profile/internals/ProfileEducationTab";
 import { ProfilePostsTab } from "@/components/profile/internals/ProfilePostsTab";
 import { ProfileActivityTab } from "@/components/profile/internals/ProfileActivityTab";
-import { Card } from "@/components/ui/card";
 import { useState } from "react";
 import { User } from "@/lib/api";
 
@@ -19,8 +18,13 @@ interface ProfilePageClientProps {
 
 export function ProfilePageClient({ profileData, currentUserId, userId }: ProfilePageClientProps) {
   const [activeTab, setActiveTab] = useState("Posts");
+  const [userData, setUserData] = useState(profileData);
 
-  if (!profileData) {
+  const handleUserUpdate = (updatedUser: User) => {
+    setUserData(updatedUser);
+  };
+
+  if (!userData) {
     return (
       <div className="space-y-4">
         <div className="flex justify-center items-center py-12">
@@ -33,9 +37,10 @@ export function ProfilePageClient({ profileData, currentUserId, userId }: Profil
   return (
     <div className="space-y-4">
       <ProfileHeader
-        user={profileData}
+        user={userData}
         institution={null}
         currentUserId={currentUserId || ""}
+        onUserUpdate={handleUserUpdate}
       />
 
       <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -50,7 +55,7 @@ export function ProfilePageClient({ profileData, currentUserId, userId }: Profil
         {activeTab === "Education" && (
           <ProfileEducationTab userId={userId} />
         )}
-        {activeTab === "Posts" && <ProfilePostsTab />}
+        {activeTab === "Posts" && <ProfilePostsTab userId={userId} />}
         {activeTab === "Activity" && <ProfileActivityTab />}
       </div>
     </div>

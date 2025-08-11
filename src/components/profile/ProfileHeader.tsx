@@ -13,9 +13,12 @@ import {
   Briefcase, 
   GraduationCap, 
   Link2, 
-  CheckCircle 
+  CheckCircle,
+  Edit
 } from "lucide-react";
 import Image from "next/image";
+import { EditProfileModal } from "./EditProfileModal";
+import { useUserStore } from "@/store/userStore";
 import {
   followUser,
   unfollowUser,
@@ -34,13 +37,16 @@ interface ProfileHeaderProps {
   user: User | null;
   institution: Institution | null;
   currentUserId: string;
+  onUserUpdate?: (updatedUser: User) => void;
 }
 
 export const ProfileHeader = ({
   user,
   institution,
   currentUserId,
+  onUserUpdate,
 }: ProfileHeaderProps) => {
+  const { currentUser, fetchCurrentUser } = useUserStore();
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(user?.followers || 0);
   const [isConnected, setIsConnected] = useState(false);
@@ -49,6 +55,8 @@ export const ProfileHeader = ({
   const [connectionsCount, setConnectionsCount] = useState(
     user?.connections || 0
   );
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentUserProfile, setCurrentUserProfile] = useState(user);
   const [isLoading, setIsLoading] = useState({
     follow: false,
     connect: false,
@@ -56,18 +64,25 @@ export const ProfileHeader = ({
     reject: false,
   });
 
-  // Don't show buttons if viewing own profile
-  const isOwnProfile = currentUserId === user?.id;
+  const isOwnProfile = currentUser?.id === user?.id;
+
+  // Fetch current user on mount
+  useEffect(() => {
+    if (!currentUser) {
+      fetchCurrentUser();
+    }
+  }, [currentUser, fetchCurrentUser]);
+
 
   // Check initial follow and connection status
   useEffect(() => {
     const checkStatus = async () => {
-      if (!user?.id || !currentUserId || isOwnProfile) return;
+      if (!user?.id || !currentUser?.id || isOwnProfile) return;
 
       try {
         // Check follow status
         const followers = await getUserFollowers(user.id);
-        const isFollowing = followers.some((f) => f.user1Id === currentUserId);
+        const isFollowing = followers.some((f) => f.user1Id === currentUser.id);
         setIsFollowing(isFollowing);
 
         // Get followers count
@@ -78,8 +93,8 @@ export const ProfileHeader = ({
         const connections = await getUserConnections(user.id);
         const connection = connections.find(
           (c) =>
-            (c.user1Id === currentUserId && c.user2_id === user.id) ||
-            (c.user1Id === user.id && c.user2_id === currentUserId)
+            (c.user1Id === currentUser.id && c.user2_id === user.id) ||
+            (c.user1Id === user.id && c.user2_id === currentUser.id)
         );
 
         if (connection) {
@@ -89,7 +104,7 @@ export const ProfileHeader = ({
             setHasIncomingRequest(false);
           } else {
             // Check if current user sent the request or received it
-            if (connection.user1Id === currentUserId) {
+            if (connection.user1Id === currentUser.id) {
               // Current user sent the request
               setHasPendingRequest(true);
               setHasIncomingRequest(false);
@@ -110,10 +125,10 @@ export const ProfileHeader = ({
     };
 
     checkStatus();
-  }, [user?.id, currentUserId, isOwnProfile]);
+  }, [user?.id, currentUser?.id, isOwnProfile]);
 
   const handleFollow = async () => {
-    if (!user?.id || !currentUserId || isLoading.follow || isOwnProfile) return;
+    if (!user?.id || !currentUser?.id || isLoading.follow || isOwnProfile) return;
 
     setIsLoading((prev) => ({ ...prev, follow: true }));
     try {
@@ -133,7 +148,7 @@ export const ProfileHeader = ({
   };
 
   const handleConnect = async () => {
-    if (!user?.id || !currentUserId || isLoading.connect || isOwnProfile)
+    if (!user?.id || !currentUser?.id || isLoading.connect || isOwnProfile)
       return;
 
     setIsLoading((prev) => ({ ...prev, connect: true }));
@@ -157,7 +172,7 @@ export const ProfileHeader = ({
   };
 
   const handleAcceptConnection = async () => {
-    if (!user?.id || !currentUserId || isLoading.accept || isOwnProfile) return;
+    if (!user?.id || !currentUser?.id || isLoading.accept || isOwnProfile) return;
 
     setIsLoading((prev) => ({ ...prev, accept: true }));
     try {
@@ -173,7 +188,7 @@ export const ProfileHeader = ({
   };
 
   const handleRejectConnection = async () => {
-    if (!user?.id || !currentUserId || isLoading.reject || isOwnProfile) return;
+    if (!user?.id || !currentUser?.id || isLoading.reject || isOwnProfile) return;
 
     setIsLoading((prev) => ({ ...prev, reject: true }));
     try {
@@ -186,12 +201,22 @@ export const ProfileHeader = ({
     }
   };
 
+  const handleUserUpdate = (updatedUser: User) => {
+    setCurrentUserProfile(updatedUser);
+    setFollowersCount(updatedUser.followers || 0);
+    setConnectionsCount(updatedUser.connections || 0);
+    if (onUserUpdate) {
+      onUserUpdate(updatedUser);
+    }
+  };
+
+  const displayUser = currentUserProfile || user;
+
   return (
-    <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-      {/* Cover Photo */}
-      <div className="relative h-32 sm:h-36 md:h-40">
+    <div className="bg-white rounded-xl overflow-hidden">
+      <div className="relative h-32 sm:h-36">
         <Image
-          src={user?.banner_picture || "/banner.png"}
+          src={displayUser?.banner_picture || "/banner.png"}
           alt="Cover photo"
           className="w-full h-full object-cover"
           width={1200}
@@ -199,27 +224,26 @@ export const ProfileHeader = ({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
         {isOwnProfile && (
-          <button className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-black/50 hover:bg-black/60 text-white backdrop-blur-sm px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-full flex items-center transition-colors">
-            <Camera className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Edit cover</span>
+          <button className="absolute top-4 right-4 bg-black/50 hover:bg-black/60 text-white backdrop-blur-sm px-3 py-2 text-sm rounded-full flex items-center transition-colors">
+            <Camera className="h-4 w-4 mr-2" />
+            Edit cover
           </button>
         )}
         
-        {/* Profile Picture - Overlapping */}
-        <div className="absolute -bottom-12 sm:-bottom-16 left-4 sm:left-6">
+        <div className="absolute -bottom-16 left-6">
           <div className="relative">
-            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white shadow-lg">
+            <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
               <AvatarImage
-                src={user?.profile_picture || "/pp.png"}
-                alt={user?.name || "User"}
+                src={displayUser?.profile_picture || "/pp.png"}
+                alt={displayUser?.name || "User"}
               />
-              <AvatarFallback className="text-lg sm:text-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 font-bold">
-                {user?.name?.[0] || "U"}
+              <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 font-bold">
+                {displayUser?.name?.[0] || "U"}
               </AvatarFallback>
             </Avatar>
             {isOwnProfile && (
-              <button className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-1 sm:p-2 shadow-sm transition-colors">
-                <Camera className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
+              <button className="absolute bottom-2 right-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-sm transition-colors">
+                <Camera className="h-4 w-4 text-gray-600" />
               </button>
             )}
           </div>
@@ -227,11 +251,22 @@ export const ProfileHeader = ({
       </div>
 
       <div className="pt-16 pb-4 px-6 relative">
-        {!isOwnProfile && (
-          <div className="absolute top-4 right-6 flex gap-2">
-            <Button variant="outline" size="sm" className="rounded-full">
-              <MessageSquare className="h-4 w-4" />
+        <div className="absolute top-4 right-6 flex gap-2">
+          {isOwnProfile ? (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="rounded-full"
+              onClick={() => setIsEditModalOpen(true)}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Profile
             </Button>
+          ) : (
+            <>
+              <Button variant="outline" size="sm" className="rounded-full">
+                <MessageSquare className="h-4 w-4" />
+              </Button>
 
             <Button
               variant={isFollowing ? "default" : "outline"}
@@ -297,39 +332,40 @@ export const ProfileHeader = ({
                   : "Connect"}
               </Button>
             )}
-          </div>
-        )}
+            </>
+          )}
+        </div>
         <div className="mb-2">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2 font-sans mt-4">
-            {user?.name || "Loading..."}
-            {user?.verified && (
-              <CheckCircle className="h-5 w-5 text-blue-500 fill-current" />
+            {displayUser?.name || "Loading..."}
+            {displayUser?.verified && (
+              <CheckCircle className="h-5 w-5 text-blue-500" />
             )}
           </h1>
-          <p className="text-gray-500 text-sm">@{user?.email?.split('@')[0] || 'username'}</p>
+          <p className="text-gray-500 text-sm">@{displayUser?.email?.split('@')[0] || 'username'}</p>
         </div>
-        {user?.bio && (
+        {displayUser?.bio && (
           <div className="mb-3">
-            <p className="text-gray-900 leading-relaxed">{user.bio}</p>
+            <p className="text-gray-900 leading-relaxed">{displayUser.bio}</p>
           </div>
         )}
 
         <div className="space-y-2 text-gray-500 text-sm mb-3">
-          {user?.location && (
+          {displayUser?.location && (
             <div className="flex items-center gap-1">
               <MapPin className="h-4 w-4" />
-              <span>{user.location}</span>
+              <span>{displayUser.location}</span>
             </div>
           )}
 
           <div className="flex items-center gap-1">
             <Briefcase className="h-4 w-4" />
-            <span>{user?.role || "Healthcare Professional"}</span>
-            {user?.specialization && (
+            <span>{displayUser?.role || "Healthcare Professional"}</span>
+            {displayUser?.specialization && (
               <>
                 <span className="mx-1">•</span>
                 <GraduationCap className="h-4 w-4" />
-                <span>{user.specialization}</span>
+                <span>{displayUser.specialization}</span>
               </>
             )}
           </div>
@@ -353,6 +389,16 @@ export const ProfileHeader = ({
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      {isOwnProfile && displayUser && (
+        <EditProfileModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          user={displayUser as any} // Type cast to handle different User types
+          onUpdate={handleUserUpdate}
+        />
+      )}
     </div>
   );
 };

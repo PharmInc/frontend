@@ -1,5 +1,6 @@
-import { getUserById, getUser, getAuthToken, User } from "@/lib/api";
+import { getUserById, getUser, User } from "@/lib/api";
 import { ProfilePageClient } from "./ProfilePageClient";
+import { cookies } from "next/headers";
 
 export default async function ProfilePage({
   params,
@@ -14,7 +15,9 @@ export default async function ProfilePage({
     // Get current user ID from token or API
     let currentUserId: string | null = null;
     try {
-      const token = getAuthToken();
+      const cookieStore = await cookies();
+      const token = cookieStore.get('authToken')?.value;
+      
       if (token) {
         try {
           // First try to decode from JWT token

@@ -125,7 +125,6 @@ export const ProfileExperienceTab = ({ userId }: ProfileExperienceTabProps) => {
           })
         );
         setExperiences(enrichedData);
-        toast.success("Experience data loaded successfully");
       } catch (error) {
         console.error("Failed to fetch experiences:", error);
         toast.error("Failed to fetch experience data");

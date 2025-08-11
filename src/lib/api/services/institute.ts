@@ -1,4 +1,4 @@
-import { apiRequest } from "@/lib/api/utils";
+import { instituteApi } from "@/lib/api/axios/api";
 import {
   Institution,
   InstitutionCreateParams,
@@ -10,48 +10,36 @@ import {
 export const createInstitution = async (
   institutionData: InstitutionCreateParams
 ): Promise<Institution> => {
-  return apiRequest<Institution>("institute", "/private/institution", {
-    method: "POST",
-    body: JSON.stringify(institutionData),
-  });
+  const response = await instituteApi.post("/private/institution", institutionData);
+  return response.data;
 };
 
 export const getInstitution = async (): Promise<Institution> => {
-  return apiRequest<Institution>("institute", "/private/institution", {
-    method: "GET",
-  });
+  const response = await instituteApi.get("/private/institution");
+  return response.data;
 };
 
 export const getInstitutionById = async (id: string): Promise<Institution> => {
-  return apiRequest<Institution>("institute", `/public/institution/${id}`, {
-    method: "GET",
-  });
+  const response = await instituteApi.get(`/public/institution/${id}`);
+  return response.data;
 };
 
 export const updateInstitution = async (
   institutionData: InstitutionUpdateParams
 ): Promise<Institution> => {
-  return apiRequest<Institution>("institute", "/private/institution", {
-    method: "PUT",
-    body: JSON.stringify(institutionData),
-  });
+  const response = await instituteApi.put("/private/institution", institutionData);
+  return response.data;
 };
 
 export const deleteInstitution = async (): Promise<void> => {
-  return apiRequest<void>("institute", "/private/institution", {
-    method: "DELETE",
-  });
+  await instituteApi.delete("/private/institution");
 };
 
 export const searchInstitutions = async (
   params: InstitutionSearchParams
 ): Promise<PaginatedResponse<Institution>> => {
-  return apiRequest<PaginatedResponse<Institution>>(
-    "user",
-    "/public/institution/search",
-    { method: "GET" },
-    params as unknown as Record<string, unknown>
-  );
+  const response = await instituteApi.get("/public/institution/search", { params });
+  return response.data;
 };
 
 export const listInstitutions = async (
@@ -59,10 +47,8 @@ export const listInstitutions = async (
   limit: number = 10,
   fields?: string
 ): Promise<PaginatedResponse<Institution>> => {
-  return apiRequest<PaginatedResponse<Institution>>(
-    "institute",
-    "/public/institution",
-    { method: "GET" },
-    { page, limit, fields }
-  );
+  const response = await instituteApi.get("/public/institution", {
+    params: { page, limit, fields }
+  });
+  return response.data;
 };

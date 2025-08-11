@@ -125,7 +125,6 @@ export const ProfileEducationTab = ({ userId }: ProfileEducationTabProps) => {
           })
         );
         setEducations(enrichedData);
-        toast.success("Education data loaded successfully");
       } catch (error) {
         console.error("Failed to fetch educations:", error);
         toast.error("Failed to fetch education data");
