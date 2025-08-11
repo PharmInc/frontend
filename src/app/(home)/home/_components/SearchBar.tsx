@@ -1,11 +1,19 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react'
-import { Search } from "lucide-react"
+import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { Search, User, MapPin } from "lucide-react"
+import { searchUsers } from '@/lib/api/services/user'
+import { User as UserType } from '@/lib/api/types'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 
 export default function SearchBar() {
+  const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchValue, setSearchValue] = useState("")
+  const [searchResults, setSearchResults] = useState<UserType[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -19,73 +27,161 @@ export default function SearchBar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const recentSearches = [
-    "machine learning in healthcare",
-    "clinical trials 2024"
-  ]
+  const debouncedSearch = useCallback(
+    async (query: string) => {
+      if (query.trim().length < 2) {
+        setSearchResults([])
+        setHasSearched(false)
+        return
+      }
 
-  const suggestions = [
-    "cardiology research",
-    "medical conferences",
-    "pharmaceutical innovations",
-    "drug discovery trends"
-  ]
+      setIsSearching(true)
+      try {
+        const response = await searchUsers({
+          name: query,
+          page: 1,
+          limit: 10
+        })
+        setSearchResults(response.data)
+        setHasSearched(true)
+      } catch (error) {
+        console.error('Search failed:', error)
+        setSearchResults([])
+        setHasSearched(true)
+      } finally {
+        setIsSearching(false)
+      }
+    },
+    []
+  )
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchValue) {
+        debouncedSearch(searchValue)
+      } else {
+        setSearchResults([])
+        setHasSearched(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchValue, debouncedSearch])
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchValue(value)
+    if (!value.trim()) {
+      setSearchResults([])
+      setHasSearched(false)
+    }
+  }
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchValue.trim()) {
+      debouncedSearch(searchValue)
+    }
+  }
+
+  const handleUserClick = (user: UserType) => {    
+    const isInstitution = user.role?.toLowerCase().includes('institution') || 
+                         user.role?.toLowerCase().includes('hospital') ||
+                         user.role?.toLowerCase().includes('university') ||
+                         user.role?.toLowerCase().includes('college') ||
+                         user.role?.toLowerCase().includes('company')
+    
+    if (isInstitution) {
+      router.push(`/institute/${user.id}`)
+    } else {
+      router.push(`/profile/${user.id}`)
+    }
+    
+    setSearchOpen(false)
+  }
 
   return (
     <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 z-10 mb-0">
       <div ref={searchRef} className="relative">
-        <div className="relative bg-gray-100 rounded-full">
+        <form onSubmit={handleSearchSubmit} className="relative bg-gray-100 rounded-full">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
           <input
             type="text"
             placeholder="Search PharmaConnect..."
             value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
+            onChange={handleSearchChange}
             onFocus={() => setSearchOpen(true)}
             className="w-full bg-transparent border-0 rounded-full py-3 pl-12 pr-4 text-base placeholder:text-gray-500 focus:outline-none focus:ring-0"
           />
-        </div>
+        </form>
         
         {searchOpen && searchValue && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden z-20">
             <div className="max-h-96 overflow-y-auto">
-              <div className="py-2">
-                <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Recent searches
-                </div>
-                {recentSearches.map((search, index) => (
-                  <div
-                    key={index}
-                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center"
-                    onClick={() => {
-                      setSearchValue(search)
-                      setSearchOpen(false)
-                    }}
-                  >
-                    <Search className="mr-3 h-4 w-4 text-gray-400" />
-                    <span className="text-gray-900">{search}</span>
+              {isSearching ? (
+                <div className="py-6 text-center text-gray-500">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                    Searching...
                   </div>
-                ))}
-              </div>
-              
-              <div className="py-2 border-t border-gray-100">
-                <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Suggestions
                 </div>
-                {suggestions.map((suggestion, index) => (
-                  <div
-                    key={index}
-                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center"
-                    onClick={() => {
-                      setSearchValue(suggestion)
-                      setSearchOpen(false)
-                    }}
-                  >
-                    <Search className="mr-3 h-4 w-4 text-gray-400" />
-                    <span className="text-gray-900">{suggestion}</span>
+              ) : hasSearched ? (
+                searchResults.length > 0 ? (
+                  <div className="py-2">
+                    <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      People ({searchResults.length})
+                    </div>
+                    {searchResults.map((user) => (
+                      <div
+                        key={user.id}
+                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3"
+                        onClick={() => handleUserClick(user)}
+                      >
+                        <div className="flex-shrink-0">
+                          <Image
+                            src={user.profile_picture || '/pp.png'}
+                            alt={user.name}
+                            width={40}
+                            height={40}
+                            className="rounded-full object-cover w-10 h-10"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">
+                            {user.name}
+                          </div>
+                          <div className="text-sm text-gray-500 truncate">
+                            {user.role}
+                          </div>
+                          {user.location && (
+                            <div className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                              <MapPin className="h-3 w-3" />
+                              {user.location}
+                            </div>
+                          )}
+                        </div>
+                        {user.verified && (
+                          <div className="flex-shrink-0">
+                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div className="py-6 text-center text-gray-500">
+                    <div className="flex flex-col items-center gap-2">
+                      <User className="h-8 w-8 text-gray-300" />
+                      <div>No users found for "{searchValue}"</div>
+                      <div className="text-sm text-gray-400">Try a different search term</div>
+                    </div>
+                  </div>
+                )
+              ) : null}
             </div>
           </div>
         )}
@@ -93,7 +189,7 @@ export default function SearchBar() {
         {searchOpen && !searchValue && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden z-20">
             <div className="py-6 text-center text-gray-500">
-              Start typing to search...
+              Start typing to search for people...
             </div>
           </div>
         )}
