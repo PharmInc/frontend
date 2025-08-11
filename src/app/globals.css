@@ -1,6 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600;700&display=swap")
-layer(base);
-
 @import "tailwindcss";
 
 @plugin 'tailwindcss-animate';
@@ -53,8 +50,9 @@ layer(base);
   --color-medical-hashtag-bg: #eff6ff;
   --color-medical-hashtag-text: #1d4ed8;
 
-  --font-serif: DM Serif Display, serif;
-  --font-sans: Inter, sans-serif;
+  --font-serif: var(--font-chirp), serif;
+  --font-sans: var(--font-chirp), sans-serif;
+  --font-chirp: var(--font-chirp), system-ui, sans-serif;
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
@@ -291,7 +289,7 @@ layer(base);
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-chirp;
   }
 
   h1,

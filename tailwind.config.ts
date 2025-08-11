@@ -70,6 +70,7 @@ export default {
       fontFamily: {
         serif: ["DM Serif Display", "serif"],
         sans: ["Inter", "sans-serif"],
+        chirp: ["var(--font-chirp)", "system-ui", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

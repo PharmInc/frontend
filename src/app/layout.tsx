@@ -3,6 +3,7 @@ import "./globals.css";
 
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
+import { twitterChirp } from "@/lib/fonts";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} min-h-screen flex flex-col`}>
+      <body className={`${twitterChirp.variable} min-h-screen flex flex-col font-chirp`}>
         <div className="flex flex-col grow">{children}</div>
         <Toaster />
       </body>
