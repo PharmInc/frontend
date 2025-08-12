@@ -56,7 +56,7 @@ export default function LayoutContent({ children }: LayoutContentProps) {
           </div>
         </div>
 
-        <div className="flex-1 min-w-0 border-x border-gray-200">
+        <div className="flex-1 min-w-0 border-x border-gray-200 pt-3">
           <main className="w-full h-full">
             {children}
           </main>

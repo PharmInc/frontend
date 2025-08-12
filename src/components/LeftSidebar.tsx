@@ -53,7 +53,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
   };
 
   return (
-    <aside className="h-screen bg-white border-r border-gray-200 flex flex-col font-sans">
+    <aside className="h-screen bg-white border-r border-gray-200 flex flex-col font-sans pt-3">
       <div className="p-4 pb-0 flex-shrink-0">
         <div className="xl:block hidden mb-8">
           <Logo />
