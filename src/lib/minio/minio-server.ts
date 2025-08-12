@@ -12,10 +12,11 @@ const getMinioClient = (): Minio.Client => {
   if (!minioClient) {
     minioClient = new Minio.Client({
       endPoint: MINIO_ENDPOINT,
-      useSSL: true,
+      useSSL: false,
       accessKey: ACCESS_KEY,
       secretKey: SECRET_KEY,
       region: 'us-east-1',
+      port: 9000
     });
   }
   return minioClient;
