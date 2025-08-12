@@ -1,12 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useUserStore } from "@/store/userStore";
 
 import { motion } from "framer-motion";
 
 import Link from "next/link";
 
 export const Navbar = () => {
+  const { currentUser } = useUserStore();
+
   return (
     <motion.header
       className="fixed w-full top-0 z-50 bg-white/95 border-b border-gray-100 backdrop-blur-sm"
@@ -55,19 +58,31 @@ export const Navbar = () => {
 
         {/* Auth Buttons */}
         <div className="flex items-center gap-3">
-          <Link href="/auth">
-            <Button
-              variant="ghost"
-              className="text-gray-700 hover:text-white-700"
-            >
-              Log In
-            </Button>
-          </Link>
-          <Link href="/auth">
-            <Button className="bg-blue-700 hover:bg-blue-700 text-white">
-              Sign Up
-            </Button>
-          </Link>
+          {currentUser ? (
+            <>
+              <Link href="/home">
+                <Button className="bg-blue-700 hover:bg-blue-700 text-white">
+                  Home
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/auth">
+                <Button
+                  variant="ghost"
+                  className="text-gray-700 hover:text-white-700"
+                >
+                  Log In
+                </Button>
+              </Link>
+              <Link href="/auth">
+                <Button className="bg-blue-700 hover:bg-blue-700 text-white">
+                  Sign Up
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </motion.header>

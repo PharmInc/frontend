@@ -46,6 +46,18 @@ export const TextContent = () => (
           See How It Works
         </Button>
       </motion.div>
+      <motion.div whileHover={{ scale: 1.1, boxShadow: "0 0 20px #1D4ED8" }}>
+        <Button
+          size="lg"
+          variant="default"
+          className="bg-[#1D4ED8] text-white hover:bg-[#2563EB] shadow-lg"
+          onClick={() =>
+            window.open("https://forms.gle/p2tQuTwxM3HwR8LL6", "_blank")
+          }
+        >
+          Take the Survey
+        </Button>
+      </motion.div>
     </div>
   </motion.div>
 );
