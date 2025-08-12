@@ -13,7 +13,7 @@ const getMinioClient = (): Minio.Client => {
   if (!minioClient) {
     minioClient = new Minio.Client({
       endPoint: MINIO_ENDPOINT,
-      useSSL: false,
+      useSSL: true,
       accessKey: ACCESS_KEY,
       secretKey: SECRET_KEY,
       region: 'us-east-1',
