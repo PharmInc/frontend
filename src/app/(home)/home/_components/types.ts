@@ -31,9 +31,20 @@ export interface Post {
   title?: string;
   content: string;
   image?: string;
+  attachments?: FileAttachment[];
   tags?: string[];
   type: "Research Paper" | "Case Study";
   likes: number;
   comments: number;
   shares: number;
+}
+
+export interface FileAttachment {
+  id: string;
+  filename: string;
+  size: number;
+  content_type: string;
+  url: string;
+  type: 'image' | 'document' | 'video' | 'other';
+  extension?: string;
 }

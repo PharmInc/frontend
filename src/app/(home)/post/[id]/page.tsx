@@ -21,6 +21,8 @@ import { useUserStore, usePostStore } from '@/store';
 import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { fetchFolderContents, type FolderContentsResponse } from '@/lib/minio/minio-client';
+import MediaCarousel from '../../home/_components/MediaCarousel';
 
 interface UserInfo {
   name: string;
@@ -64,6 +66,7 @@ interface ExtendedPost extends Post {
     profile_picture?: string;
     role: string;
   };
+  attachment_id?: string;
 }
 
 interface CommentItemProps {
@@ -341,6 +344,8 @@ export default function PostDetailPage() {
   const [isLiking, setIsLiking] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [attachments, setAttachments] = useState<FolderContentsResponse | null>(null);
+  const [loadingAttachments, setLoadingAttachments] = useState(false);
 
   const postId = params.id as string;
 
@@ -364,10 +369,32 @@ export default function PostDetailPage() {
       };
       
       setPost({ ...postData, user });
+      
+      // Load attachments if they exist
+      const hasAttachmentId = (postData as any).attachment_id;
+      if (hasAttachmentId) {
+        loadAttachments(hasAttachmentId);
+      }
     } catch (error) {
       console.error('Failed to fetch post:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAttachments = async (attachmentId: string) => {
+    if (loadingAttachments) return;
+    
+    setLoadingAttachments(true);
+    try {
+      const folderContents = await fetchFolderContents(attachmentId.toString());
+      if (folderContents.files.length > 0) {
+        setAttachments(folderContents);
+      }
+    } catch (error) {
+      console.error('Failed to load attachments:', error);
+    } finally {
+      setLoadingAttachments(false);
     }
   };
 
@@ -731,18 +758,18 @@ export default function PostDetailPage() {
               {post.content}
             </div>
 
-            {/* Post Image */}
-            {/* {post.attachment_id && (
-              <div className="mb-4 rounded-2xl overflow-hidden border border-gray-200">
-                <Image
-                  src="/api/placeholder/600/400"
-                  alt="Post attachment"
-                  width={600}
-                  height={400}
-                  className="w-full h-auto"
-                />
+            {/* Attachments Display */}
+            {loadingAttachments && (
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <div className="text-sm text-gray-600">Loading attachments...</div>
               </div>
-            )} */}
+            )}
+            
+            {attachments && attachments.files.length > 0 && (
+              <div className="mb-4">
+                <MediaCarousel files={attachments.files} />
+              </div>
+            )}
 
             {/* Post Meta */}
             <div className="text-sm text-gray-500 mb-4">

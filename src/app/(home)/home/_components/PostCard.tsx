@@ -10,10 +10,12 @@ import {
 import { Post } from "./types";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePostStore } from "@/store/postStore";
 import ExpandedComments from "./ExpandedComments";
 import { useRouter } from "next/navigation";
+import { fetchFolderContents, type FolderContentsResponse } from "@/lib/minio/minio-client";
+import MediaCarousel from "./MediaCarousel";
 
 interface PostCardProps {
   post: Post;
@@ -26,6 +28,8 @@ export default function PostCard({ post }: PostCardProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [attachments, setAttachments] = useState<FolderContentsResponse | null>(null);
+  const [loadingAttachments, setLoadingAttachments] = useState(false);
   
   const { toggleLike, liked, sharePost, savePost, saved } = usePostStore();
   
@@ -46,7 +50,6 @@ export default function PostCard({ post }: PostCardProps) {
   };
 
   const handlePostClick = (e: React.MouseEvent) => {
-    // Don't navigate if clicking on interactive elements
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('a')) {
       return;
@@ -87,6 +90,32 @@ export default function PostCard({ post }: PostCardProps) {
       setIsSaving(false);
     }
   };
+
+  const loadAttachments = async () => {
+    if (!post.attachments && typeof post.id === 'string' && loadingAttachments) return;
+    
+    const attachmentId = (post as any).attachment_id || post.id;
+    if (!attachmentId) return;
+
+    setLoadingAttachments(true);
+    try {
+      const folderContents = await fetchFolderContents(attachmentId.toString());
+      if (folderContents.files.length > 0) {
+        setAttachments(folderContents);
+      }
+    } catch (error) {
+      console.error('Failed to load attachments:', error);
+    } finally {
+      setLoadingAttachments(false);
+    }
+  };
+
+  useEffect(() => {
+    const hasAttachmentId = (post as any).attachment_id;
+    if (hasAttachmentId && !attachments && !loadingAttachments) {
+      loadAttachments();
+    }
+  }, [post]);
   
   const maxLength = 300; 
   const shouldTruncate = post.content.length > maxLength;
@@ -148,6 +177,13 @@ export default function PostCard({ post }: PostCardProps) {
         {post.image && (
           <div className="rounded-lg overflow-hidden border border-gray-100">
             <Image width={1024} height={1024} src={post.image} alt="post" className="w-full h-auto aspect-auto" />
+          </div>
+        )}
+
+        {/* Multiple Attachments Display with MediaCarousel */}
+        {attachments && attachments.files.length > 0 && (
+          <div onClick={(e) => e.stopPropagation()}>
+            <MediaCarousel files={attachments.files} />
           </div>
         )}
 

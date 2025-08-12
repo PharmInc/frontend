@@ -3,6 +3,7 @@ import { devtools } from 'zustand/middleware'
 import { Post } from '@/app/(home)/home/_components/types'
 import { listPosts, createPost, getPost } from '@/lib/api/services/content'
 import { useUserStore } from './userStore'
+import { fetchFolderContents } from '@/lib/minio/minio-client'
 
 interface PostState {
   posts: Post[]
@@ -92,7 +93,10 @@ export const usePostStore = create<PostState>()(
               likes: post.reactions || 0,
               comments: post.comments || 0,
               shares: post.shares || 0,
-              ...(post.attachment_id && {
+              // Store attachment_id for folder-based attachments
+              ...(post.attachment_id && { attachment_id: post.attachment_id }),
+              // Keep legacy image support
+              ...(post.attachment_id && !post.attachment_id.includes('-') && {
                 image: `https://content.api.pharminc.in/image/${post.attachment_id}`,
               }),
             }
@@ -153,7 +157,8 @@ export const usePostStore = create<PostState>()(
             likes: response.reactions || 0,
             comments: 0,
             shares: response.shares || 0,
-            ...(response.attachment_id && {
+            ...(response.attachment_id && { attachment_id: response.attachment_id }),
+            ...(response.attachment_id && !response.attachment_id.includes('-') && {
               image: `https://content.api.pharminc.in/image/${response.attachment_id}`,
             }),
           }
@@ -257,7 +262,10 @@ export const usePostStore = create<PostState>()(
             likes: newPost.reactions || 0,
             comments: 0,
             shares: newPost.shares || 0,
-            ...(newPost.attachment_id && {
+            // Store attachment_id for folder-based attachments
+            ...(newPost.attachment_id && { attachment_id: newPost.attachment_id }),
+            // Keep legacy image support
+            ...(newPost.attachment_id && !newPost.attachment_id.includes('-') && {
               image: `https://content.api.pharminc.in/image/${newPost.attachment_id}`,
             }),
           }
