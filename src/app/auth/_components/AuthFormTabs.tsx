@@ -16,7 +16,7 @@ export function AuthFormTabs({ signInContent, signUpContent }: AuthFormTabsProps
       </TabsList>
 
       <TabsContent value="signin" className="space-y-4">
-        <SocialAuthButtons />
+        {/* <SocialAuthButtons />
         
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -27,13 +27,13 @@ export function AuthFormTabs({ signInContent, signUpContent }: AuthFormTabsProps
               Or continue with email
             </span>
           </div>
-        </div>
+        </div> */}
 
         {signInContent}
       </TabsContent>
 
       <TabsContent value="signup" className="space-y-4">
-        <SocialAuthButtons />
+        {/* <SocialAuthButtons />
         
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -44,7 +44,7 @@ export function AuthFormTabs({ signInContent, signUpContent }: AuthFormTabsProps
               Or continue with email
             </span>
           </div>
-        </div>
+        </div> */}
 
         {signUpContent}
       </TabsContent>
