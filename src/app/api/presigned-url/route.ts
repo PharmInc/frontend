@@ -17,7 +17,6 @@ const getMinioClient = (): Minio.Client => {
       accessKey: ACCESS_KEY,
       secretKey: SECRET_KEY,
       region: 'us-east-1',
-      port: 9000
     });
   }
   return minioClient;
