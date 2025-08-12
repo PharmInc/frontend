@@ -25,6 +25,8 @@ export default function PostModal({ isOpen, onClose, user }: PostModalProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [currentFolderId, setCurrentFolderId] = useState<string>("");
+  const [uploadProgress, setUploadProgress] = useState<{[key: number]: number}>({});
+  const [currentlyUploading, setCurrentlyUploading] = useState<number>(-1);
   const { createNewPost } = usePostStore();
   
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -47,6 +49,8 @@ export default function PostModal({ isOpen, onClose, user }: PostModalProps) {
       setCurrentFolderId("");
       setUploadError(null);
       setIsUploading(false);
+      setUploadProgress({});
+      setCurrentlyUploading(-1);
     }
   }, [isOpen]);
 
@@ -82,8 +86,21 @@ export default function PostModal({ isOpen, onClose, user }: PostModalProps) {
         attachmentId = folderId;
         
         console.log('Uploading files to folder:', folderId);
-        const uploadedResults = await uploadMultipleFiles(selectedFiles, folderId);
+        
+        const uploadedResults = await uploadMultipleFiles(
+          selectedFiles, 
+          folderId,
+          (fileIndex: number, progress: number) => {
+            setCurrentlyUploading(fileIndex);
+            setUploadProgress(prev => ({
+              ...prev,
+              [fileIndex]: progress
+            }));
+          }
+        );
+        
         console.log('Upload results:', uploadedResults);
+        setCurrentlyUploading(-1);
       }
       
       await createNewPost({
@@ -98,6 +115,8 @@ export default function PostModal({ isOpen, onClose, user }: PostModalProps) {
       setSelectedFiles([]);
       setCurrentFolderId("");
       setUploadError(null);
+      setUploadProgress({});
+      setCurrentlyUploading(-1);
       onClose();
     } catch (error) {
       console.error("Failed to create post:", error);
@@ -198,7 +217,11 @@ export default function PostModal({ isOpen, onClose, user }: PostModalProps) {
                   title="Post (Ctrl+Enter)"
                 >
                   {isSubmitting ? (
-                    isUploading ? "Uploading files..." : "Posting..."
+                    isUploading ? (
+                      currentlyUploading >= 0 ? 
+                        `Uploading ${currentlyUploading + 1}/${selectedFiles.length}...` : 
+                        "Uploading files..."
+                    ) : "Posting..."
                   ) : (
                     selectedFiles.length > 0 ? `Post with ${selectedFiles.length} file(s)` : "Post"
                   )}
@@ -280,9 +303,23 @@ export default function PostModal({ isOpen, onClose, user }: PostModalProps) {
                       {selectedFiles.map((file, index) => {
                         const isImage = file.type.startsWith('image/');
                         const isVideo = file.type.startsWith('video/');
+                        const isCurrentlyUploading = currentlyUploading === index;
+                        const progress = uploadProgress[index] || 0;
+                        const isUploaded = !isUploading && progress === 100;
                         
                         return (
-                          <div key={index} className="flex items-center gap-3 p-2 bg-white rounded border">
+                          <div key={index} className="flex items-center gap-3 p-2 bg-white rounded border relative">
+                            {isUploading && isCurrentlyUploading && (
+                              <div className="absolute inset-0 bg-blue-50/80 rounded flex items-center justify-center z-10">
+                                <div className="flex items-center gap-2">
+                                  <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                                  <span className="text-sm text-blue-700 font-medium">
+                                    {Math.round(progress)}%
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                            
                             <div className="flex-shrink-0">
                               {isImage ? (
                                 <div className="w-12 h-12 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
@@ -312,12 +349,23 @@ export default function PostModal({ isOpen, onClose, user }: PostModalProps) {
                             <div className="flex-1 min-w-0">
                               <div className="text-sm font-medium text-gray-900 truncate">
                                 {file.name}
+                                {isUploaded && (
+                                  <span className="ml-2 text-green-600 text-xs">✓ Uploaded</span>
+                                )}
                               </div>
                               <div className="text-xs text-gray-500 flex items-center gap-2">
                                 <span>{(file.size / 1024 / 1024).toFixed(2)} MB</span>
                                 <span>•</span>
                                 <span className="truncate">{file.type}</span>
                               </div>
+                              {isUploading && isCurrentlyUploading && (
+                                <div className="mt-1 w-full bg-gray-200 rounded-full h-1">
+                                  <div 
+                                    className="bg-blue-500 h-1 rounded-full transition-all duration-300"
+                                    style={{ width: `${progress}%` }}
+                                  />
+                                </div>
+                              )}
                             </div>
                             <button
                               onClick={() => removeSelectedFile(index)}
@@ -333,7 +381,12 @@ export default function PostModal({ isOpen, onClose, user }: PostModalProps) {
                     </div>
                     <div className="mt-2 text-xs text-blue-600 font-medium flex items-center gap-1">
                       <span>💡</span>
-                      <span>Files will be uploaded when you click "Post"</span>
+                      <span>
+                        {isUploading 
+                          ? `Uploading ${currentlyUploading + 1} of ${selectedFiles.length} files...`
+                          : "Files will be uploaded when you click 'Post'"
+                        }
+                      </span>
                     </div>
                   </div>
                 </div>

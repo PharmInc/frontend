@@ -10,6 +10,16 @@ export interface FileUploadResponse {
   folderId?: string;
 }
 
+export interface PresignedUrlResponse {
+  presignedUrl: string;
+  fileId: string;
+  objectKey: string;
+  fileName: string;
+  fileUrl: string;
+  folderId: string;
+  fileExtension: string;
+}
+
 export interface FolderContentsResponse {
   folderId: string;
   files: FileUploadResponse[];
@@ -50,42 +60,151 @@ export const getFileTypeFromMime = (mimeType: string): 'image' | 'document' | 'v
   return 'other';
 };
 
-export const uploadFile = async ({ file, type, folderId }: FileUploadParams): Promise<FileUploadResponse> => {
+export const getPresignedUrl = async (
+  fileName: string,
+  fileType: string,
+  fileSize: number,
+  folderId: string
+): Promise<PresignedUrlResponse> => {
+  try {
+    const response = await fetch('/api/presigned-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        fileName,
+        fileType,
+        fileSize,
+        folderId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Failed to get presigned URL: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get presigned URL failed:', error);
+    
+    if (error instanceof Error) {
+      throw error;
+    }
+    
+    throw new Error('Failed to get presigned URL. Please try again.');
+  }
+};
+
+export const uploadFileWithPresignedUrl = async (
+  file: File,
+  presignedUrl: string,
+  onProgress?: (progress: number) => void
+): Promise<void> => {
+  try {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      if (onProgress) {
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const progress = (event.loaded / event.total) * 100;
+            onProgress(progress);
+          }
+        });
+      }
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`Upload failed with status: ${xhr.status}`));
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Upload failed due to network error'));
+      });
+
+      xhr.addEventListener('abort', () => {
+        reject(new Error('Upload was aborted'));
+      });
+
+      xhr.open('PUT', presignedUrl);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.send(file);
+    });
+  } catch (error) {
+    console.error('File upload to presigned URL failed:', error);
+    
+    if (error instanceof Error) {
+      throw error;
+    }
+    
+    throw new Error('Failed to upload file. Please try again.');
+  }
+};
+
+export const confirmFileUpload = async (
+  objectKey: string,
+  fileName: string,
+  fileType: string
+): Promise<void> => {
+  try {
+    const response = await fetch('/api/confirm-upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        objectKey,
+        fileName,
+        fileType,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Failed to confirm upload: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Confirm upload failed:', error);
+    
+    if (error instanceof Error) {
+      throw error;
+    }
+    
+    throw new Error('Failed to confirm upload. Please try again.');
+  }
+};
+
+export const uploadFile = async (
+  { file, type, folderId }: FileUploadParams,
+  onProgress?: (progress: number) => void
+): Promise<FileUploadResponse> => {
   try {
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       throw new Error('File size must be less than 10MB');
     }
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('folderId', folderId);
-    if (type) {
-      formData.append('type', type);
-    }
-
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Upload failed with status: ${response.status}`);
-    }
-
-    const result = await response.json();
+    const presignedData = await getPresignedUrl(file.name, file.type, file.size, folderId);
+    
+    await uploadFileWithPresignedUrl(file, presignedData.presignedUrl, onProgress);
+    
+    await confirmFileUpload(presignedData.objectKey, presignedData.fileName, file.type);
     
     return {
-      id: result.id,
-      filename: result.filename,
-      size: result.size,
-      content_type: result.content_type,
-      url: result.url,
-      type: result.type,
-      extension: result.extension,
-      objectKey: result.objectKey,
-      folderId: result.folderId,
+      id: presignedData.fileId,
+      filename: presignedData.fileName,
+      size: file.size,
+      content_type: file.type,
+      url: presignedData.fileUrl,
+      type: getFileTypeFromMime(file.type),
+      extension: presignedData.fileExtension,
+      objectKey: presignedData.objectKey,
+      folderId: presignedData.folderId,
     };
 
   } catch (error) {
@@ -101,24 +220,33 @@ export const uploadFile = async ({ file, type, folderId }: FileUploadParams): Pr
 
 export const uploadMultipleFiles = async (
   files: File[],
-  folderId: string
+  folderId: string,
+  onProgress?: (fileIndex: number, progress: number) => void
 ): Promise<FileUploadResponse[]> => {
-  const uploadPromises = files.map(file => {
+  const results: FileUploadResponse[] = [];
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
     const fileType = getFileTypeFromMime(file.type);
-    return uploadFile({ 
-      file, 
-      type: fileType !== 'other' ? fileType : undefined, 
-      folderId 
-    });
-  });
-
-  try {
-    const results = await Promise.all(uploadPromises);
-    return results;
-  } catch (error) {
-    console.error('Multiple file upload failed:', error);
-    throw error;
+    
+    try {
+      const result = await uploadFile(
+        { 
+          file, 
+          type: fileType !== 'other' ? fileType : undefined, 
+          folderId 
+        },
+        onProgress ? (progress) => onProgress(i, progress) : undefined
+      );
+      
+      results.push(result);
+    } catch (error) {
+      console.error(`Failed to upload file ${file.name}:`, error);
+      throw new Error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
+
+  return results;
 };
 
 export const fetchFolderContents = async (folderId: string): Promise<FolderContentsResponse> => {
