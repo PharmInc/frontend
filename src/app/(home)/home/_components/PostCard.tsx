@@ -49,6 +49,13 @@ export default function PostCard({ post }: PostCardProps) {
     setShowComments(!showComments);
   };
 
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (post.authorId) {
+      router.push(`/profile/${post.authorId}`);
+    }
+  };
+
   const handlePostClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('a')) {
@@ -135,10 +142,14 @@ export default function PostCard({ post }: PostCardProps) {
           <img
             src={post.avatar}
             alt={post.author}
-            className="w-9 h-9 rounded-full object-cover"
+            onClick={handleProfileClick}
+            className="w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all"
           />
           <div className="flex flex-col leading-tight">
-            <span className="font-semibold text-sm text-gray-900 font-sans">
+            <span 
+              onClick={handleProfileClick}
+              className="font-semibold text-sm text-gray-900 font-sans cursor-pointer hover:text-blue-600 transition-colors"
+            >
               {post.author}
             </span>
             <span className="text-xs text-gray-500 font-sans">

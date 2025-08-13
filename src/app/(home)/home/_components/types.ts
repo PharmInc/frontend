@@ -25,6 +25,7 @@ export interface InstitutionEntity extends BaseEntity {
 export interface Post {
   id: number | string;
   author: string;
+  authorId?: string; // User ID of the post author
   avatar: string;
   role: string;
   time: string;

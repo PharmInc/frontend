@@ -12,6 +12,7 @@ import { getAuthToken } from '@/lib/api/utils';
 interface BookmarkedPost {
   id: string;
   author: string;
+  authorId?: string; // User ID of the post author
   avatar: string;
   role: string;
   time: string;
@@ -33,6 +34,12 @@ const BookmarksPage = () => {
 
   // Empty array since backend bookmarks is not ready
   const bookmarkedPosts: BookmarkedPost[] = [];
+
+  const handleProfileClick = (authorId?: string) => {
+    if (authorId) {
+      router.push(`/profile/${authorId}`);
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -107,12 +114,18 @@ const BookmarksPage = () => {
                     alt={post.author}
                     width={48}
                     height={48}
-                    className="rounded-full"
+                    onClick={() => handleProfileClick(post.authorId)}
+                    className="rounded-full cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all"
                   />
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
                       <div>
-                        <h3 className="font-semibold text-gray-900 font-sans">{post.author}</h3>
+                        <h3 
+                          onClick={() => handleProfileClick(post.authorId)}
+                          className="font-semibold text-gray-900 font-sans cursor-pointer hover:text-blue-600 transition-colors"
+                        >
+                          {post.author}
+                        </h3>
                         <p className="text-sm text-gray-500 font-sans">{post.role} • {post.time}</p>
                       </div>
                       <button className="p-2 hover:bg-gray-100 rounded-full">

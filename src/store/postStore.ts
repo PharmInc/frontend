@@ -83,6 +83,7 @@ export const usePostStore = create<PostState>()(
             return {
               id: post.id,
               author: author.name || "Unknown User",
+              authorId: post.auth, // Store the user ID
               avatar: author.profilePicture || "/pp.png",
               role: author.role || "Medical Professional",
               time: new Date(post.created_at).toLocaleString(),
@@ -147,6 +148,7 @@ export const usePostStore = create<PostState>()(
           const transformedPost: Post = {
             id: response.id,
             author: author.name || "Unknown User",
+            authorId: response.auth,
             avatar: author.profilePicture || "/pp.png",
             role: author.role || "Medical Professional",
             time: new Date(response.created_at).toLocaleString(),
