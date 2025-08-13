@@ -2,27 +2,40 @@
 
 import React, { useState, useEffect } from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Bell, Users, MessageCircle } from "lucide-react"
 import { NotificationItem } from './_components/NotificationItem'
 import { ConnectionRequestItem } from './_components/ConnectionRequestItem'
 import { LoginPrompt } from './_components/LoginPrompt'
 import { useUserStore } from '@/store/userStore'
 import { getAuthToken } from '@/lib/api/utils'
-import Link from 'next/link'
+import { getUserConnections, getUserById, acceptConnection, disconnectUser, Connect, User } from '@/lib/api'
 
-const page = () => {
+interface ConnectionWithUser extends Connect {
+  user: User;
+}
+
+const NotificationsPage = () => {
   const [loadingStates, setLoadingStates] = useState<{[key: string]: { accept: boolean; reject: boolean }}>({})
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [connectionRequests, setConnectionRequests] = useState<ConnectionWithUser[]>([])
+  const [loading, setLoading] = useState(false)
   const { currentUser, fetchCurrentUser, loading: userLoading } = useUserStore()
 
   useEffect(() => {
     const checkAuth = async () => {
       const token = getAuthToken()
+      console.log('Auth token:', token ? 'exists' : 'not found')
+      
       if (token) {
         setIsAuthenticated(true)
+        if (!currentUser && !userLoading) {
+          console.log('Fetching current user...')
+          await fetchCurrentUser()
+        } else {
+          console.log('Current user:', currentUser ? { id: currentUser.id, name: currentUser.name } : 'null')
+        }
       } else {
+        console.log('No auth token, user not authenticated')
         setIsAuthenticated(false)
       }
     }
@@ -30,19 +43,111 @@ const page = () => {
     checkAuth()
   }, [currentUser, fetchCurrentUser, userLoading])
 
+  useEffect(() => {
+    const fetchConnectionRequests = async () => {
+      if (!currentUser?.id || !isAuthenticated) {
+        console.log('Cannot fetch connections - missing data:', { 
+          currentUserId: currentUser?.id, 
+          isAuthenticated 
+        })
+        return
+      }
+      
+      console.log('Fetching connection requests for user:', currentUser.id)
+      setLoading(true)
+      try {
+        const connections = await getUserConnections(currentUser.id)
+        console.log('Raw connections:', connections)
+        
+        const pendingRequests = connections.filter(
+          conn => !conn.accepted && conn.user2_id === currentUser.id
+        )
+        console.log('Pending requests (filtered):', pendingRequests)
+        
+        const connectionsWithUsers = await Promise.all(
+          pendingRequests.map(async (conn) => {
+            try {
+              console.log(`Fetching user details for user1_id: ${conn.user1_id}`)
+              const user = await getUserById(conn.user1_id)
+              console.log(`User details for ${conn.user1_id}:`, user)
+              return { ...conn, user }
+            } catch (error) {
+              console.error(`Error fetching user ${conn.user1_id}:`, error)
+              return null
+            }
+          })
+        )
+        
+        const validConnections = connectionsWithUsers.filter(Boolean) as ConnectionWithUser[]
+        console.log('Final connections with users:', validConnections)
+        setConnectionRequests(validConnections)
+      } catch (error) {
+        console.error('Error fetching connection requests:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (currentUser?.id && isAuthenticated) {
+      fetchConnectionRequests()
+    }
+  }, [currentUser?.id, isAuthenticated])
+
+  const handleAcceptConnection = async (connectionId: string) => {
+    const connection = connectionRequests.find(conn => conn.id === connectionId)
+    if (!connection) return
+    
+    setLoadingStates(prev => ({
+      ...prev,
+      [connectionId]: { ...prev[connectionId], accept: true }
+    }))
+    
+    try {
+      await acceptConnection(connection.user1_id)
+      setConnectionRequests(prev => prev.filter(conn => conn.id !== connectionId))
+    } catch (error) {
+      console.error('Error accepting connection:', error)
+    } finally {
+      setLoadingStates(prev => ({
+        ...prev,
+        [connectionId]: { ...prev[connectionId], accept: false }
+      }))
+    }
+  }
+
+  const handleRejectConnection = async (connectionId: string) => {
+    const connection = connectionRequests.find(conn => conn.id === connectionId)
+    if (!connection) return
+    
+    // TODO -> Backend api missing for rejecting
+  }
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInMs = now.getTime() - date.getTime()
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60))
+    const diffInDays = Math.floor(diffInHours / 24)
+    
+    if (diffInHours < 1) return 'Just now'
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`
+    if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`
+    return date.toLocaleDateString()
+  }
+
   if (isAuthenticated === null) {
     return (
-      <div className="min-h-screen bg-gray-50 font-sans">
-        <div className="max-w-2xl mx-auto pt-8 px-4">
-          <div className="flex items-center space-x-3 mb-6">
-            <Bell className="w-6 h-6 text-gray-700" />
-            <h1 className="text-2xl font-bold text-gray-900 font-sans">Notifications</h1>
+      <div className="flex flex-col bg-white min-h-screen">
+        <div className="flex items-center gap-4 p-4 border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+          <div className="flex items-center gap-2">
+            <Bell className="w-6 h-6 text-gray-900" />
+            <h1 className="text-xl font-bold text-gray-900 font-sans">Notifications</h1>
           </div>
-          <div className="flex items-center justify-center py-20">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <div className="text-lg text-gray-600">Loading...</div>
-            </div>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div className="text-lg text-gray-600">Loading...</div>
           </div>
         </div>
       </div>
@@ -53,59 +158,21 @@ const page = () => {
     return <LoginPrompt />
   }
 
-  const allNotifications = [
-    {
-      type: "like",
-      user: "Dr. Sarah Johnson",
-      action: "liked your post about new medical research",
-      time: "2 hours ago",
-      avatar: "SJ"
-    },
-    {
-      type: "connection",
-      user: "Medical University",
-      action: "wants to connect with you",
-      time: "4 hours ago",
-      avatar: "MU",
-      userId: "mu-123"
-    },
-    {
-      type: "comment",
-      user: "Dr. Mike Chen",
-      action: "commented on your research paper",
-      time: "6 hours ago",
-      avatar: "MC"
-    },
-    {
-      type: "connection",
-      user: "Dr. Emily Rodriguez", 
-      action: "sent you a connection request",
-      time: "8 hours ago",
-      avatar: "ER",
-      userId: "er-456"
-    },
-    {
-      type: "general",
-      user: "PharmInc",
-      action: "shared a new job opportunity that might interest you",
-      time: "1 day ago",
-      avatar: "PI"
-    }
-  ]
-
-  const generalNotifications = allNotifications.filter(n => n.type === "general" || n.type === "like" || n.type === "comment")
-  const connectionNotifications = allNotifications.filter(n => n.type === "connection")
+  // For now, we'll keep general notifications empty since we're focusing on connection requests
+  const generalNotifications: any[] = []
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
-      <div className="max-w-2xl mx-auto pt-8 px-4">
-        <div className="flex items-center space-x-3 mb-6">
-          <Bell className="w-6 h-6 text-gray-700" />
-          <h1 className="text-2xl font-bold text-gray-900 font-sans">Notifications</h1>
+    <div className="flex flex-col bg-white">
+      <div className="flex items-center gap-4 p-4 border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="flex items-center gap-2">
+          <Bell className="w-6 h-6 text-gray-900" />
+          <h1 className="text-xl font-bold text-gray-900 font-sans">Notifications</h1>
         </div>
+      </div>
 
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200 rounded-full p-1">
+      <Tabs defaultValue="all" className="w-full">
+        <div className="p-4 border-b border-gray-100">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-50 border border-gray-200 rounded-full p-1">
             <TabsTrigger 
               value="all" 
               className="flex items-center space-x-2 rounded-full data-[state=active]:bg-blue-500 data-[state=active]:text-white"
@@ -126,75 +193,103 @@ const page = () => {
             >
               <Users className="w-4 h-4" />
               <span>Connections</span>
+              {connectionRequests.length > 0 && (
+                <span className="ml-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {connectionRequests.length}
+                </span>
+              )}
             </TabsTrigger>
           </TabsList>
+        </div>
 
-          <TabsContent value="all" className="mt-6">
-            <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="p-0">
-                {allNotifications.length > 0 ? (
-                  allNotifications.map((notification, index) => (
-                    <NotificationItem key={index} {...notification} />
-                  ))
-                ) : (
-                  <div className="p-12 text-center text-gray-500">
-                    <Bell className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="font-medium">No notifications yet</p>
-                    <p className="text-sm text-gray-400 mt-1">We'll notify you when something happens</p>
+        <div className="flex-1">
+          <TabsContent value="all" className="">
+            <div className="bg-white">
+              {loading ? (
+                <div className="flex items-center justify-center py-16">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                    <div className="text-sm text-gray-600">Loading notifications...</div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="general" className="mt-6">
-            <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="p-0">
-                {generalNotifications.length > 0 ? (
-                  generalNotifications.map((notification, index) => (
-                    <NotificationItem key={index} {...notification} />
-                  ))
-                ) : (
-                  <div className="p-12 text-center text-gray-500">
-                    <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="font-medium">No general notifications</p>
-                    <p className="text-sm text-gray-400 mt-1">Activity notifications will appear here</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="connections" className="mt-6">
-            <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="p-0">
-                {connectionNotifications.length > 0 ? (
-                  connectionNotifications.map((notification, index) => (
+                </div>
+              ) : connectionRequests.length > 0 ? (
+                <div className="space-y-4 p-4">
+                  {connectionRequests.map((connectionRequest) => (
                     <ConnectionRequestItem 
-                      key={index} 
-                      user={notification.user}
-                      action={notification.action}
-                      time={notification.time}
-                      avatar={notification.avatar}
-                      onAccept={()=>{}}
-                      onReject={()=>{}}
-                      isLoading={loadingStates[notification.userId || `user-${index}`] || { accept: false, reject: false }}
+                      key={connectionRequest.id}
+                      user={connectionRequest.user}
+                      connectionId={connectionRequest.id}
+                      time={formatTimeAgo(connectionRequest.created_at)}
+                      onAccept={handleAcceptConnection}
+                      onReject={handleRejectConnection}
+                      isLoading={loadingStates[connectionRequest.id] || { accept: false, reject: false }}
                     />
-                  ))
-                ) : (
-                  <div className="p-12 text-center text-gray-500">
-                    <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="font-medium">No connection requests</p>
-                    <p className="text-sm text-gray-400 mt-1">Connection requests will appear here</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 px-4">
+                  <Bell className="h-16 w-16 text-gray-300 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-500 mb-2 font-sans">No notifications yet</h3>
+                  <p className="text-gray-400 text-center max-w-sm">We'll notify you when something happens</p>
+                </div>
+              )}
+            </div>
           </TabsContent>
-        </Tabs>
-      </div>
+
+          <TabsContent value="general" className="">
+            <div className="bg-white">
+              {generalNotifications.length > 0 ? (
+                <div className="space-y-4 p-4">
+                  {generalNotifications.map((notification, index) => (
+                    <NotificationItem key={index} {...notification} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 px-4">
+                  <MessageCircle className="h-16 w-16 text-gray-300 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-500 mb-2 font-sans">No general notifications</h3>
+                  <p className="text-gray-400 text-center max-w-sm">Activity notifications will appear here</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="connections" className="">
+            <div className="bg-white">
+              {loading ? (
+                <div className="flex items-center justify-center py-16">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                    <div className="text-sm text-gray-600">Loading connection requests...</div>
+                  </div>
+                </div>
+              ) : connectionRequests.length > 0 ? (
+                <div className="space-y-4 p-4">
+                  {connectionRequests.map((connectionRequest) => (
+                    <ConnectionRequestItem 
+                      key={connectionRequest.id}
+                      user={connectionRequest.user}
+                      connectionId={connectionRequest.id}
+                      time={formatTimeAgo(connectionRequest.created_at)}
+                      onAccept={handleAcceptConnection}
+                      onReject={handleRejectConnection}
+                      isLoading={loadingStates[connectionRequest.id] || { accept: false, reject: false }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 px-4">
+                  <Users className="h-16 w-16 text-gray-300 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-500 mb-2 font-sans">No connection requests</h3>
+                  <p className="text-gray-400 text-center max-w-sm">Connection requests will appear here</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   )
 }
 
-export default page;
+export default NotificationsPage;

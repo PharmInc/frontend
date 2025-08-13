@@ -27,6 +27,9 @@ export interface User {
   about?: string;
   followers?: number;
   connections?: number;
+  isFollowing?: boolean;
+  isConnected?: boolean;
+  connectionStatus?: 'none' | 'pending_sent' | 'pending_received' | 'connected';
 }
 
 export interface UserCreateParams {
@@ -93,7 +96,8 @@ export interface ConnectParams {
 export interface Connect extends ConnectParams {
   id: string;
   created_at: string;
-  user1Id: string;
+  user1_id: string;
+  user2_id: string;
   accepted: boolean;
 }
 

@@ -47,11 +47,38 @@ export const ProfileHeader = ({
   onUserUpdate,
 }: ProfileHeaderProps) => {
   const { currentUser, fetchCurrentUser } = useUserStore();
-  const [isFollowing, setIsFollowing] = useState(false);
+  
+  // Initialize states based on user data
+  const getInitialConnectionState = () => {
+    if (!user) return { isConnected: false, hasPendingRequest: false, hasIncomingRequest: false };
+
+    if (user.connectionStatus) {
+      switch (user.connectionStatus) {
+        case 'connected':
+          return { isConnected: true, hasPendingRequest: false, hasIncomingRequest: false };
+        case 'pending_sent':
+          return { isConnected: false, hasPendingRequest: true, hasIncomingRequest: false };
+        case 'pending_received':
+          return { isConnected: false, hasPendingRequest: false, hasIncomingRequest: true };
+        default:
+          return { isConnected: false, hasPendingRequest: false, hasIncomingRequest: false };
+      }
+    }
+    
+    return { 
+      isConnected: user.isConnected || false, 
+      hasPendingRequest: false, 
+      hasIncomingRequest: false 
+    };
+  };
+
+  const initialConnectionState = getInitialConnectionState();
+  
+  const [isFollowing, setIsFollowing] = useState(user?.isFollowing || false);
   const [followersCount, setFollowersCount] = useState(user?.followers || 0);
-  const [isConnected, setIsConnected] = useState(false);
-  const [hasPendingRequest, setHasPendingRequest] = useState(false);
-  const [hasIncomingRequest, setHasIncomingRequest] = useState(false);
+  const [isConnected, setIsConnected] = useState(initialConnectionState.isConnected);
+  const [hasPendingRequest, setHasPendingRequest] = useState(initialConnectionState.hasPendingRequest);
+  const [hasIncomingRequest, setHasIncomingRequest] = useState(initialConnectionState.hasIncomingRequest);
   const [connectionsCount, setConnectionsCount] = useState(
     user?.connections || 0
   );
@@ -66,66 +93,49 @@ export const ProfileHeader = ({
 
   const isOwnProfile = currentUser?.id === user?.id;
 
+  useEffect(() => {
+    if (user) {
+      setIsFollowing(user.isFollowing || false);
+      setIsConnected(user.isConnected || false);
+      setFollowersCount(user.followers || 0);
+      setConnectionsCount(user.connections || 0);
+      
+      if (user.connectionStatus) {
+        switch (user.connectionStatus) {
+          case 'connected':
+            setIsConnected(true);
+            setHasPendingRequest(false);
+            setHasIncomingRequest(false);
+            break;
+          case 'pending_sent':
+            setIsConnected(false);
+            setHasPendingRequest(true);
+            setHasIncomingRequest(false);
+            break;
+          case 'pending_received':
+            setIsConnected(false);
+            setHasPendingRequest(false);
+            setHasIncomingRequest(true);
+            break;
+          default:
+            setIsConnected(false);
+            setHasPendingRequest(false);
+            setHasIncomingRequest(false);
+        }
+      } else {
+        setIsConnected(user.isConnected || false);
+        setHasPendingRequest(false);
+        setHasIncomingRequest(false);
+      }
+    }
+  }, [user]);
+
   // Fetch current user on mount
   useEffect(() => {
     if (!currentUser) {
       fetchCurrentUser();
     }
   }, [currentUser, fetchCurrentUser]);
-
-
-  // Check initial follow and connection status
-  useEffect(() => {
-    const checkStatus = async () => {
-      if (!user?.id || !currentUser?.id || isOwnProfile) return;
-
-      try {
-        // Check follow status
-        const followers = await getUserFollowers(user.id);
-        const isFollowing = followers.some((f) => f.user1Id === currentUser.id);
-        setIsFollowing(isFollowing);
-
-        // Get followers count
-        const followersCountData = await getFollowerCount(user.id);
-        setFollowersCount(followersCountData.followersCount);
-
-        // Check connection status
-        const connections = await getUserConnections(user.id);
-        const connection = connections.find(
-          (c) =>
-            (c.user1Id === currentUser.id && c.user2_id === user.id) ||
-            (c.user1Id === user.id && c.user2_id === currentUser.id)
-        );
-
-        if (connection) {
-          if (connection.accepted) {
-            setIsConnected(true);
-            setHasPendingRequest(false);
-            setHasIncomingRequest(false);
-          } else {
-            // Check if current user sent the request or received it
-            if (connection.user1Id === currentUser.id) {
-              // Current user sent the request
-              setHasPendingRequest(true);
-              setHasIncomingRequest(false);
-            } else {
-              // Current user received the request
-              setHasIncomingRequest(true);
-              setHasPendingRequest(false);
-            }
-          }
-        }
-
-        // Get connections count
-        const connectionsCountData = await getConnectionCount(user.id);
-        setConnectionsCount(connectionsCountData.connectionsCount);
-      } catch (error) {
-        console.error("Error checking status:", error);
-      }
-    };
-
-    checkStatus();
-  }, [user?.id, currentUser?.id, isOwnProfile]);
 
   const handleFollow = async () => {
     if (!user?.id || !currentUser?.id || isLoading.follow || isOwnProfile) return;
