@@ -433,7 +433,7 @@ export default function PostModal({ isOpen, onClose, user }: PostModalProps) {
                     )}
                   </button>
 
-                  <button
+                  {/* <button
                     type="button"
                     onClick={handleLinkAttach}
                     className="p-2 hover:bg-purple-50 rounded-full transition-colors group"
@@ -451,11 +451,11 @@ export default function PostModal({ isOpen, onClose, user }: PostModalProps) {
                     title="Add research"
                   >
                     <FileText className="h-5 w-5 text-orange-500 group-hover:text-orange-600" />
-                  </button>
+                  </button> */}
                   
-                  <div className="ml-4 text-xs text-gray-400 hidden sm:block">
+                    <div className="text-xs text-gray-400 hidden sm:block ml-auto">
                     Ctrl+Enter to post
-                  </div>
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3">

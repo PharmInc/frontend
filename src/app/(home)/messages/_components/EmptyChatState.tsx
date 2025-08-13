@@ -11,13 +11,16 @@ export default function EmptyChatState() {
           <MessageCircle className="w-12 h-12 text-gray-400" />
         </div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2 font-sans">
-          Your Messages
+          Messaging Coming Soon
         </h2>
         <p className="text-gray-500 mb-6 max-w-sm">
-          Send private messages to your colleagues, research partners, and healthcare institutions.
+          We're working on bringing you a seamless messaging experience. Connect with colleagues and healthcare professionals soon.
         </p>
-        <button className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">
-          Write a message
+        <button 
+          disabled 
+          className="bg-gray-300 text-gray-500 px-6 py-2 rounded-full cursor-not-allowed"
+        >
+          Feature coming soon
         </button>
       </div>
     </div>

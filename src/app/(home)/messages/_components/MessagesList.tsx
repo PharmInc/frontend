@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, MoreHorizontal } from 'lucide-react'
+import { Search, MoreHorizontal, MessageCircle } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useChatStore } from '@/store'
 
@@ -21,75 +21,7 @@ interface Message {
   unread: boolean
 }
 
-const mockMessages: Message[] = [
-  {
-    id: "1",
-    user: {
-      id: "1",
-      name: "Dr. Sarah Johnson",
-      username: "sarah_j",
-      avatar: "/api/placeholder/40/40",
-      verified: true,
-      online: true
-    },
-    lastMessage: "Thanks for the consultation details!",
-    timestamp: "2m",
-    unread: true
-  },
-  {
-    id: "2",
-    user: {
-      id: "2",
-      name: "PharmaTech Institute",
-      username: "pharmatech",
-      avatar: "/api/placeholder/40/40",
-      verified: true,
-      online: false
-    },
-    lastMessage: "We'd like to schedule an interview",
-    timestamp: "1h",
-    unread: true
-  },
-  {
-    id: "3",
-    user: {
-      id: "3",
-      name: "Dr. Michael Chen",
-      username: "mchen_md",
-      avatar: "/api/placeholder/40/40",
-      online: true
-    },
-    lastMessage: "Looking forward to our collaboration",
-    timestamp: "3h",
-    unread: false
-  },
-  {
-    id: "4",
-    user: {
-      id: "4",
-      name: "Research Lab Beta",
-      username: "researchbeta",
-      avatar: "/api/placeholder/40/40",
-      online: false
-    },
-    lastMessage: "The research paper looks promising",
-    timestamp: "1d",
-    unread: false
-  },
-  {
-    id: "5",
-    user: {
-      id: "5",
-      name: "Dr. Emily Rodriguez",
-      username: "emily_r",
-      avatar: "/api/placeholder/40/40",
-      online: false
-    },
-    lastMessage: "Can we discuss the new treatment protocol?",
-    timestamp: "2d",
-    unread: false
-  }
-]
+const mockMessages: Message[] = []
 
 export default function MessagesList() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -138,7 +70,7 @@ export default function MessagesList() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {filteredMessages.map((message) => (
+        {filteredMessages.length > 0 ? filteredMessages.map((message) => (
           <div
             key={message.id}
             onClick={() => handleMessageClick(message)}
@@ -185,7 +117,12 @@ export default function MessagesList() {
               </div>
             </div>
           </div>
-        ))}
+        )) : (
+          <div className="flex flex-col items-center justify-center h-full py-16 px-4">
+            <MessageCircle className="h-16 w-16 text-gray-300 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-500 mb-2 font-sans">No messages yet</h3>
+          </div>
+        )}
       </div>
     </div>
   )
