@@ -352,7 +352,7 @@ export const ProfileHeader = ({
               <CheckCircle className="h-5 w-5 text-blue-500" />
             )}
           </h1>
-          <p className="text-gray-500 text-sm">@{displayUser?.email?.split('@')[0] || 'username'}</p>
+          {/* <p className="text-gray-500 text-sm">@{displayUser?.email?.split('@')[0] || 'username'}</p> */}
         </div>
         {displayUser?.bio && (
           <div className="mb-3">
