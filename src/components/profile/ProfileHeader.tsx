@@ -18,7 +18,9 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { EditProfileModal } from "./EditProfileModal";
+import { EditProfilePictureModal } from "./EditProfilePictureModal";
 import { useUserStore } from "@/store/userStore";
+import { getProfilePictureUrl, isProfilePictureUrl } from "@/lib/utils";
 import {
   followUser,
   unfollowUser,
@@ -83,6 +85,7 @@ export const ProfileHeader = ({
     user?.connections || 0
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isProfilePictureModalOpen, setIsProfilePictureModalOpen] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState(user);
   const [isLoading, setIsLoading] = useState({
     follow: false,
@@ -220,7 +223,41 @@ export const ProfileHeader = ({
     }
   };
 
+  const handleProfilePictureUpdate = (newProfilePictureUrl: string) => {
+    const updatedUser = {
+      ...currentUserProfile,
+      profile_picture: newProfilePictureUrl
+    } as User;
+    
+    setCurrentUserProfile(updatedUser);
+    
+    if (onUserUpdate) {
+      onUserUpdate(updatedUser);
+    }
+    
+    // Trigger a refetch of current user data
+    fetchCurrentUser();
+  };
+
   const displayUser = currentUserProfile || user;
+
+  // Get the proper profile picture URL
+  const getDisplayProfilePicture = () => {
+    if (!displayUser?.profile_picture) return "/pp.png";
+    
+    // If it's already a profile picture URL from our API, use it as is
+    if (isProfilePictureUrl(displayUser.profile_picture)) {
+      return displayUser.profile_picture;
+    }
+    
+    // If it's a legacy URL or external URL, use it as is
+    if (displayUser.profile_picture.startsWith('http') || displayUser.profile_picture.startsWith('/')) {
+      return displayUser.profile_picture;
+    }
+    
+    // Otherwise, assume it's just a filename and construct the URL
+    return getProfilePictureUrl(displayUser.id, displayUser.profile_picture);
+  };
 
   return (
     <div className="bg-white rounded-xl overflow-hidden">
@@ -233,18 +270,18 @@ export const ProfileHeader = ({
           height={400}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
-        {isOwnProfile && (
+        {/* {isOwnProfile && (
           <button className="absolute top-4 right-4 bg-black/50 hover:bg-black/60 text-white backdrop-blur-sm px-3 py-2 text-sm rounded-full flex items-center transition-colors">
             <Camera className="h-4 w-4 mr-2" />
             Edit cover
           </button>
-        )}
+        )} */}
         
         <div className="absolute -bottom-16 left-6">
           <div className="relative">
             <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
               <AvatarImage
-                src={displayUser?.profile_picture || "/pp.png"}
+                src={getDisplayProfilePicture()}
                 alt={displayUser?.name || "User"}
               />
               <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 font-bold">
@@ -252,7 +289,10 @@ export const ProfileHeader = ({
               </AvatarFallback>
             </Avatar>
             {isOwnProfile && (
-              <button className="absolute bottom-2 right-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-sm transition-colors">
+              <button
+                onClick={() => setIsProfilePictureModalOpen(true)}
+                className="absolute bottom-2 right-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-sm transition-colors cursor-pointer z-10"
+              >
                 <Camera className="h-4 w-4 text-gray-600" />
               </button>
             )}
@@ -263,15 +303,17 @@ export const ProfileHeader = ({
       <div className="pt-16 pb-4 px-6 relative">
         <div className="absolute top-4 right-6 flex gap-2">
           {isOwnProfile ? (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="rounded-full"
-              onClick={() => setIsEditModalOpen(true)}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Profile
-            </Button>
+            <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-full"
+                onClick={() => setIsEditModalOpen(true)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Profile
+              </Button>
+            </>
           ) : (
             <>
               <Button variant="outline" size="sm" className="rounded-full">
@@ -399,6 +441,18 @@ export const ProfileHeader = ({
           </div>
         </div>
       </div>
+
+      {isOwnProfile && displayUser && (
+        <EditProfilePictureModal
+          isOpen={isProfilePictureModalOpen}
+          onClose={() => setIsProfilePictureModalOpen(false)}
+          currentProfilePicture={getDisplayProfilePicture()}
+          userName={displayUser.name}
+          userId={displayUser.id}
+          isInstitute={!!institution}
+          onUpdate={handleProfilePictureUpdate}
+        />
+      )}
 
       {/* Edit Profile Modal */}
       {isOwnProfile && displayUser && (

@@ -334,3 +334,128 @@ export const deleteFolderFromMinio = async (folderId: string): Promise<void> => 
     throw error;
   }
 };
+
+export const uploadProfilePicture = async (
+  file: File | Buffer,
+  fileName: string,
+  userId: string
+): Promise<{ fileId: string; objectKey: string; fileName: string }> => {
+  const client = getMinioClient();
+  
+  await deleteProfilePicture(userId);
+  
+  const fileId = uuidv4();
+  const objectKey = `profiles/${userId}/${fileId}.png`; // Always convert to PNG
+  
+  const bucketExists = await client.bucketExists(BUCKET_NAME);
+  if (!bucketExists) {
+    await client.makeBucket(BUCKET_NAME);
+  }
+
+  let buffer: Buffer;
+  if (file instanceof File) {
+    const arrayBuffer = await file.arrayBuffer();
+    buffer = Buffer.from(arrayBuffer);
+  } else {
+    buffer = file;
+  }
+
+  await client.putObject(BUCKET_NAME, objectKey, buffer, buffer.length, {
+    'Content-Type': 'image/png',
+    'X-Original-Filename': fileName,
+  });
+
+  return { fileId, objectKey, fileName: `${fileId}.png` };
+};
+
+export const getProfilePicture = async (userId: string): Promise<{
+  buffer: Buffer;
+  contentType: string;
+  fileName: string;
+} | null> => {
+  const client = getMinioClient();
+  const prefix = `profiles/${userId}/`;
+  
+  try {
+    const stream = client.listObjects(BUCKET_NAME, prefix, false);
+    let profilePicture: string | null = null;
+
+    return new Promise((resolve, reject) => {
+      stream.on('data', (obj) => {
+        if (obj.name && obj.name.endsWith('.png')) {
+          profilePicture = obj.name;
+        }
+      });
+
+      stream.on('end', async () => {
+        if (!profilePicture) {
+          resolve(null);
+          return;
+        }
+
+        try {
+          const fileStream = await client.getObject(BUCKET_NAME, profilePicture);
+          
+          const chunks: Buffer[] = [];
+          for await (const chunk of fileStream) {
+            chunks.push(chunk);
+          }
+          const buffer = Buffer.concat(chunks);
+
+          const stat = await client.statObject(BUCKET_NAME, profilePicture);
+          const fileName = profilePicture.split('/').pop() || 'profile.png';
+
+          resolve({
+            buffer,
+            contentType: 'image/png',
+            fileName
+          });
+        } catch (error) {
+          reject(error);
+        }
+      });
+
+      stream.on('error', (error) => {
+        reject(error);
+      });
+    });
+  } catch (error) {
+    console.error('Error getting profile picture:', error);
+    return null;
+  }
+};
+
+export const deleteProfilePicture = async (userId: string): Promise<void> => {
+  const client = getMinioClient();
+  const prefix = `profiles/${userId}/`;
+  
+  try {
+    const stream = client.listObjects(BUCKET_NAME, prefix, false);
+    const objectsToDelete: string[] = [];
+
+    return new Promise((resolve, reject) => {
+      stream.on('data', (obj) => {
+        if (obj.name) {
+          objectsToDelete.push(obj.name);
+        }
+      });
+
+      stream.on('end', async () => {
+        try {
+          if (objectsToDelete.length > 0) {
+            await client.removeObjects(BUCKET_NAME, objectsToDelete);
+          }
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      });
+
+      stream.on('error', (error) => {
+        reject(error);
+      });
+    });
+  } catch (error) {
+    console.error('Error deleting profile picture:', error);
+  }
+};
