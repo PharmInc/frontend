@@ -57,7 +57,6 @@ export const useUserStore = create<UserState>()(
 
         fetchUserById: async (id: string): Promise<User> => {
           const { userCache } = get()
-          
           // Return cached user if available
           if (userCache[id]) {
             return userCache[id]

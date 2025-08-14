@@ -63,7 +63,6 @@ export const usePostStore = create<PostState>()(
           // Fetch all authors
           const authorPromises = authorIds.map((id: string) => fetchUserById(id))
           const authors = await Promise.all(authorPromises)
-          
           // Create authors map
           const authorsMap = authors.reduce((acc, author) => {
             if (author.id) {
@@ -79,6 +78,8 @@ export const usePostStore = create<PostState>()(
               role: "Medical Professional",
               profilePicture: "/pp.png",
             }
+
+            console.log(author);
             
             return {
               id: post.id,
