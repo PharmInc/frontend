@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Stethoscope } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,8 @@ export default function DoctorAuthPage() {
 
   const router = useRouter();
   const { fetchCurrentUser } = useUserStore();
+  const searchParams = useSearchParams();
+  const type = searchParams?.get("type") ?? "";
 
   const handleSignIn = async () => {
     if (loading) return;
@@ -137,7 +139,7 @@ export default function DoctorAuthPage() {
         subtitle="Join our community of medical professionals"
       />
 
-      <AuthFormTabs
+  <AuthFormTabs
         signInContent={
           <SignInForm
             email={email}
@@ -147,7 +149,7 @@ export default function DoctorAuthPage() {
             onSubmit={handleSignIn}
             loading={loading}
           />
-        }
+  }
         signUpContent={
           <SignUpForm
             firstName={firstName}
@@ -165,6 +167,7 @@ export default function DoctorAuthPage() {
             roleSpecificFields={doctorSpecificFields}
           />
         }
+        defaultTab={type === "signup" ? "signup" : "signin"}
       />
     </div>
   );

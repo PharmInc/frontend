@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Building } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,8 @@ export default function InstitutionAuthPage() {
 
   const router = useRouter();
   const { fetchCurrentInstitution } = useInstitutionStore();
+  const searchParams = useSearchParams();
+  const type = searchParams?.get("type") ?? "";
 
   const handleSignIn = async () => {
     if (loading) return;
@@ -179,6 +181,8 @@ export default function InstitutionAuthPage() {
             roleSpecificFields={institutionSpecificFields}
           />
         }
+        defaultTab={type === "signup" ? "signup" : "signin"}
+        hideSignup={true}
       />
     </div>
   );

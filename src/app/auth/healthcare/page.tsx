@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,8 @@ export default function HealthcareAuthPage() {
 
   const router = useRouter();
   const { fetchCurrentUser } = useUserStore();
+  const searchParams = useSearchParams();
+  const type = searchParams?.get("type") ?? "";
 
   const handleSignIn = async () => {
     if (loading) return;
@@ -160,6 +162,7 @@ export default function HealthcareAuthPage() {
             roleSpecificFields={healthcareSpecificFields}
           />
         }
+        defaultTab={type === "signup" ? "signup" : "signin"}
       />
     </div>
   );
