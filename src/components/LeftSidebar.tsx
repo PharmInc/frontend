@@ -10,6 +10,7 @@ import {
   Bookmark,
   Crown,
   User as UserIcon,
+  Users,
   LogOut,
 } from "lucide-react";
 import { User, InstitutionEntity } from "../app/(home)/home/_components/types";
@@ -26,6 +27,7 @@ const navigations = [
   { href: '/home', icon: Home, label: 'Home' },
   { href: '/notifications', icon: Bell, label: 'Notifications' },
   { href: '/messages', icon: MessageCircle, label: 'Messages' },
+  { href: '/my-networks', icon: Users, label: 'My Networks' },
   { href: '/bookmarks', icon: Bookmark, label: 'Bookmarks' },
   { href: '/jobs', icon: FileText, label: 'Jobs' },
   { href: '/societies', icon: Network, label: 'Societies' },

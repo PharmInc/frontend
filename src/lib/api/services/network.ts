@@ -24,6 +24,11 @@ export const getFollowerCount = async (
   return response.data;
 };
 
+export const getUserFollowing = async (userId: string): Promise<Follow[]> => {
+  const response = await networkApi.get(`/public/follow/${userId}/following`);
+  return response.data;
+};
+
 // Connect endpoints
 export const connectUser = async (params: ConnectParams): Promise<Connect> => {
   const response = await networkApi.post("/private/connect", params);
