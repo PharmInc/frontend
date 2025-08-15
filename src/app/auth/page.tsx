@@ -3,27 +3,18 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Stethoscope, Users, Building } from "lucide-react";
+import { AuthFormHeader } from "./_components";
 
 export default function AuthPage() {
   const searchParams = useSearchParams();
   const type = searchParams?.get("type") ?? "signin";
   return (
     <div className="w-full max-w-md">
-      <div className="mb-8 text-center">
-        <Link href="/" className="inline-flex items-center gap-2 mb-8">
-          <img
-            src="/logo.png"
-            alt="PharmInc Logo"
-            className="h-12 w-auto rounded-md"
-          />
-        </Link>
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">
-          Join the Medical Network
-        </h1>
-        <p className="text-gray-600">
-          Connect with colleagues, share research, and advance your career
-        </p>
-      </div>
+      <AuthFormHeader
+        icon={Stethoscope}
+        title="Join the Medical Network"
+        subtitle="Connect with colleagues, share research, and advance your career"
+      />
 
       <div className="space-y-4 mb-8">
         <h2 className="text-xl font-semibold text-center mb-6">
