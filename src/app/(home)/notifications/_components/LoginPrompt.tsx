@@ -26,7 +26,7 @@ export const LoginPrompt = () => {
               </div>
 
               <div className="flex justify-center">
-                <Link href="/auth">
+                <Link href="/auth?type=signup">
                   <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition-colors duration-200 text-base font-sans">
                     Join now
                   </Button>

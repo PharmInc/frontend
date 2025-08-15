@@ -76,7 +76,7 @@ export const Navbar = () => {
                   Log In
                 </Button>
               </Link>
-              <Link href="/auth">
+              <Link href="/auth?type=signup">
                 <Button className="bg-blue-700 hover:bg-blue-700 text-white">
                   Sign Up
                 </Button>

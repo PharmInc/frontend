@@ -50,7 +50,7 @@ const LandingNavbar = () => {
                   Log In
                 </Button>
               </Link>
-              <Link href="/signup">
+              <Link href="/signup?type=signup">
                 <Button className="bg-blue-700 hover:bg-blue-700 text-white">
                   Sign Up
                 </Button>

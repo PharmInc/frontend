@@ -28,7 +28,7 @@ export default function NotFound() {
             Thank you for your understanding as we continue to improve our platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/">
+            <Link href="/home">
               <Button size="lg" className="bg-gray-800 text-white hover:bg-gray-700">
                 Return to Home
               </Button>
