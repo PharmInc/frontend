@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { login, createUser, setAuthToken, register } from "@/lib/api";
 import { useUserStore } from "@/store/userStore";
 import { AuthFormHeader, AuthFormTabs, SignInForm, SignUpForm } from "../_components";
 
-export default function HealthcareAuthPage() {
+function HealthcareAuthContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -165,5 +165,13 @@ export default function HealthcareAuthPage() {
         defaultTab={type === "signup" ? "signup" : "signin"}
       />
     </div>
+  );
+}
+
+export default function HealthcareAuthPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HealthcareAuthContent />
+    </Suspense>
   );
 }

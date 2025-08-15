@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Stethoscope } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { login, createUser, setAuthToken, register } from "@/lib/api";
 import { useUserStore } from "@/store/userStore";
 import { AuthFormHeader, AuthFormTabs, SignInForm, SignUpForm } from "../_components";
 
-export default function DoctorAuthPage() {
+function DoctorAuthContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -170,5 +170,13 @@ export default function DoctorAuthPage() {
         defaultTab={type === "signup" ? "signup" : "signin"}
       />
     </div>
+  );
+}
+
+export default function DoctorAuthPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DoctorAuthContent />
+    </Suspense>
   );
 }

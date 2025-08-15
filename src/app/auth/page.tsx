@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { Stethoscope, Users, Building } from "lucide-react";
 import { AuthFormHeader } from "./_components";
 
-export default function AuthPage() {
+function AuthContent() {
   const searchParams = useSearchParams();
   const type = searchParams?.get("type") ?? "signin";
   return (
@@ -79,5 +80,13 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthContent />
+    </Suspense>
   );
 }

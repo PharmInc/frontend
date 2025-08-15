@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Building } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { login, createInstitution, setAuthToken, register } from "@/lib/api";
 import { useInstitutionStore } from "@/store/institutionStore";
 import { AuthFormHeader, AuthFormTabs, SignInForm, SignUpForm } from "../_components";
 
-export default function InstitutionAuthPage() {
+function InstitutionAuthContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -185,5 +185,13 @@ export default function InstitutionAuthPage() {
         hideSignup={true}
       />
     </div>
+  );
+}
+
+export default function InstitutionAuthPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <InstitutionAuthContent />
+    </Suspense>
   );
 }
