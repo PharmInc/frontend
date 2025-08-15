@@ -18,7 +18,7 @@ const medicalHubs = [
 ];
 
 export const GlobalMap = () => (
-  <section className="py-16 bg-white overflow-hidden">
+  <section id="global-map" className="py-16 bg-white overflow-hidden">
     <div className="container mx-auto px-4">
       <motion.div
         className="text-center mb-12"

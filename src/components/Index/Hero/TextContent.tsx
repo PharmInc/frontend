@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export const TextContent = () => (
   <motion.div
@@ -28,25 +29,28 @@ export const TextContent = () => (
     </motion.p>
     <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
       <motion.div
+        className="overflow-hidden rounded-lg"
         whileHover={{ scale: 1.05, boxShadow: "0 0 16px #3B82F6" }}
-        onClick={() =>
-          window.open(
-            "https://docs.google.com/forms/d/e/1FAIpQLSdXDI...",
-            "_blank"
-          )
-        }
-        className="cursor-pointer"
-      ></motion.div>
-      <motion.div whileHover={{ scale: 1.05, boxShadow: "0 0 16px #3B82F6" }}>
+      >
         <Button
+          type="button"
           size="lg"
           variant="outline"
-          className="border-[#3B82F6] text-[#3B82F6] hover:bg-[#3B82F6]/5 shadow"
+          className="border-[#3B82F6] border-2 rounded-lg text-[#3B82F6] hover:bg-[#3B82F6]/5 shadow"
+          onClick={() => {
+            const el = document.getElementById("global-map");
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }}
         >
           See How It Works
         </Button>
       </motion.div>
-      <motion.div whileHover={{ scale: 1.1, boxShadow: "0 0 20px #1D4ED8" }}>
+      <motion.div
+        className="overflow-hidden rounded-lg"
+        whileHover={{ scale: 1.1, boxShadow: "0 0 20px #1D4ED8" }}
+      >
         <Button
           size="lg"
           variant="default"
