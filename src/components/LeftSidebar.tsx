@@ -1,8 +1,8 @@
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import {
   Home,
-  Search,
   MessageCircle,
   FileText,
   Bell,
@@ -22,12 +22,30 @@ interface LeftSidebarProps {
   user?: User | InstitutionEntity | null;
 }
 
+const navigations = [
+  { href: '/home', icon: Home, label: 'Home' },
+  { href: '/notifications', icon: Bell, label: 'Notifications' },
+  { href: '/messages', icon: MessageCircle, label: 'Messages' },
+  { href: '/bookmarks', icon: Bookmark, label: 'Bookmarks' },
+  { href: '/jobs', icon: FileText, label: 'Jobs' },
+  { href: '/societies', icon: Network, label: 'Societies' },
+  { href: '/verifications', icon: Crown, label: 'Verifications' },
+];
+
 export default function LeftSidebar({ user = null }: LeftSidebarProps) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const { clearUser } = useUserStore();
   const { clearInstitution } = useInstitutionStore();
   const userType = getUserType()
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === '/home') {
+      return pathname === '/home' || pathname === '/';
+    }
+    return pathname.startsWith(href);
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -66,45 +84,18 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
       </div>
 
       <nav className="flex flex-col gap-1 flex-1 overflow-y-auto xl:px-3 px-2 min-h-0 mt-2 xl:mt-7">
-        <Link href="/home" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
-          <Home className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
-          <span className="xl:block hidden text-xl text-gray-900 font-normal">Home</span>
-        </Link>
-        
-        {/* <Link href="/explore" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
-          <Search className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
-          <span className="xl:block hidden text-xl text-gray-900 font-normal">Explore</span>
-        </Link> */}
-        
-        <Link href="/notifications" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
-          <Bell className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
-          <span className="xl:block hidden text-xl text-gray-900 font-normal">Notifications</span>
-        </Link>
-        
-        <Link href="/messages" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
-          <MessageCircle className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
-          <span className="xl:block hidden text-xl text-gray-900 font-normal">Messages</span>
-        </Link>
-        
-        <Link href="/bookmarks" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
-          <Bookmark className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
-          <span className="xl:block hidden text-xl text-gray-900 font-normal">Bookmarks</span>
-        </Link>
-        
-        <Link href="/jobs" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
-          <FileText className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
-          <span className="xl:block hidden text-xl text-gray-900 font-normal">Jobs</span>
-        </Link>
-        
-        <Link href="/societies" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
-          <Network className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
-          <span className="xl:block hidden text-xl text-gray-900 font-normal">Societies</span>
-        </Link>
-        
-        <Link href="/verifications" className="group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors">
-          <Crown className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
-          <span className="xl:block hidden text-xl text-gray-900 font-normal">Verifications</span>
-        </Link>
+        {navigations.map(({ href, icon: Icon, label }) => (
+          <Link 
+            key={href}
+            href={href} 
+            className={`group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors`}
+          >
+            <Icon className={`h-6 w-6 text-gray-700 group-hover:text-gray-900 ${isActive(href) ? 'text-gray-900 font-bold stroke-2' : ''}`} />
+            <span className={`xl:block hidden text-xl text-gray-900 ${isActive(href) ? 'font-semibold' : 'font-normal'}`}>
+              {label}
+            </span>
+          </Link>
+        ))}
       </nav>
 
       <div className="p-4 pt-0 border-t border-gray-100 flex-shrink-0">
