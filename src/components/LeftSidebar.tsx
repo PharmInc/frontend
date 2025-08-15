@@ -123,8 +123,8 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
                 <h3 className="text-base font-bold text-gray-900 truncate">
                   {user?.name || "User"}
                 </h3>
-                <p className="text-sm text-gray-500 truncate">
-                  @{getDisplayHandle(user)}
+                <p className="text-sm text-gray-500 truncate capitalize">
+                  {getDisplayHandle(user)}
                 </p>
               </div>
             </button>
