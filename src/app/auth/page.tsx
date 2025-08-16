@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Stethoscope, Users, Building } from "lucide-react";
+import { Stethoscope, GraduationCap, Building } from "lucide-react";
 import { AuthFormHeader } from "./_components";
 
 function AuthContent() {
@@ -30,9 +30,9 @@ function AuthContent() {
                   <Stethoscope className="h-6 w-6 text-[#3B82F6]" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">For Doctors</h3>
+                  <h3 className="font-semibold text-lg">For Doctors & Healthcare Professionals</h3>
                   <p className="text-gray-600 text-sm">
-                    Medical practitioners, specialists, and physicians
+                    Medical practitioners, specialists, nurses, and healthcare workers
                   </p>
                 </div>
               </div>
@@ -59,19 +59,18 @@ function AuthContent() {
             </Link>
           )}
 
-          <Link href={`/auth/healthcare?type=${type}`}>
+          <Link href={`/auth/student?type=${type}`}>
             <div className="border-2 border-gray-200 rounded-lg p-6 cursor-pointer hover:border-[#3B82F6] hover:scale-[1.02] transition-all duration-200">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-[#3B82F6]" />
+                  <GraduationCap className="h-6 w-6 text-[#3B82F6]" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">
-                    For Healthcare Professionals
+                    For Students
                   </h3>
                   <p className="text-gray-600 text-sm">
-                    Nurses, pharmacists, researchers, and other healthcare
-                    workers
+                    Medical students, nursing students, and healthcare learners
                   </p>
                 </div>
               </div>
