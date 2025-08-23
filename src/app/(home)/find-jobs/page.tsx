@@ -112,7 +112,6 @@ const FindJobsPage = () => {
 
   return (
     <div className="flex flex-col bg-white min-h-screen">
-      {/* Header */}
       <div className="flex items-center gap-4 p-4 border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <button
           onClick={() => router.back()}
