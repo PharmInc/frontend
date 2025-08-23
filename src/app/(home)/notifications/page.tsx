@@ -1,8 +1,9 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Bell, Users, MessageCircle } from "lucide-react"
+import { Bell, Users, MessageCircle, ArrowLeft } from "lucide-react"
 import { NotificationItem } from './_components/NotificationItem'
 import { ConnectionRequestItem } from './_components/ConnectionRequestItem'
 import { LoginPrompt } from './_components/LoginPrompt'
@@ -15,6 +16,7 @@ interface ConnectionWithUser extends Connect {
 }
 
 const NotificationsPage = () => {
+  const router = useRouter()
   const [loadingStates, setLoadingStates] = useState<{[key: string]: { accept: boolean; reject: boolean }}>({})
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [connectionRequests, setConnectionRequests] = useState<ConnectionWithUser[]>([])
@@ -164,6 +166,12 @@ const NotificationsPage = () => {
   return (
     <div className="flex flex-col bg-white">
       <div className="flex items-center gap-4 p-4 border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <button
+          onClick={() => router.back()}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
         <div className="flex items-center gap-2">
           <Bell className="w-6 h-6 text-gray-900" />
           <h1 className="text-xl font-bold text-gray-900 font-sans">Notifications</h1>

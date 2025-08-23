@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, MapPin, Building, DollarSign } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, Filter, MapPin, Building, DollarSign, ArrowLeft } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +11,7 @@ import { listJobs, searchJobs } from '@/lib/api/services/job';
 import { Job, JobSearchParams } from '@/lib/api/types';
 
 const FindJobsPage = () => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,6 +114,12 @@ const FindJobsPage = () => {
     <div className="flex flex-col bg-white min-h-screen">
       {/* Header */}
       <div className="flex items-center gap-4 p-4 border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <button
+          onClick={() => router.back()}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
         <div className="flex items-center gap-2">
           <Search className="h-6 w-6 text-gray-900" />
           <h1 className="text-xl font-bold text-gray-900 font-sans">Find Jobs</h1>

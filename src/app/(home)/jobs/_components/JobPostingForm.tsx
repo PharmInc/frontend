@@ -95,21 +95,7 @@ const JobPostingForm = () => {
 
   return (
     <div className="flex flex-col bg-white">
-      <div className="flex items-center gap-4 p-4 border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft size={16} />
-          Back
-        </Button>
-        <div className="flex items-center gap-2">
-          <FileText className="h-6 w-6 text-gray-900" />
-          <h1 className="text-xl font-bold text-gray-900 font-sans">Post a Job</h1>
-        </div>
-      </div>
+      
 
       <div className="flex-1 p-6">
         <div className="max-w-4xl mx-auto">

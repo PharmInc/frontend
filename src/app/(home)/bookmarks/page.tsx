@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Search, Bookmark, MoreVertical, Heart, MessageSquare, Share2 } from 'lucide-react';
+import { Search, Bookmark, MoreVertical, Heart, MessageSquare, Share2, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -85,6 +85,12 @@ const BookmarksPage = () => {
     <div className="bg-white">
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-4">
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.back()}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
           <div className="flex items-center gap-2">
             <Bookmark className="w-6 h-6 text-gray-900" />
             <h1 className="text-xl font-bold text-gray-900 font-sans">Bookmarks</h1>

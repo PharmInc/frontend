@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Users, UserCheck, Heart } from "lucide-react"
+import { Users, UserCheck, Heart, ArrowLeft } from "lucide-react"
 import { ConnectionItem } from './_components/ConnectionItem'
 import { FollowerItem } from './_components/FollowerItem'
 import { FollowingItem } from './_components/FollowingItem'
@@ -228,6 +228,12 @@ const MyNetworksContent = () => {
   return (
     <div className="flex flex-col bg-white">
       <div className="flex items-center gap-4 p-4 border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <button
+          onClick={() => router.back()}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
         <div className="flex items-center gap-2">
           <Users className="w-6 h-6 text-gray-900" />
           <h1 className="text-xl font-bold text-gray-900 font-sans">My Networks</h1>
