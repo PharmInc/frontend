@@ -10,6 +10,18 @@ export interface FileUploadResponse {
   folderId?: string;
 }
 
+// Helper function to get cookie value
+function getCookieValue(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    return parts.pop()?.split(';').shift() || null;
+  }
+  return null;
+}
+
 export interface PresignedUrlResponse {
   presignedUrl: string;
   fileId: string;
@@ -281,8 +293,17 @@ export const getFolderFileUrl = (folderId: string, fileId: string, filename?: st
 
 export const deleteFolder = async (folderId: string): Promise<void> => {
   try {
+    let token: string | null = null;
+    if (typeof document !== 'undefined') {
+      token = getCookieValue('token') || getCookieValue('auth-token') || getCookieValue('authToken');
+    }
+    
     const response = await fetch(`/api/delete?folderId=${folderId}`, {
       method: 'DELETE',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {

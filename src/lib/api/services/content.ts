@@ -13,6 +13,7 @@ import {
   ApplicationUpdateParams,
   PaginatedResponse,
 } from "@/lib/api/types";
+import { PostCleanupService } from "@/lib/services/postCleanupService";
 
 // Post endpoints
 export const createPost = async (postData: PostCreateParams): Promise<Post> => {
@@ -30,6 +31,19 @@ export const updatePost = async (
 
 export const deletePost = async (id: string): Promise<void> => {
   await contentApi.delete(`/private/post/${id}`);
+};
+
+export const deletePostWithCleanup = async (id: string, cleanupStorage: boolean = true): Promise<void> => {
+  await contentApi.delete(`/private/post/${id}`);
+  
+  if (cleanupStorage) {
+    // TODO -> Client side cleanup temporary solution will replace it server side later currently no auth token verification logic
+    try {
+      await PostCleanupService.cleanupPost(id);
+    } catch (error) {
+      console.error(`Failed to clean up storage for post ${id}:`, error);
+    }
+  }
 };
 
 export const getPost = async (id: string): Promise<Post> => {

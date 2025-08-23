@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useUserStore } from "@/store/userStore";
+import { PostCleanupService } from "@/lib/services/postCleanupService";
 
 interface ProfilePostsTabProps {
   userId: string;
@@ -81,8 +82,21 @@ export const ProfilePostsTab = ({ userId }: ProfilePostsTabProps) => {
 
     try {
       setDeleting(true);
-      // TODO -> Implement Minio Clean Service
+      const selectedPost = posts.find(post => post.id === selectedPostId);
+      
       await deletePost(selectedPostId);
+
+      if (selectedPost?.attachment_id) {
+        try {
+          console.log(`Cleaning up Minio folder for attachment_id: ${selectedPost.attachment_id}`);
+          await PostCleanupService.cleanupPost(selectedPost.attachment_id);
+          console.log(`Successfully deleted Minio folder for post attachment: ${selectedPost.attachment_id}`);
+        } catch (minioError) {
+          console.error(`Failed to delete Minio folder for attachment_id ${selectedPost.attachment_id}:`, minioError);
+        }
+      } else {
+        console.log(`Post ${selectedPostId} has no attachment_id, skipping Minio cleanup`);
+      }
       
       setPosts(prevPosts => prevPosts.filter(post => post.id !== selectedPostId));
       setPagination(prev => ({
