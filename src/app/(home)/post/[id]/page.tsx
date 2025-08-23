@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { fetchFolderContents, type FolderContentsResponse } from '@/lib/minio/minio-client';
 import MediaCarousel from '../../home/_components/MediaCarousel';
+import ShareModal from '../../home/_components/ShareModal';
 
 interface UserInfo {
   name: string;
@@ -344,6 +345,7 @@ export default function PostDetailPage() {
   const [isLiking, setIsLiking] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [attachments, setAttachments] = useState<FolderContentsResponse | null>(null);
   const [loadingAttachments, setLoadingAttachments] = useState(false);
 
@@ -620,16 +622,7 @@ export default function PostDetailPage() {
     setIsSharing(true);
     try {
       await sharePost(post.id);
-      if (navigator.share) {
-        await navigator.share({
-          title: `Post by ${post.user?.name}`,
-          text: post.content,
-          url: `${window.location.origin}/post/${post.id}`
-        });
-      } else {
-        await navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`);
-        alert('Link copied to clipboard!');
-      }
+      setShowShareModal(true);
     } catch (error) {
       console.error('Failed to share post:', error);
     } finally {
@@ -893,6 +886,28 @@ export default function PostDetailPage() {
           )}
         </div>
       </div>
+      
+      {post && (
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          post={{
+            id: post.id,
+            author: post.user?.name || 'Unknown User',
+            authorId: post.auth,
+            avatar: post.user?.profile_picture || '/pp.png',
+            role: post.user?.role || 'Medical Professional',
+            time: formatDate(post.created_at),
+            title: post.title,
+            content: post.content,
+            tags: [],
+            type: "Research Paper",
+            likes: post.reactions || 0,
+            comments: comments.length,
+            shares: post.shares || 0,
+          }}
+        />
+      )}
     </div>
   );
 }

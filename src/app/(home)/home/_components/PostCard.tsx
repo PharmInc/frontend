@@ -13,6 +13,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePostStore } from "@/store/postStore";
 import ExpandedComments from "./ExpandedComments";
+import ShareModal from "./ShareModal";
 import { useRouter } from "next/navigation";
 import { fetchFolderContents, type FolderContentsResponse } from "@/lib/minio/minio-client";
 import MediaCarousel from "./MediaCarousel";
@@ -27,6 +28,7 @@ export default function PostCard({ post }: PostCardProps) {
   const [isSharing, setIsSharing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [attachments, setAttachments] = useState<FolderContentsResponse | null>(null);
   const [loadingAttachments, setLoadingAttachments] = useState(false);
@@ -69,16 +71,7 @@ export default function PostCard({ post }: PostCardProps) {
     setIsSharing(true);
     try {
       await sharePost(post.id);
-      if (navigator.share) {
-        await navigator.share({
-          title: `Post by ${post.author}`,
-          text: post.content,
-          url: `${window.location.origin}/post/${post.id}`
-        });
-      } else {
-        await navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`);
-        alert('Link copied to clipboard!');
-      }
+      setShowShareModal(true);
     } catch (error) {
       console.error('Failed to share post:', error);
     } finally {
@@ -275,6 +268,12 @@ export default function PostCard({ post }: PostCardProps) {
           isVisible={showComments}
         />
       </div>
+
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        post={post}
+      />
     </>
   );
 }
