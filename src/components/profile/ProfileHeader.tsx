@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,7 @@ export const ProfileHeader = ({
   onUserUpdate,
 }: ProfileHeaderProps) => {
   const { currentUser, fetchCurrentUser } = useUserStore();
+  const router = useRouter();
   
   // Initialize states based on user data
   const getInitialConnectionState = () => {
@@ -95,6 +97,18 @@ export const ProfileHeader = ({
   });
 
   const isOwnProfile = currentUser?.id === user?.id;
+
+  const handleConnectionsClick = () => {
+    if (isOwnProfile) {
+      router.push('/my-networks?tab=connections');
+    }
+  };
+
+  const handleFollowersClick = () => {
+    if (isOwnProfile) {
+      router.push('/my-networks?tab=followers');
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -431,11 +445,17 @@ export const ProfileHeader = ({
         </div>
 
         <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-1">
+          <div 
+            className={`flex items-center gap-1 ${isOwnProfile ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''}`}
+            onClick={handleConnectionsClick}
+          >
             <span className="font-bold text-gray-900">{connectionsCount}</span>
             <span className="text-gray-500">Connections</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div 
+            className={`flex items-center gap-1 ${isOwnProfile ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''}`}
+            onClick={handleFollowersClick}
+          >
             <span className="font-bold text-gray-900">{followersCount}</span>
             <span className="text-gray-500">Followers</span>
           </div>

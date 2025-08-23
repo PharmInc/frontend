@@ -49,8 +49,8 @@ export const ProfileConnectionsCard = () => {
   };
 
   const seeAllRequests = () => {
-    // Navigate to notifications page with connections tab
-    router.push('/notifications?tab=connections');
+    // Navigate to my-networks page with connections tab
+    router.push('/my-networks?tab=connections');
   };
 
   return (

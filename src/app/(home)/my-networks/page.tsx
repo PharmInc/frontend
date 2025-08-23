@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Users, UserCheck, Heart } from "lucide-react"
 import { ConnectionItem } from './_components/ConnectionItem'
@@ -29,7 +30,12 @@ interface FollowWithUser extends Follow {
   user: User;
 }
 
-const MyNetworksPage = () => {
+const MyNetworksContent = () => {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  
+  const activeTab = searchParams?.get("tab") ?? "connections"
+  
   const [loadingStates, setLoadingStates] = useState<{[key: string]: boolean}>({})
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [connections, setConnections] = useState<ConnectionWithUser[]>([])
@@ -41,6 +47,12 @@ const MyNetworksPage = () => {
     following: false
   })
   const { currentUser, fetchCurrentUser, loading: userLoading } = useUserStore()
+
+  const handleTabChange = (tab: string) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('tab', tab)
+    router.push(url.pathname + url.search)
+  }
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -222,7 +234,7 @@ const MyNetworksPage = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="connections" className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="p-4 border-b border-gray-100">
           <TabsList className="grid w-full grid-cols-3 bg-gray-50 border border-gray-200 rounded-full p-1">
             <TabsTrigger 
@@ -359,6 +371,14 @@ const MyNetworksPage = () => {
         </div>
       </Tabs>
     </div>
+  )
+}
+
+const MyNetworksPage = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <MyNetworksContent />
+    </Suspense>
   )
 }
 
