@@ -30,7 +30,7 @@ const navigations = [
   { href: '/my-networks', icon: Users, label: 'My Networks' },
   { href: '/bookmarks', icon: Bookmark, label: 'Bookmarks' },
   { href: '/jobs', icon: FileText, label: 'Jobs' },
-  { href: '/societies', icon: Network, label: 'Societies' },
+  // { href: '/societies', icon: Network, label: 'Societies' },
   { href: '/verifications', icon: Crown, label: 'Verifications' },
 ];
 
