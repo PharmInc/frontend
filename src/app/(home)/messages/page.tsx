@@ -50,39 +50,23 @@ export default function MessagesPage() {
   }
 
   return (
-    <>
-      <div className="min-h-screen bg-white">
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="flex items-center gap-4 p-4">
-            <button
-              onClick={() => router.back()}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <h1 className="text-xl font-bold">Messages</h1>
-          </div>
-        </div>
-        
-        <div className="h-full flex-1 flex w-full">
-          <MessagesList />
-          <div className="flex-1">
-            {
-              selectedChat ? (
-                    <ChatInterface
-                      recipientName={selectedChat.name}
-                      recipientAvatar={selectedChat.avatar}
-                      recipientUsername={selectedChat.username}
-                      recipientVerified={selectedChat.verified}
-                      recipientOnline={selectedChat.online}
-                    />
-                  ) : (
-                    <EmptyChatState />
-                  )
-            }
-          </div>
-        </div>
+    <div className="h-full bg-white flex" style={{ height: 'calc(100vh - 24px)' }}>
+      <MessagesList />
+      <div className="flex-1 h-full">
+        {
+          selectedChat ? (
+                <ChatInterface
+                  recipientName={selectedChat.name}
+                  recipientAvatar={selectedChat.avatar}
+                  recipientUsername={selectedChat.username}
+                  recipientVerified={selectedChat.verified}
+                  recipientOnline={selectedChat.online}
+                />
+              ) : (
+                <EmptyChatState />
+              )
+        }
       </div>
-    </>
+    </div>
   )
 }

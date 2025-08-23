@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${twitterChirp.variable} min-h-screen flex flex-col font-chirp`}>
+      <body className={`${twitterChirp.variable} min-h-screen flex flex-col font-chirp overflow-y-scroll`}>
         <div className="flex flex-col grow">{children}</div>
         <Toaster />
       </body>
