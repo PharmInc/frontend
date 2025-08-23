@@ -1,8 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Heart, Share2, Bookmark, MessageSquare } from "lucide-react";
-import { getUserPosts } from "@/lib/api/services/content";
+import { Calendar, Heart, Share2, Bookmark, MessageSquare, MoreHorizontal, Trash2 } from "lucide-react";
+import { getUserPosts, deletePost } from "@/lib/api/services/content";
 import { Post, PaginatedResponse } from "@/lib/api/types";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useUserStore } from "@/store/userStore";
 
 interface ProfilePostsTabProps {
   userId: string;
@@ -18,6 +23,13 @@ export const ProfilePostsTab = ({ userId }: ProfilePostsTabProps) => {
     totalPages: 0,
     total: 0
   });
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
+  
+  const { currentUser } = useUserStore();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -55,6 +67,41 @@ export const ProfilePostsTab = ({ userId }: ProfilePostsTabProps) => {
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
     return date.toLocaleDateString();
   };
+
+  const handleDeletePost = (postId: string) => {
+    setSelectedPostId(postId);
+    setDeleteModalOpen(true);
+    setPopoverOpen(null);
+  };
+
+  const confirmDeletePost = async () => {
+    if (deleteConfirmText.toLowerCase() !== "delete" || !selectedPostId) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      // TODO -> Implement Minio Clean Service
+      await deletePost(selectedPostId);
+      
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== selectedPostId));
+      setPagination(prev => ({
+        ...prev,
+        total: prev.total - 1
+      }));
+      
+      setDeleteModalOpen(false);
+      setSelectedPostId(null);
+      setDeleteConfirmText("");
+    } catch (err) {
+      console.error("Error deleting post:", err);
+      setError("Failed to delete post");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const isCurrentUserProfile = currentUser?.id === userId;
 
   if (loading) {
     return (
@@ -109,9 +156,31 @@ export const ProfilePostsTab = ({ userId }: ProfilePostsTabProps) => {
         <div className="space-y-6">
           {posts.map((post) => (
             <div key={post.id} className="border rounded-xl p-4 hover:border-blue-200 transition-colors">
-              <h3 className="font-semibold text-lg mb-2">
-                {post.title}
-              </h3>
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="font-semibold text-lg flex-1">
+                  {post.title}
+                </h3>
+                {isCurrentUserProfile && (
+                  <Popover open={popoverOpen === post.id} onOpenChange={(open) => setPopoverOpen(open ? post.id : null)}>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-40" align="end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleDeletePost(post.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Post
+                      </Button>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
               <p className="text-gray-700 mb-3 overflow-hidden" style={{ 
                 display: '-webkit-box',
                 WebkitLineClamp: 3,
@@ -155,6 +224,54 @@ export const ProfilePostsTab = ({ userId }: ProfilePostsTabProps) => {
           )}
         </div>
       </CardContent>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Post</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this post? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="delete-confirm" className="block text-sm font-medium mb-2">
+                Type "delete" to confirm:
+              </label>
+              <Input
+                id="delete-confirm"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type 'delete' to confirm"
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setDeleteConfirmText("");
+                setSelectedPostId(null);
+              }}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeletePost}
+              disabled={deleteConfirmText.toLowerCase() !== "delete" || deleting}
+            >
+              {deleting ? "Deleting..." : "Delete Post"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
