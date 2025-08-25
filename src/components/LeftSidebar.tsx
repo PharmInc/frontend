@@ -12,6 +12,7 @@ import {
   User as UserIcon,
   Users,
   LogOut,
+  Settings,
 } from "lucide-react";
 import { User, InstitutionEntity } from "../app/(home)/home/_components/types";
 import Logo from "@/components/logo";
@@ -131,6 +132,14 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
                 >
                   <UserIcon className="w-5 h-5 text-gray-600" />
                   <span className="font-medium text-gray-900">Profile</span>
+                </Link>
+                <Link 
+                  href="/settings"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                  onClick={() => setShowProfileMenu(false)}
+                >
+                  <Settings className="w-5 h-5 text-gray-600" />
+                  <span className="font-medium text-gray-900">Settings</span>
                 </Link>
                 <hr className="border-gray-100 my-1" />
                 <button
