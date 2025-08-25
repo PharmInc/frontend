@@ -12,6 +12,7 @@ import {
   ApplicationCreateParams,
   ApplicationUpdateParams,
   PaginatedResponse,
+  ReactionResponse,
 } from "@/lib/api/types";
 import { PostCleanupService } from "@/lib/services/postCleanupService";
 
@@ -101,6 +102,13 @@ export const getPopularPosts = async (
 ): Promise<PaginatedResponse<Post>> => {
   const response = await contentApi.get("/public/post/popular", {
     params: { metric, page, limit }
+  });
+  return response.data;
+};
+
+export const patchReaction = async (id: string): Promise<ReactionResponse> => {
+  const response = await contentApi.post(`/private/post/${id}/reaction` , {
+    reacted : true
   });
   return response.data;
 };

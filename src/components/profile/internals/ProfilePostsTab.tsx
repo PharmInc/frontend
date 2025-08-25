@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { useUserStore } from "@/store/userStore";
 import { PostCleanupService } from "@/lib/services/postCleanupService";
+import Link from "next/link";
 
 interface ProfilePostsTabProps {
   userId: string;
@@ -169,6 +170,7 @@ export const ProfilePostsTab = ({ userId }: ProfilePostsTabProps) => {
       <CardContent className="p-6">
         <div className="space-y-6">
           {posts.map((post) => (
+            <Link href={`/post/${post.id}`}>
             <div key={post.id} className="border rounded-xl p-4 hover:border-blue-200 transition-colors">
               <div className="flex items-start justify-between mb-2">
                 <h3 className="font-semibold text-lg flex-1">
@@ -224,6 +226,7 @@ export const ProfilePostsTab = ({ userId }: ProfilePostsTabProps) => {
                 </div>
               </div>
             </div>
+            </Link>
           ))}
           
           {pagination.total > 0 && (

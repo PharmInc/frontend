@@ -125,7 +125,7 @@ const MyNetworksContent = () => {
       const followersWithUsers = await Promise.all(
         followers.map(async (follow) => {
           try {
-            const user = await getUserById(follow.user1Id)
+            const user = await getUserById(follow.user2_id)
             return { ...follow, user }
           } catch (error) {
             console.error(`Error fetching user:`, error)

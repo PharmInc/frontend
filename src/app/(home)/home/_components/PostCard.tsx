@@ -33,13 +33,13 @@ export default function PostCard({ post }: PostCardProps) {
   const [attachments, setAttachments] = useState<FolderContentsResponse | null>(null);
   const [loadingAttachments, setLoadingAttachments] = useState(false);
   
-  const { toggleLike, liked, sharePost, savePost, saved } = usePostStore();
+  const { toggleLike, liked, sharePost, savePost, saved, likedCount } = usePostStore();
   
   const handleLikeClick = async () => {
     if (isLiking) return;
     setIsLiking(true);
     try {
-      toggleLike(post.id);
+      await toggleLike(post.id);
     } catch (error) {
       console.error('Failed to toggle like:', error);
     } finally {
@@ -209,7 +209,7 @@ export default function PostCard({ post }: PostCardProps) {
         </div>
 
         <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-2 font-sans">
-          <span>{post.likes} likes</span>
+          <span>{likedCount[post.id] || post.likes} likes</span>
           <span>{post.comments} comments</span>
           <span>{post.shares} shares</span>
         </div>

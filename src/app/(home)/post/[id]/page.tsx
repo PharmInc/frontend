@@ -15,7 +15,7 @@ import {
   Trash2,
   ChevronDown
 } from 'lucide-react';
-import { getPost, getPostComments, createComment, replyToComment, updateComment, deleteComment, getCommentReplies } from '@/lib/api/services/content';
+import { getPost, getPostComments, createComment, replyToComment, updateComment, deleteComment, getCommentReplies, patchReaction } from '@/lib/api/services/content';
 import { Post, Comment } from '@/lib/api/types';
 import { useUserStore, usePostStore } from '@/store';
 import Image from 'next/image';
@@ -348,6 +348,8 @@ export default function PostDetailPage() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [attachments, setAttachments] = useState<FolderContentsResponse | null>(null);
   const [loadingAttachments, setLoadingAttachments] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
 
   const postId = params.id as string;
 
@@ -371,6 +373,10 @@ export default function PostDetailPage() {
       };
       
       setPost({ ...postData, user });
+      
+      // Initialize like state
+      setLikeCount(postData.reactions || 0);
+      setIsLiked(liked[postData.id] || false);
       
       // Load attachments if they exist
       const hasAttachmentId = (postData as any).attachment_id;
@@ -609,7 +615,9 @@ export default function PostDetailPage() {
     if (isLiking || !post) return;
     setIsLiking(true);
     try {
-      toggleLike(post.id);
+      const response = await patchReaction(post.id);
+      setIsLiked(response.reacted);
+      setLikeCount(response.totalReactions);
     } catch (error) {
       console.error('Failed to toggle like:', error);
     } finally {
@@ -772,7 +780,7 @@ export default function PostDetailPage() {
             {/* Stats */}
             <div className="flex items-center gap-6 py-3 border-y border-gray-200">
               <span className="text-sm">
-                <span className="font-bold text-gray-900">{post.reactions || 0}</span>
+                <span className="font-bold text-gray-900">{likeCount}</span>
                 <span className="text-gray-500 ml-1">Likes</span>
               </span>
               <span className="text-sm">
@@ -792,8 +800,8 @@ export default function PostDetailPage() {
                 disabled={isLiking}
                 className="flex items-center gap-2 px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors flex-1 justify-center disabled:opacity-70"
               >
-                <Heart className={`h-5 w-5 ${liked[post.id] ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
-                <span className={`font-medium ${liked[post.id] ? "text-red-500" : "text-gray-600"}`}>
+                <Heart className={`h-5 w-5 ${isLiked ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
+                <span className={`font-medium ${isLiked ? "text-red-500" : "text-gray-600"}`}>
                   {isLiking ? "..." : "Like"}
                 </span>
               </button>

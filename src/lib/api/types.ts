@@ -375,3 +375,9 @@ export interface ApplicationUpdateParams {
   reviewed_at?: string;
   responded_at?: string;
 }
+
+export interface ReactionResponse {
+  postId: string;
+  reacted: boolean;
+  totalReactions: number;
+}

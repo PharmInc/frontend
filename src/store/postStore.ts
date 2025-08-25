@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { Post } from '@/app/(home)/home/_components/types'
-import { listPosts, createPost, getPost } from '@/lib/api/services/content'
+import { listPosts, createPost, getPost, patchReaction } from '@/lib/api/services/content'
 import { useUserStore } from './userStore'
 import { fetchFolderContents } from '@/lib/minio/minio-client'
 
@@ -21,11 +21,14 @@ interface PostState {
   fetchSinglePost: (postId: string) => Promise<Post | null>
   loadMorePosts: () => Promise<void>
   addPost: (post: Post) => void
-  toggleLike: (postId: string | number) => void
+  toggleLike: (postId: string | number) => Promise<void>
   sharePost: (postId: string | number) => Promise<void>
   savePost: (postId: string | number) => void
   clearPosts: () => void
   createNewPost: (postData: { title: string; content: string; attachment_id?: string }) => Promise<void>
+  // TEMPORARY FIX START - Add utility method to check if post is liked
+  isPostLikedByCurrentUser: (postId: string | number) => boolean
+  // TEMPORARY FIX END
 }
 
 export const usePostStore = create<PostState>()(
@@ -110,11 +113,30 @@ export const usePostStore = create<PostState>()(
             initialLikedCount[post.id] = post.likes
           })
 
+          // TEMPORARY FIX START - Initialize liked state from localStorage
+          const { currentUser } = useUserStore.getState()
+          const initialLikedState: Record<string | number, boolean> = {}
+          if (currentUser?.id) {
+            const likedPostsKey = 'pharminc_liked_posts'
+            const likedPostsData = localStorage.getItem(likedPostsKey)
+            const likedPosts: Array<{user_id: string, post_id: string | number}> = 
+              likedPostsData ? JSON.parse(likedPostsData) : []
+            
+            transformedPosts.forEach((post) => {
+              const hasLiked = likedPosts.some(
+                item => item.user_id === currentUser.id && item.post_id === post.id
+              )
+              initialLikedState[post.id] = hasLiked
+            })
+          }
+          // TEMPORARY FIX END
+
           const currentPosts = append ? get().posts : []
           const newPosts = append ? [...currentPosts, ...transformedPosts] : transformedPosts
 
           set({ 
             posts: newPosts,
+            liked: { ...get().liked, ...initialLikedState },
             likedCount: { ...get().likedCount, ...initialLikedCount },
             currentPage: page,
             hasMore: pagination?.hasNext || false,
@@ -191,17 +213,90 @@ export const usePostStore = create<PostState>()(
         })
       },
 
-      toggleLike: (postId: string | number) => {
-        const { liked, likedCount } = get()
-        const isLiked = liked[postId] || false
+      toggleLike: async (postId: string | number) => {
+        // TEMPORARY FIX START - Remove when backend API is ready
+        const { currentUser } = useUserStore.getState()
+        if (!currentUser?.id) {
+          console.error('User not logged in')
+          return
+        }
+
+        // Get current localStorage data
+        const likedPostsKey = 'pharminc_liked_posts'
+        const likedPostsData = localStorage.getItem(likedPostsKey)
+        const likedPosts: Array<{user_id: string, post_id: string | number}> = 
+          likedPostsData ? JSON.parse(likedPostsData) : []
+        
+        // Check if user has already liked this post
+        const hasLiked = likedPosts.some(
+          item => item.user_id === currentUser.id && item.post_id === postId
+        )
+        
+        // Update localStorage
+        let newLikedPosts
+        if (hasLiked) {
+          // Remove like
+          newLikedPosts = likedPosts.filter(
+            item => !(item.user_id === currentUser.id && item.post_id === postId)
+          )
+        } else {
+          // Add like
+          newLikedPosts = [...likedPosts, { user_id: currentUser.id, post_id: postId }]
+        }
+        
+        localStorage.setItem(likedPostsKey, JSON.stringify(newLikedPosts))
+        
+        // Update local state
+        const currentLikeCount = get().likedCount[postId] || 0
+        const newLikeCount = hasLiked ? currentLikeCount - 1 : currentLikeCount + 1
         
         set({
-          liked: { ...liked, [postId]: !isLiked },
+          liked: { ...get().liked, [postId]: !hasLiked },
           likedCount: {
-            ...likedCount,
-            [postId]: (likedCount[postId] || 0) + (isLiked ? -1 : 1)
+            ...get().likedCount,
+            [postId]: newLikeCount
           }
         })
+
+        // Update the post in the posts array
+        const posts = get().posts
+        const updatedPosts = posts.map(post => 
+          post.id === postId 
+            ? { ...post, likes: newLikeCount }
+            : post
+        )
+        set({ posts: updatedPosts })
+        // TEMPORARY FIX END
+        
+        try {
+          const response = await patchReaction(postId.toString())
+          
+          // TEMPORARY FIX START - Comment out backend response handling
+          /*
+          set({
+            liked: { ...get().liked, [postId]: response.reacted },
+            likedCount: {
+              ...get().likedCount,
+              [postId]: response.totalReactions
+            }
+          })
+
+          // Update the post in the posts array
+          const posts = get().posts
+          const updatedPosts = posts.map(post => 
+            post.id === postId 
+              ? { ...post, likes: response.totalReactions }
+              : post
+          )
+          set({ posts: updatedPosts })
+          */
+          // TEMPORARY FIX END
+        } catch (error) {
+          console.error('Failed to toggle like:', error)
+          // TEMPORARY FIX START - Don't throw error, just log it
+          // throw error
+          // TEMPORARY FIX END
+        }
       },
 
       sharePost: async (postId: string | number) => {
@@ -231,6 +326,11 @@ export const usePostStore = create<PostState>()(
       },
 
       clearPosts: () => {
+        // TEMPORARY FIX START - Optionally clear localStorage liked posts data
+        // Note: Uncomment the line below if you want to clear liked posts on logout
+        // localStorage.removeItem('pharminc_liked_posts')
+        // TEMPORARY FIX END
+        
         set({ 
           posts: [], 
           liked: {}, 
@@ -280,6 +380,27 @@ export const usePostStore = create<PostState>()(
           throw error
         }
       },
+
+      // TEMPORARY FIX START - Utility method to check if post is liked by current user
+      isPostLikedByCurrentUser: (postId: string | number) => {
+        const { currentUser } = useUserStore.getState()
+        if (!currentUser?.id) return false
+        
+        // Check from store state first (for performance)
+        const storeState = get().liked[postId]
+        if (storeState !== undefined) return storeState
+        
+        // Fallback to localStorage check
+        const likedPostsKey = 'pharminc_liked_posts'
+        const likedPostsData = localStorage.getItem(likedPostsKey)
+        const likedPosts: Array<{user_id: string, post_id: string | number}> = 
+          likedPostsData ? JSON.parse(likedPostsData) : []
+        
+        return likedPosts.some(
+          item => item.user_id === currentUser.id && item.post_id === postId
+        )
+      },
+      // TEMPORARY FIX END
     }),
     { name: 'post-store' }
   )
