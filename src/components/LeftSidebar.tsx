@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import {
   Home,
@@ -16,9 +16,11 @@ import {
 } from "lucide-react";
 import { User, InstitutionEntity } from "../app/(home)/home/_components/types";
 import Logo from "@/components/logo";
-import { useUserStore, useInstitutionStore } from "@/store";
+import { useUserStore, useInstitutionStore, useConnectionsStore } from "@/store";
 import { clearAuthToken, getUserType } from "@/lib/api/utils";
 import { getDisplayHandle, getProfilePicture } from "../app/(home)/home/_utils/utils";
+import { BETA_BUILD_VERSION } from "@/config/constants";
+import ShortLogo from "./ShortLogo";
 
 interface LeftSidebarProps {
   user?: User | InstitutionEntity | null;
@@ -42,6 +44,8 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
   const { clearInstitution } = useInstitutionStore();
   const userType = getUserType()
   const pathname = usePathname();
+  const router = useRouter();
+  const {clearFollowing , clearConnections} = useConnectionsStore();
 
   const isActive = (href: string) => {
     if (href === '/home') {
@@ -67,6 +71,9 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
     clearAuthToken();
     clearUser();
     clearInstitution();
+    clearFollowing();
+    clearConnections();
+    router.push('/');
   };
 
   const handleProfileClick = () => {
@@ -80,9 +87,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
           <Logo />
         </div>
         <div className="xl:hidden block mb-8">
-          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-sm">P</span>
-          </div>
+          <ShortLogo />
         </div>
       </div>
 
@@ -106,7 +111,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
           <div className="relative" ref={profileMenuRef}>
             <button 
               onClick={handleProfileClick}
-              className="flex items-center gap-3 px-3 py-3 rounded-full hover:bg-gray-100 transition-colors w-full text-left"
+              className="flex items-center xl:gap-3 xl:px-3 xl:py-3 rounded-full hover:bg-gray-100 transition-colors w-full text-left"
             >
               <img
                 src={getProfilePicture(user)}
@@ -124,7 +129,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
             </button>
 
             {showProfileMenu && (
-              <div className="absolute bottom-full left-0 mb-2 w-full min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-in slide-in-from-bottom-2 duration-200">
+              <div className="absolute bottom-full left-0 mb-2 w-full min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-[999] animate-in slide-in-from-bottom-2 duration-200">
                 <Link 
                   href={`/${userType==='institution'?"institute":"profile"}/${user.id}`}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
@@ -162,6 +167,8 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
             </Link>
           </div>
         )}
+
+        <span className='text-[8px] absolute bottom-0 left-0 text-gray-800'>Beta build {BETA_BUILD_VERSION}</span>
       </div>
     </aside>
   );

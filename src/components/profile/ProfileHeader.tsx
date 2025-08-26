@@ -3,6 +3,14 @@ import { useRouter } from "next/navigation";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { 
   Camera, 
   MessageSquare, 
@@ -64,6 +72,7 @@ export const ProfileHeader = ({
   const [connectionsCount, setConnectionsCount] = useState(user?.connections || 0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isProfilePictureModalOpen, setIsProfilePictureModalOpen] = useState(false);
+  const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState(user);
   const [isLoading, setIsLoading] = useState({
     follow: false,
@@ -116,7 +125,12 @@ export const ProfileHeader = ({
   }, [currentUser?.id, fetchConnections, fetchFollowedUsers]);
 
   const handleFollow = async () => {
-    if (!user?.id || !currentUser?.id || isLoading.follow || isOwnProfile) return;
+    if (!currentUser?.id) {
+      setIsLoginPromptOpen(true);
+      return;
+    }
+    
+    if (!user?.id || isLoading.follow || isOwnProfile) return;
 
     setIsLoading((prev) => ({ ...prev, follow: true }));
     try {
@@ -135,8 +149,12 @@ export const ProfileHeader = ({
   };
 
   const handleConnect = async () => {
-    if (!user?.id || !currentUser?.id || isLoading.connect || isOwnProfile)
+    if (!currentUser?.id) {
+      setIsLoginPromptOpen(true);
       return;
+    }
+    
+    if (!user?.id || isLoading.connect || isOwnProfile) return;
 
     setIsLoading((prev) => ({ ...prev, connect: true }));
     try {
@@ -180,6 +198,15 @@ export const ProfileHeader = ({
     } finally {
       setIsLoading((prev) => ({ ...prev, reject: false }));
     }
+  };
+
+  const handleMessage = () => {
+    if (!currentUser?.id) {
+      setIsLoginPromptOpen(true);
+      return;
+    }
+    // TODO: Implement messaging functionality
+    console.log('Message user:', user?.id);
   };
 
   const handleUserUpdate = (updatedUser: User) => {
@@ -284,7 +311,12 @@ export const ProfileHeader = ({
             </>
           ) : (
             <>
-              <Button variant="outline" size="sm" className="rounded-full">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-full"
+                onClick={handleMessage}
+              >
                 <MessageSquare className="h-4 w-4" />
               </Button>
 
@@ -437,6 +469,36 @@ export const ProfileHeader = ({
           onUpdate={handleUserUpdate}
         />
       )}
+
+      {/* Login Prompt Dialog */}
+      <Dialog open={isLoginPromptOpen} onOpenChange={setIsLoginPromptOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Login Required</DialogTitle>
+            <DialogDescription>
+              You need to log in to connect with other professionals and follow their updates.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsLoginPromptOpen(false)}
+              className="flex-1 sm:flex-none"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                setIsLoginPromptOpen(false);
+                router.push('/auth');
+              }}
+              className="flex-1 sm:flex-none"
+            >
+              Login
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
