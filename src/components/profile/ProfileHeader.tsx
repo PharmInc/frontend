@@ -51,11 +51,15 @@ export const ProfileHeader = ({
     disconnectFromUser,
     acceptConnectionRequest,
     rejectConnectionRequest,
-    fetchConnections
+    fetchConnections,
+    getFollowStatus,
+    followUserAction,
+    unfollowUserAction,
+    fetchFollowedUsers
   } = useConnectionsStore();
   const router = useRouter();
   
-  const [isFollowing, setIsFollowing] = useState(user?.isFollowing || false);
+  const isFollowing = user?.id ? getFollowStatus(user.id) === 'following' : false;
   const [followersCount, setFollowersCount] = useState(user?.followers || 0);
   const [connectionsCount, setConnectionsCount] = useState(user?.connections || 0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -92,7 +96,6 @@ export const ProfileHeader = ({
 
   useEffect(() => {
     if (user) {
-      setIsFollowing(user.isFollowing || false);
       setFollowersCount(user.followers || 0);
       setConnectionsCount(user.connections || 0);
     }
@@ -108,8 +111,9 @@ export const ProfileHeader = ({
   useEffect(() => {
     if (currentUser?.id) {
       fetchConnections(currentUser.id);
+      fetchFollowedUsers();
     }
-  }, [currentUser?.id, fetchConnections]);
+  }, [currentUser?.id, fetchConnections, fetchFollowedUsers]);
 
   const handleFollow = async () => {
     if (!user?.id || !currentUser?.id || isLoading.follow || isOwnProfile) return;
@@ -117,13 +121,12 @@ export const ProfileHeader = ({
     setIsLoading((prev) => ({ ...prev, follow: true }));
     try {
       if (isFollowing) {
-        await unfollowUser({ user2_id: user.id });
+        await unfollowUserAction(user.id);
         setFollowersCount((prev) => prev - 1);
       } else {
-        await followUser({ user2_id: user.id });
+        await followUserAction(user.id);
         setFollowersCount((prev) => prev + 1);
       }
-      setIsFollowing((prev) => !prev);
     } catch (error) {
       console.error("Error toggling follow:", error);
     } finally {

@@ -1,22 +1,28 @@
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
-import { Connect } from '@/lib/api/types'
+import { Connect, User } from '@/lib/api/types'
 import { 
   getUserConnections, 
   connectUser, 
   disconnectUser, 
-  acceptConnection 
+  acceptConnection,
+  followUser,
+  unfollowUser,
+  getUserFollowed
 } from '@/lib/api/services/network'
 
 export type ConnectionStatus = 'connected' | 'pending_sent' | 'pending_received' | 'none'
+export type FollowStatus = 'following' | 'not_following'
 
 interface ConnectionsState {
   connections: Connect[]
   connectionStatusMap: Record<string, ConnectionStatus>
+  followedUsers: User[]
+  followingStatusMap: Record<string, FollowStatus>
   loading: boolean
   error: string | null
 
-  // Actions
+  // Connection Actions
   fetchConnections: (userId: string) => Promise<void>
   getConnectionStatus: (currentUserId: string, targetUserId: string) => ConnectionStatus
   connectToUser: (currentUserId: string, targetUserId: string) => Promise<void>
@@ -24,6 +30,13 @@ interface ConnectionsState {
   acceptConnectionRequest: (currentUserId: string, requesterId: string) => Promise<void>
   rejectConnectionRequest: (currentUserId: string, requesterId: string) => Promise<void>
   clearConnections: () => void
+
+  // Following Actions
+  fetchFollowedUsers: () => Promise<void>
+  getFollowStatus: (targetUserId: string) => FollowStatus
+  followUserAction: (targetUserId: string) => Promise<void>
+  unfollowUserAction: (targetUserId: string) => Promise<void>
+  clearFollowing: () => void
 }
 
 export const useConnectionsStore = create<ConnectionsState>()(
@@ -32,6 +45,8 @@ export const useConnectionsStore = create<ConnectionsState>()(
       (set, get) => ({
         connections: [],
         connectionStatusMap: {},
+        followedUsers: [],
+        followingStatusMap: {},
         loading: false,
         error: null,
 
@@ -194,12 +209,95 @@ export const useConnectionsStore = create<ConnectionsState>()(
             error: null 
           })
         },
+
+        // Following Actions
+        fetchFollowedUsers: async () => {
+          set({ loading: true, error: null })
+          try {
+            const followedUsers = await getUserFollowed()
+            const followingStatusMap: Record<string, FollowStatus> = {}
+
+            followedUsers.forEach(user => {
+              followingStatusMap[user.id] = 'following'
+            })
+
+            set({
+              followedUsers,
+              followingStatusMap,
+              loading: false
+            })
+          } catch (error) {
+            console.error('Error fetching followed users:', error)
+            set({
+              error: 'Failed to load followed users',
+              loading: false
+            })
+          }
+        },
+
+        getFollowStatus: (targetUserId: string): FollowStatus => {
+          const { followingStatusMap } = get()
+          return followingStatusMap[targetUserId] || 'not_following'
+        },
+
+        followUserAction: async (targetUserId: string) => {
+          try {
+            await followUser({ user2_id: targetUserId })
+            
+            // Update local state
+            const { followingStatusMap } = get()
+            const newStatusMap = {
+              ...followingStatusMap,
+              [targetUserId]: 'following' as FollowStatus
+            }
+
+            set({
+              followingStatusMap: newStatusMap
+            })
+
+            // Optionally refetch followed users to get the full user object
+            get().fetchFollowedUsers()
+          } catch (error) {
+            console.error('Error following user:', error)
+            throw error
+          }
+        },
+
+        unfollowUserAction: async (targetUserId: string) => {
+          try {
+            await unfollowUser({ user2_id: targetUserId })
+            
+            // Update local state
+            const { followedUsers, followingStatusMap } = get()
+            const newFollowedUsers = followedUsers.filter(user => user.id !== targetUserId)
+            const newStatusMap = { ...followingStatusMap }
+            delete newStatusMap[targetUserId]
+
+            set({
+              followedUsers: newFollowedUsers,
+              followingStatusMap: newStatusMap
+            })
+          } catch (error) {
+            console.error('Error unfollowing user:', error)
+            throw error
+          }
+        },
+
+        clearFollowing: () => {
+          set({
+            followedUsers: [],
+            followingStatusMap: {},
+            error: null
+          })
+        },
       }),
       {
         name: 'connections-store',
         partialize: (state) => ({ 
           connections: state.connections,
-          connectionStatusMap: state.connectionStatusMap 
+          connectionStatusMap: state.connectionStatusMap,
+          followedUsers: state.followedUsers,
+          followingStatusMap: state.followingStatusMap 
         }),
       }
     ),

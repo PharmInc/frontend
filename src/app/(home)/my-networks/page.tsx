@@ -13,6 +13,7 @@ import { getAuthToken } from '@/lib/api/utils'
 import { 
   getUserFollowers, 
   getUserFollowing,
+  getUserFollowed,
   getUserById, 
   unfollowUser,
   Connect, 
@@ -38,7 +39,6 @@ const MyNetworksContent = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [connectionsWithUsers, setConnectionsWithUsers] = useState<ConnectionWithUser[]>([])
   const [followers, setFollowers] = useState<FollowWithUser[]>([])
-  const [following, setFollowing] = useState<FollowWithUser[]>([])
   const [loading, setLoading] = useState({
     connections: false,
     followers: false,
@@ -50,7 +50,11 @@ const MyNetworksContent = () => {
     connections, 
     fetchConnections: fetchConnectionsFromStore, 
     disconnectFromUser,
-    loading: connectionsLoading 
+    loading: connectionsLoading,
+    fetchFollowedUsers,
+    followingStatusMap,
+    followedUsers,
+    unfollowUserAction
   } = useConnectionsStore()
 
   const handleTabChange = (tab: string) => {
@@ -182,22 +186,9 @@ const MyNetworksContent = () => {
     
     setLoading(prev => ({ ...prev, following: true }))
     try {
-      const following = await getUserFollowing(currentUser.id)
-      
-      const followingWithUsers = await Promise.all(
-        following.map(async (follow) => {
-          try {
-            const user = await getUserById(follow.user2_id)
-            return { ...follow, user }
-          } catch (error) {
-            console.error(`Error fetching user:`, error)
-            return null
-          }
-        })
-      )
-      
-      const validFollowing = followingWithUsers.filter(Boolean) as FollowWithUser[]
-      setFollowing(validFollowing)
+      await fetchFollowedUsers()
+      // Use the followed users from the store
+      // The component will update automatically via store subscription
     } catch (error) {
       console.error('Error fetching following:', error)
     } finally {
@@ -224,8 +215,7 @@ const MyNetworksContent = () => {
     setLoadingStates(prev => ({ ...prev, [userId]: true }))
     
     try {
-      await unfollowUser({ user2_id: userId })
-      setFollowing(prev => prev.filter(follow => follow.user.id !== userId))
+      await unfollowUserAction(userId)
     } catch (error) {
       console.error('Error unfollowing user:', error)
     } finally {
@@ -309,9 +299,9 @@ const MyNetworksContent = () => {
             >
               <Heart className="w-4 h-4" />
               <span>Following</span>
-              {following.length > 0 && (
+              {followedUsers.length > 0 && (
                 <span className="ml-1 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {following.length}
+                  {followedUsers.length}
                 </span>
               )}
             </TabsTrigger>
@@ -389,15 +379,15 @@ const MyNetworksContent = () => {
                     <div className="text-sm text-gray-600">Loading following...</div>
                   </div>
                 </div>
-              ) : following.length > 0 ? (
+              ) : followedUsers.length > 0 ? (
                 <div className="space-y-4 p-4">
-                  {following.map((follow) => (
+                  {followedUsers.map((user) => (
                     <FollowingItem 
-                      key={follow.id}
-                      user={follow.user}
+                      key={user.id}
+                      user={user}
                       onUnfollow={handleUnfollow}
                       onMessage={handleMessage}
-                      isLoading={loadingStates[follow.user.id] || false}
+                      isLoading={loadingStates[user.id] || false}
                     />
                   ))}
                 </div>

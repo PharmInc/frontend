@@ -1,5 +1,5 @@
 import { networkApi } from "@/lib/api/axios/api";
-import { Follow, FollowParams, Connect, ConnectParams } from "@/lib/api/types";
+import { Follow, FollowParams, Connect, ConnectParams, User } from "@/lib/api/types";
 
 // Follow endpoints
 export const followUser = async (params: FollowParams): Promise<Follow> => {
@@ -26,6 +26,11 @@ export const getFollowerCount = async (
 
 export const getUserFollowing = async (userId: string): Promise<Follow[]> => {
   const response = await networkApi.get(`/public/follow/${userId}/following`);
+  return response.data;
+};
+
+export const getUserFollowed = async (): Promise<User[]> => {
+  const response = await networkApi.get("/private/followed");
   return response.data;
 };
 
