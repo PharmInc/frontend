@@ -170,8 +170,8 @@ export const ProfilePostsTab = ({ userId }: ProfilePostsTabProps) => {
       <CardContent className="p-6">
         <div className="space-y-6">
           {posts.map((post) => (
-            <Link href={`/post/${post.id}`}>
-            <div key={post.id} className="border rounded-xl p-4 hover:border-blue-200 transition-colors">
+            <Link key={post.id} href={`/post/${post.id}`}>
+            <div className="border rounded-xl p-4 hover:border-blue-200 transition-colors">
               <div className="flex items-start justify-between mb-2">
                 <h3 className="font-semibold text-lg flex-1">
                   {post.title}

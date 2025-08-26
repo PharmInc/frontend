@@ -8,14 +8,12 @@ import { ConnectionItem } from './_components/ConnectionItem'
 import { FollowerItem } from './_components/FollowerItem'
 import { FollowingItem } from './_components/FollowingItem'
 import { LoginPrompt } from './_components/LoginPrompt'
-import { useUserStore } from '@/store/userStore'
+import { useUserStore, useConnectionsStore } from '@/store'
 import { getAuthToken } from '@/lib/api/utils'
 import { 
-  getUserConnections, 
   getUserFollowers, 
   getUserFollowing,
   getUserById, 
-  disconnectUser, 
   unfollowUser,
   Connect, 
   Follow,
@@ -38,7 +36,7 @@ const MyNetworksContent = () => {
   
   const [loadingStates, setLoadingStates] = useState<{[key: string]: boolean}>({})
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
-  const [connections, setConnections] = useState<ConnectionWithUser[]>([])
+  const [connectionsWithUsers, setConnectionsWithUsers] = useState<ConnectionWithUser[]>([])
   const [followers, setFollowers] = useState<FollowWithUser[]>([])
   const [following, setFollowing] = useState<FollowWithUser[]>([])
   const [loading, setLoading] = useState({
@@ -46,7 +44,14 @@ const MyNetworksContent = () => {
     followers: false,
     following: false
   })
+  
   const { currentUser, fetchCurrentUser, loading: userLoading } = useUserStore()
+  const { 
+    connections, 
+    fetchConnections: fetchConnectionsFromStore, 
+    disconnectFromUser,
+    loading: connectionsLoading 
+  } = useConnectionsStore()
 
   const handleTabChange = (tab: string) => {
     const url = new URL(window.location.href)
@@ -78,21 +83,24 @@ const MyNetworksContent = () => {
 
   useEffect(() => {
     if (currentUser?.id && isAuthenticated) {
-      fetchConnections()
+      fetchConnectionsData()
       fetchFollowers()
       fetchFollowing()
     }
   }, [currentUser?.id, isAuthenticated])
 
-  const fetchConnections = async () => {
+  const fetchConnectionsData = async () => {
     if (!currentUser?.id) return
     
     setLoading(prev => ({ ...prev, connections: true }))
     try {
-      const connections = await getUserConnections(currentUser.id)
+      // Fetch connections from store
+      await fetchConnectionsFromStore(currentUser.id)
+      
+      // Get accepted connections with user data
       const acceptedConnections = connections.filter(conn => conn.accepted)
       
-      const connectionsWithUsers = await Promise.all(
+      const connectionsWithUsersData = await Promise.all(
         acceptedConnections.map(async (conn) => {
           try {
             // Get the other user in the connection
@@ -106,14 +114,40 @@ const MyNetworksContent = () => {
         })
       )
       
-      const validConnections = connectionsWithUsers.filter(Boolean) as ConnectionWithUser[]
-      setConnections(validConnections)
+      const validConnections = connectionsWithUsersData.filter(Boolean) as ConnectionWithUser[]
+      setConnectionsWithUsers(validConnections)
     } catch (error) {
       console.error('Error fetching connections:', error)
     } finally {
       setLoading(prev => ({ ...prev, connections: false }))
     }
   }
+
+  useEffect(() => {
+    if (currentUser?.id && connections.length > 0) {
+      const updateConnectionsWithUsers = async () => {
+        const acceptedConnections = connections.filter(conn => conn.accepted)
+        
+        const connectionsWithUsersData = await Promise.all(
+          acceptedConnections.map(async (conn) => {
+            try {
+              const otherUserId = conn.user1_id === currentUser.id ? conn.user2_id : conn.user1_id
+              const user = await getUserById(otherUserId)
+              return { ...conn, user }
+            } catch (error) {
+              console.error(`Error fetching user:`, error)
+              return null
+            }
+          })
+        )
+        
+        const validConnections = connectionsWithUsersData.filter(Boolean) as ConnectionWithUser[]
+        setConnectionsWithUsers(validConnections)
+      }
+      
+      updateConnectionsWithUsers()
+    }
+  }, [connections, currentUser?.id])
 
   const fetchFollowers = async () => {
     if (!currentUser?.id) return
@@ -172,11 +206,13 @@ const MyNetworksContent = () => {
   }
 
   const handleDisconnect = async (userId: string) => {
+    if (!currentUser?.id) return
+    
     setLoadingStates(prev => ({ ...prev, [userId]: true }))
     
     try {
-      await disconnectUser({ user2_id: userId })
-      setConnections(prev => prev.filter(conn => conn.user.id !== userId))
+      await disconnectFromUser(currentUser.id, userId)
+      setConnectionsWithUsers(prev => prev.filter(conn => conn.user.id !== userId))
     } catch (error) {
       console.error('Error disconnecting user:', error)
     } finally {
@@ -249,9 +285,9 @@ const MyNetworksContent = () => {
             >
               <UserCheck className="w-4 h-4" />
               <span>Connections</span>
-              {connections.length > 0 && (
+              {connectionsWithUsers.length > 0 && (
                 <span className="ml-1 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {connections.length}
+                  {connectionsWithUsers.length}
                 </span>
               )}
             </TabsTrigger>
@@ -292,9 +328,9 @@ const MyNetworksContent = () => {
                     <div className="text-sm text-gray-600">Loading connections...</div>
                   </div>
                 </div>
-              ) : connections.length > 0 ? (
+              ) : connectionsWithUsers.length > 0 ? (
                 <div className="space-y-4 p-4">
-                  {connections.map((connection) => (
+                  {connectionsWithUsers.map((connection) => (
                     <ConnectionItem 
                       key={connection.id}
                       user={connection.user}

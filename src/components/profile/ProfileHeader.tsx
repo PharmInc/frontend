@@ -20,18 +20,13 @@ import {
 import Image from "next/image";
 import { EditProfileModal } from "./EditProfileModal";
 import { EditProfilePictureModal } from "./EditProfilePictureModal";
-import { useUserStore } from "@/store/userStore";
+import { useUserStore, useConnectionsStore } from "@/store";
 import { getProfilePictureUrl, isProfilePictureUrl } from "@/lib/utils";
 import {
   followUser,
   unfollowUser,
   getFollowerCount,
-  connectUser,
-  disconnectUser,
-  acceptConnection,
   getConnectionCount,
-  getUserConnections,
-  getUserFollowers,
   User,
   Institution,
 } from "@/lib/api";
@@ -50,42 +45,19 @@ export const ProfileHeader = ({
   onUserUpdate,
 }: ProfileHeaderProps) => {
   const { currentUser, fetchCurrentUser } = useUserStore();
+  const { 
+    getConnectionStatus,
+    connectToUser,
+    disconnectFromUser,
+    acceptConnectionRequest,
+    rejectConnectionRequest,
+    fetchConnections
+  } = useConnectionsStore();
   const router = useRouter();
-  
-  // Initialize states based on user data
-  const getInitialConnectionState = () => {
-    if (!user) return { isConnected: false, hasPendingRequest: false, hasIncomingRequest: false };
-
-    if (user.connectionStatus) {
-      switch (user.connectionStatus) {
-        case 'connected':
-          return { isConnected: true, hasPendingRequest: false, hasIncomingRequest: false };
-        case 'pending_sent':
-          return { isConnected: false, hasPendingRequest: true, hasIncomingRequest: false };
-        case 'pending_received':
-          return { isConnected: false, hasPendingRequest: false, hasIncomingRequest: true };
-        default:
-          return { isConnected: false, hasPendingRequest: false, hasIncomingRequest: false };
-      }
-    }
-    
-    return { 
-      isConnected: user.isConnected || false, 
-      hasPendingRequest: false, 
-      hasIncomingRequest: false 
-    };
-  };
-
-  const initialConnectionState = getInitialConnectionState();
   
   const [isFollowing, setIsFollowing] = useState(user?.isFollowing || false);
   const [followersCount, setFollowersCount] = useState(user?.followers || 0);
-  const [isConnected, setIsConnected] = useState(initialConnectionState.isConnected);
-  const [hasPendingRequest, setHasPendingRequest] = useState(initialConnectionState.hasPendingRequest);
-  const [hasIncomingRequest, setHasIncomingRequest] = useState(initialConnectionState.hasIncomingRequest);
-  const [connectionsCount, setConnectionsCount] = useState(
-    user?.connections || 0
-  );
+  const [connectionsCount, setConnectionsCount] = useState(user?.connections || 0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isProfilePictureModalOpen, setIsProfilePictureModalOpen] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState(user);
@@ -97,6 +69,14 @@ export const ProfileHeader = ({
   });
 
   const isOwnProfile = currentUser?.id === user?.id;
+
+  const connectionStatus = currentUser?.id && user?.id 
+    ? getConnectionStatus(currentUser.id, user.id) 
+    : 'none';
+
+  const isConnected = connectionStatus === 'connected';
+  const hasPendingRequest = connectionStatus === 'pending_sent';
+  const hasIncomingRequest = connectionStatus === 'pending_received';
 
   const handleConnectionsClick = () => {
     if (isOwnProfile) {
@@ -113,37 +93,8 @@ export const ProfileHeader = ({
   useEffect(() => {
     if (user) {
       setIsFollowing(user.isFollowing || false);
-      setIsConnected(user.isConnected || false);
       setFollowersCount(user.followers || 0);
       setConnectionsCount(user.connections || 0);
-      
-      if (user.connectionStatus) {
-        switch (user.connectionStatus) {
-          case 'connected':
-            setIsConnected(true);
-            setHasPendingRequest(false);
-            setHasIncomingRequest(false);
-            break;
-          case 'pending_sent':
-            setIsConnected(false);
-            setHasPendingRequest(true);
-            setHasIncomingRequest(false);
-            break;
-          case 'pending_received':
-            setIsConnected(false);
-            setHasPendingRequest(false);
-            setHasIncomingRequest(true);
-            break;
-          default:
-            setIsConnected(false);
-            setHasPendingRequest(false);
-            setHasIncomingRequest(false);
-        }
-      } else {
-        setIsConnected(user.isConnected || false);
-        setHasPendingRequest(false);
-        setHasIncomingRequest(false);
-      }
     }
   }, [user]);
 
@@ -153,6 +104,12 @@ export const ProfileHeader = ({
       fetchCurrentUser();
     }
   }, [currentUser, fetchCurrentUser]);
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      fetchConnections(currentUser.id);
+    }
+  }, [currentUser?.id, fetchConnections]);
 
   const handleFollow = async () => {
     if (!user?.id || !currentUser?.id || isLoading.follow || isOwnProfile) return;
@@ -181,15 +138,12 @@ export const ProfileHeader = ({
     setIsLoading((prev) => ({ ...prev, connect: true }));
     try {
       if (isConnected || hasPendingRequest) {
-        await disconnectUser({ user2_id: user.id });
-        setIsConnected(false);
-        setHasPendingRequest(false);
+        await disconnectFromUser(currentUser.id, user.id);
         if (isConnected) {
           setConnectionsCount((prev) => prev - 1);
         }
       } else {
-        await connectUser({ user2_id: user.id });
-        setHasPendingRequest(true);
+        await connectToUser(currentUser.id, user.id);
       }
     } catch (error) {
       console.error("Error toggling connection:", error);
@@ -203,9 +157,7 @@ export const ProfileHeader = ({
 
     setIsLoading((prev) => ({ ...prev, accept: true }));
     try {
-      await acceptConnection(user.id);
-      setIsConnected(true);
-      setHasIncomingRequest(false);
+      await acceptConnectionRequest(currentUser.id, user.id);
       setConnectionsCount((prev) => prev + 1);
     } catch (error) {
       console.error("Error accepting connection:", error);
@@ -219,8 +171,7 @@ export const ProfileHeader = ({
 
     setIsLoading((prev) => ({ ...prev, reject: true }));
     try {
-      await disconnectUser({ user2_id: user.id });
-      setHasIncomingRequest(false);
+      await rejectConnectionRequest(currentUser.id, user.id);
     } catch (error) {
       console.error("Error rejecting connection:", error);
     } finally {
@@ -392,7 +343,7 @@ export const ProfileHeader = ({
                 {isLoading.connect
                   ? "Processing..."
                   : isConnected
-                  ? "Connected"
+                  ? "Disconnect"
                   : hasPendingRequest
                   ? "Request Sent"
                   : "Connect"}
