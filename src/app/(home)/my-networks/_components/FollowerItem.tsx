@@ -1,4 +1,5 @@
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { MessageSquare, UserMinus } from "lucide-react"
@@ -16,23 +17,33 @@ export const FollowerItem = ({
   onUnfollow,
   onMessage,
   isLoading = false
-}: FollowerItemProps) => (
-  <div className="flex items-center space-x-3 p-4 bg-white rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
-    <Avatar className="h-12 w-12">
-      <AvatarImage
-        src={user.profile_picture || "/pp.png"}
-        alt={user.name}
-      />
-      <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
-        {user.name?.[0] || "U"}
-      </AvatarFallback>
-    </Avatar>
-    <div className="flex-1 min-w-0">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-semibold text-gray-900 hover:underline cursor-pointer">
-            {user.name}
-          </h3>
+}: FollowerItemProps) => {
+  const router = useRouter()
+
+  const handleProfileClick = () => {
+    router.push(`/profile/${user.id}`)
+  }
+
+  return (
+    <div className="flex items-center space-x-3 p-4 bg-white rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
+      <Avatar className="h-12 w-12 cursor-pointer" onClick={handleProfileClick}>
+        <AvatarImage
+          src={user.profile_picture || "/pp.png"}
+          alt={user.name}
+        />
+        <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
+          {user.name?.[0] || "U"}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 
+              className="font-semibold text-gray-900 hover:underline cursor-pointer"
+              onClick={handleProfileClick}
+            >
+              {user.name}
+            </h3>
           {user.role && (
             <p className="text-sm text-gray-600">{user.role}</p>
           )}
@@ -72,4 +83,5 @@ export const FollowerItem = ({
       </div>
     </div>
   </div>
-)
+  )
+}
