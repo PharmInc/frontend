@@ -5,5 +5,6 @@ export * from "@/lib/api/services/background";
 export * from "@/lib/api/services/institute";
 export * from "@/lib/api/services/job";
 export * from "@/lib/api/services/content";
+export * from "@/lib/api/services/chat";
 export * from "@/lib/api/types";
 export * from "@/lib/api/utils";

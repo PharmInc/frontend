@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -59,11 +59,11 @@ export const ProfileHeader = ({
     disconnectFromUser,
     acceptConnectionRequest,
     rejectConnectionRequest,
-    fetchConnections,
+    ensureConnectionsLoaded,
     getFollowStatus,
     followUserAction,
     unfollowUserAction,
-    fetchFollowedUsers
+    ensureFollowedUsersLoaded
   } = useConnectionsStore();
   const router = useRouter();
   
@@ -91,6 +91,15 @@ export const ProfileHeader = ({
   const hasPendingRequest = connectionStatus === 'pending_sent';
   const hasIncomingRequest = connectionStatus === 'pending_received';
 
+  const loadConnectionsData = useCallback(async (userId: string) => {
+    try {
+      await ensureConnectionsLoaded(userId);
+      await ensureFollowedUsersLoaded();
+    } catch (error) {
+      console.error('Error loading connections data:', error);
+    }
+  }, [ensureConnectionsLoaded, ensureFollowedUsersLoaded]);
+
   const handleConnectionsClick = () => {
     if (isOwnProfile) {
       router.push('/my-networks?tab=connections');
@@ -117,12 +126,12 @@ export const ProfileHeader = ({
     }
   }, [currentUser, fetchCurrentUser]);
 
+
   useEffect(() => {
     if (currentUser?.id) {
-      fetchConnections(currentUser.id);
-      fetchFollowedUsers();
+      loadConnectionsData(currentUser.id);
     }
-  }, [currentUser?.id, fetchConnections, fetchFollowedUsers]);
+  }, [currentUser?.id, loadConnectionsData]);
 
   const handleFollow = async () => {
     if (!currentUser?.id) {
@@ -205,8 +214,11 @@ export const ProfileHeader = ({
       setIsLoginPromptOpen(true);
       return;
     }
-    // TODO: Implement messaging functionality
-    console.log('Message user:', user?.id);
+    
+    if (!user?.id) return;
+    
+    // Navigate to messages page and select this user as chat recipient
+    router.push(`/messages?user=${user.id}`);
   };
 
   const handleUserUpdate = (updatedUser: User) => {

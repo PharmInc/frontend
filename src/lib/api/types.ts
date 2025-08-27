@@ -381,3 +381,32 @@ export interface ReactionResponse {
   reacted: boolean;
   totalReactions: number;
 }
+
+// Chat types
+export interface ChatUser {
+  id: string;
+  name: string;
+  username: string;
+  avatar?: string;
+  verified?: boolean;
+  online?: boolean;
+}
+
+export interface ChatMessage {
+  id: string;
+  content: string;
+  timestamp: string;
+  senderUsername: string;
+  recipientUsername: string;
+  replyTo?: string;
+  tempId?: string;
+  sending?: boolean;
+}
+
+export interface Conversation {
+  _id: string;
+  participants: string[];
+  lastMessage: string;
+  lastMessageAt: string;
+  lastSender: string;
+}

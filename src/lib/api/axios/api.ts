@@ -9,6 +9,7 @@ const BASE_URLS = {
   institute: process.env.NEXT_PUBLIC_API_INSTITUTE!,
   job: process.env.NEXT_PUBLIC_API_JOB!,
   content: process.env.NEXT_PUBLIC_API_CONTENT!,
+  chat: process.env.NEXT_PUBLIC_API_MSG!,
 };
 
 export const authApi = axios.create({ baseURL : BASE_URLS.auth });
@@ -18,3 +19,4 @@ export const networkApi = applyInterceptors(axios.create({ baseURL : BASE_URLS.n
 export const backgroundApi = applyInterceptors(axios.create({ baseURL : BASE_URLS.background }));
 export const instituteApi = applyInterceptors(axios.create({ baseURL : BASE_URLS.institute }));
 export const jobApi = applyInterceptors(axios.create({ baseURL : BASE_URLS.job }));
+export const chatApi = applyInterceptors(axios.create({ baseURL : BASE_URLS.chat }));

@@ -24,6 +24,7 @@ interface ConnectionsState {
 
   // Connection Actions
   fetchConnections: (userId: string) => Promise<void>
+  ensureConnectionsLoaded: (userId: string) => Promise<void>
   getConnectionStatus: (currentUserId: string, targetUserId: string) => ConnectionStatus
   connectToUser: (currentUserId: string, targetUserId: string) => Promise<void>
   disconnectFromUser: (currentUserId: string, targetUserId: string) => Promise<void>
@@ -33,6 +34,7 @@ interface ConnectionsState {
 
   // Following Actions
   fetchFollowedUsers: () => Promise<void>
+  ensureFollowedUsersLoaded: () => Promise<void>
   getFollowStatus: (targetUserId: string) => FollowStatus
   followUserAction: (targetUserId: string) => Promise<void>
   unfollowUserAction: (targetUserId: string) => Promise<void>
@@ -85,22 +87,18 @@ export const useConnectionsStore = create<ConnectionsState>()(
           }
         },
 
+        ensureConnectionsLoaded: async (userId: string) => {
+          const { connections } = get()
+          if (connections.length === 0) {
+            await get().fetchConnections(userId)
+          }
+        },
+
         getConnectionStatus: (currentUserId: string, targetUserId: string): ConnectionStatus => {
           if (currentUserId === targetUserId) return 'none'
           const { connectionStatusMap } = get()
           
-          // If we don't have the status in our map, return 'none' but optionally trigger a fetch
-          if (!connectionStatusMap[targetUserId]) {
-            // Optionally fetch connections in the background if we don't have them
-            const { connections } = get()
-            if (connections.length === 0) {
-              // Don't await here to avoid blocking the UI
-              get().fetchConnections(currentUserId).catch(console.error)
-            }
-            return 'none'
-          }
-          
-          return connectionStatusMap[targetUserId]
+          return connectionStatusMap[targetUserId] || 'none'
         },
 
         connectToUser: async (currentUserId: string, targetUserId: string) => {
@@ -235,6 +233,13 @@ export const useConnectionsStore = create<ConnectionsState>()(
           }
         },
 
+        ensureFollowedUsersLoaded: async () => {
+          const { followedUsers } = get()
+          if (followedUsers.length === 0) {
+            await get().fetchFollowedUsers()
+          }
+        },
+
         getFollowStatus: (targetUserId: string): FollowStatus => {
           const { followingStatusMap } = get()
           return followingStatusMap[targetUserId] || 'not_following'
@@ -255,8 +260,8 @@ export const useConnectionsStore = create<ConnectionsState>()(
               followingStatusMap: newStatusMap
             })
 
-            // Optionally refetch followed users to get the full user object
-            get().fetchFollowedUsers()
+            // Don't refetch followed users here to avoid unnecessary API calls
+            // The UI will show the updated status immediately from the status map
           } catch (error) {
             console.error('Error following user:', error)
             throw error
