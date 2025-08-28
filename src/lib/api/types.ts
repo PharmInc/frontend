@@ -86,7 +86,7 @@ export interface FollowParams {
 export interface Follow extends FollowParams {
   id: string;
   created_at: string;
-  user1Id: string;
+  user1_id: string;
 }
 
 export interface ConnectParams {

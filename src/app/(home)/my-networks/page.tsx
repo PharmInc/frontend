@@ -163,7 +163,7 @@ const MyNetworksContent = () => {
       const followersWithUsers = await Promise.all(
         followers.map(async (follow) => {
           try {
-            const user = await getUserById(follow.user2_id)
+            const user = await getUserById(follow.user1_id)
             return { ...follow, user }
           } catch (error) {
             console.error(`Error fetching user:`, error)
@@ -224,8 +224,7 @@ const MyNetworksContent = () => {
   }
 
   const handleMessage = async (userId: string) => {
-    // TODO: Implement messaging functionality
-    console.log('Message user:', userId)
+    router.push(`/messages?user=${userId}`)
   }
 
   if (isAuthenticated === null) {
