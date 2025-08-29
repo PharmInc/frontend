@@ -18,6 +18,7 @@ interface FormData {
   name: string;
   email: string;
   phone: string;
+  instituteName: string;
   description: string;
 }
 
@@ -26,6 +27,7 @@ export function JobPostingInterestModal({ isOpen, onClose }: JobPostingInterestM
     name: "",
     email: "",
     phone: "",
+    instituteName: "",
     description: "",
   });
 
@@ -44,7 +46,7 @@ export function JobPostingInterestModal({ isOpen, onClose }: JobPostingInterestM
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.description.trim()) {
+    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.instituteName.trim() || !formData.description.trim()) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -73,6 +75,7 @@ export function JobPostingInterestModal({ isOpen, onClose }: JobPostingInterestM
         name: "",
         email: "",
         phone: "",
+        instituteName: "",
         description: "",
       });
       onClose();
@@ -86,7 +89,7 @@ export function JobPostingInterestModal({ isOpen, onClose }: JobPostingInterestM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Building2 className="h-6 w-6 text-green-600" />
@@ -94,7 +97,7 @@ export function JobPostingInterestModal({ isOpen, onClose }: JobPostingInterestM
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div className="space-y-4 pb-4">
           <p className="text-gray-600 text-sm">
             Build your institution presence on PharmInc! Fill out the form below and we'll contact you to help set up your job posting capabilities.
           </p>
@@ -149,16 +152,39 @@ export function JobPostingInterestModal({ isOpen, onClose }: JobPostingInterestM
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="instituteName" className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Institute Name
+              </Label>
+              <Input
+                id="instituteName"
+                name="instituteName"
+                type="text"
+                placeholder="Enter your institute/organization name"
+                value={formData.instituteName}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="description">
                 Tell us about yourself
               </Label>
               <Textarea
                 id="description"
                 name="description"
-                placeholder="Describe your background, institution, and what makes you a great for job posting privileges..."
+                placeholder="Describe your background, institution, and what makes you a great fit for job posting privileges..."
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={4}
+                className="resize-none break-all overflow-hidden w-full max-w-full"
+                style={{ 
+                  wordWrap: 'break-word', 
+                  overflowWrap: 'anywhere', 
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word'
+                }}
                 required
               />
             </div>
