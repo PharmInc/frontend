@@ -163,7 +163,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
               Sign in
             </Link>
             <Link href="/auth" className="xl:hidden flex items-center justify-center w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors mx-auto">
-              <span className="font-bold text-lg">L</span>
+              <UserIcon className="w-6 h-6" />
             </Link>
           </div>
         )}
