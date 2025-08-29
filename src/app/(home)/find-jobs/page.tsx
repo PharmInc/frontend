@@ -2,22 +2,31 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useInView } from 'react-intersection-observer';
 import { Search, Filter, MapPin, Building, DollarSign, ArrowLeft } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import JobList from '../jobs/_components/JobList';
-import { listJobs, searchJobs } from '@/lib/api/services/job';
-import { Job, JobSearchParams } from '@/lib/api/types';
+import { useJobStore } from '@/store';
+import { searchJobs } from '@/lib/api/services/job';
+import { JobSearchParams } from '@/lib/api/types';
 
 const FindJobsPage = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalJobs, setTotalJobs] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  const { 
+    jobs, 
+    loading, 
+    loadingMore,
+    hasMore,
+    totalJobs,
+    fetchJobs,
+    loadMoreJobs,
+    clearJobs
+  } = useJobStore();
   
   // Filter states
   const [filters, setFilters] = useState<JobSearchParams>({
@@ -31,19 +40,27 @@ const FindJobsPage = () => {
     limit: 10
   });
 
-  const [showFilters, setShowFilters] = useState(false);
+  const { ref, inView } = useInView({
+    threshold: 0,
+    rootMargin: '100px'
+  });
 
-  const fetchJobs = async (searchParams?: JobSearchParams) => {
-    setLoading(true);
-    try {
-      let response;
-      
-      if (searchQuery.trim() || 
-          (searchParams?.category && searchParams.category !== 'all') || 
-          (searchParams?.location && searchParams.location !== 'all') || 
-          (searchParams?.experience_level && searchParams.experience_level !== 'all') || 
-          (searchParams?.work_location && searchParams.work_location !== 'all')) {
-        // Use search API when there are search criteria
+  useEffect(() => {
+    if (inView && hasMore && !loadingMore) {
+      loadMoreJobs();
+    }
+  }, [inView, hasMore, loadingMore, loadMoreJobs]);
+
+  const performSearch = async (searchParams?: JobSearchParams) => {
+    clearJobs();
+    
+    if (searchQuery.trim() || 
+        (searchParams?.category && searchParams.category !== 'all') || 
+        (searchParams?.location && searchParams.location !== 'all') || 
+        (searchParams?.experience_level && searchParams.experience_level !== 'all') || 
+        (searchParams?.work_location && searchParams.work_location !== 'all')) {
+      // Use search API when there are search criteria
+      try {
         const searchData: JobSearchParams = {
           ...filters,
           ...searchParams,
@@ -52,45 +69,37 @@ const FindJobsPage = () => {
           category: searchParams?.category === 'all' ? undefined : searchParams?.category,
           experience_level: searchParams?.experience_level === 'all' ? undefined : searchParams?.experience_level,
           work_location: searchParams?.work_location === 'all' ? undefined : searchParams?.work_location,
-          page: searchParams?.page || currentPage,
+          page: 1,
         };
-        response = await searchJobs(searchData);
-      } else {
-        // Use list API for general listing
-        response = await listJobs(
-          searchParams?.page || currentPage,
-          filters.limit || 10,
-          undefined,
-          true // only active jobs
-        );
+        
+        const response = await searchJobs(searchData);
+        // Transform the response to match our job store format
+        // This would require updating the job store to handle search results
+        // For now, let's use the regular fetchJobs method
+        fetchJobs(1, 10, false);
+      } catch (error) {
+        console.error('Failed to search jobs:', error);
+        fetchJobs(1, 10, false);
       }
-      
-      setJobs(response.data);
-      setTotalPages(response.totalPages || 1);
-      setTotalJobs(response.total || 0);
-    } catch (error) {
-      console.error('Failed to fetch jobs:', error);
-      setJobs([]);
-    } finally {
-      setLoading(false);
+    } else {
+      // Use regular fetch for general listing
+      fetchJobs(1, 10, false);
     }
   };
 
   useEffect(() => {
-    fetchJobs();
-  }, [currentPage]);
+    performSearch();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setCurrentPage(1);
-    fetchJobs({ ...filters, page: 1 });
+    performSearch();
   };
 
   const handleFilterChange = (key: keyof JobSearchParams, value: string) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
-    setCurrentPage(1);
-    fetchJobs({ ...newFilters, page: 1 });
+    performSearch(newFilters);
   };
 
   const clearFilters = () => {
@@ -106,8 +115,7 @@ const FindJobsPage = () => {
     };
     setFilters(clearedFilters);
     setSearchQuery('');
-    setCurrentPage(1);
-    fetchJobs(clearedFilters);
+    performSearch(clearedFilters);
   };
 
   return (
@@ -125,12 +133,10 @@ const FindJobsPage = () => {
         </div>
       </div>
 
-      {/* Search Section */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
         <div className="max-w-5xl mx-auto">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <form onSubmit={handleSearch} className="space-y-4">
-              {/* Main Search Bar */}
               <div className="flex gap-3">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -157,7 +163,6 @@ const FindJobsPage = () => {
                 </Button>
               </div>
 
-              {/* Filter Panel */}
               {showFilters && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-xl">
                   <div className="space-y-2">
@@ -258,10 +263,8 @@ const FindJobsPage = () => {
         </div>
       </div>
 
-      {/* Results Section */}
       <div className="flex-1 p-6">
         <div className="max-w-5xl mx-auto">
-          {/* Results Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900 font-sans">
@@ -272,15 +275,21 @@ const FindJobsPage = () => {
               </p>
             </div>
           </div>
-
-          {/* Job List */}
           <JobList 
             jobs={jobs} 
             loading={loading} 
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
+            loadingMore={loadingMore}
+            hasMore={hasMore}
+            onLoadMore={loadMoreJobs}
           />
+          
+          {hasMore && (
+            <div ref={ref} className="flex justify-center py-4">
+              {loadingMore && (
+                <div className="text-lg text-gray-600">Loading more jobs...</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

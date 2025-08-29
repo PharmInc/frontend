@@ -1,5 +1,6 @@
 export { useUserStore } from './userStore'
 export { usePostStore } from './postStore'
+export { useJobStore } from './jobStore'
 export { useInstitutionStore } from './institutionStore'
 export { useChatStore } from './chatStore'
 export { useUIStore } from './uiStore'
