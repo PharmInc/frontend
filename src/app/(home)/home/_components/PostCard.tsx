@@ -204,9 +204,9 @@ export default function PostCard({ post }: PostCardProps) {
           </div>
         )}
 
-        <div className="text-xs text-blue-700 font-medium font-sans">
+        {/* <div className="text-xs text-blue-700 font-medium font-sans">
           {post.type === "Research Paper" ? "📄 Research Paper" : "🩺 Case Study"}
-        </div>
+        </div> */}
 
         <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-2 font-sans">
           <span>{likedCount[post.id] || post.likes} likes</span>
