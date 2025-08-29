@@ -7,9 +7,9 @@ import { Bell, Users, MessageCircle, ArrowLeft } from "lucide-react"
 import { NotificationItem } from './_components/NotificationItem'
 import { ConnectionRequestItem } from './_components/ConnectionRequestItem'
 import { LoginPrompt } from './_components/LoginPrompt'
-import { useUserStore } from '@/store/userStore'
+import { useUserStore, useNotificationStore } from '@/store'
 import { getAuthToken } from '@/lib/api/utils'
-import { getUserConnections, getUserById, acceptConnection, disconnectUser, Connect, User } from '@/lib/api'
+import { acceptConnection, disconnectUser, Connect, User } from '@/lib/api'
 
 interface ConnectionWithUser extends Connect {
   user: User;
@@ -19,9 +19,13 @@ const NotificationsPage = () => {
   const router = useRouter()
   const [loadingStates, setLoadingStates] = useState<{[key: string]: { accept: boolean; reject: boolean }}>({})
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
-  const [connectionRequests, setConnectionRequests] = useState<ConnectionWithUser[]>([])
-  const [loading, setLoading] = useState(false)
   const { currentUser, fetchCurrentUser, loading: userLoading } = useUserStore()
+  const { 
+    connectionRequests, 
+    loading: notificationLoading, 
+    fetchNotifications,
+    markAsRead 
+  } = useNotificationStore()
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -55,49 +59,30 @@ const NotificationsPage = () => {
         return
       }
       
-      console.log('Fetching connection requests for user:', currentUser.id)
-      setLoading(true)
-      try {
-        const connections = await getUserConnections(currentUser.id)
-        console.log('Raw connections:', connections)
-        
-        const pendingRequests = connections.filter(
-          conn => !conn.accepted && conn.user2_id === currentUser.id
-        )
-        console.log('Pending requests (filtered):', pendingRequests)
-        
-        const connectionsWithUsers = await Promise.all(
-          pendingRequests.map(async (conn) => {
-            try {
-              console.log(`Fetching user details for user1_id: ${conn.user1_id}`)
-              const user = await getUserById(conn.user1_id)
-              console.log(`User details for ${conn.user1_id}:`, user)
-              return { ...conn, user }
-            } catch (error) {
-              console.error(`Error fetching user ${conn.user1_id}:`, error)
-              return null
-            }
-          })
-        )
-        
-        const validConnections = connectionsWithUsers.filter(Boolean) as ConnectionWithUser[]
-        console.log('Final connections with users:', validConnections)
-        setConnectionRequests(validConnections)
-      } catch (error) {
-        console.error('Error fetching connection requests:', error)
-      } finally {
-        setLoading(false)
-      }
+      console.log('Fetching notifications for user:', currentUser.id)
+      await fetchNotifications(currentUser.id)
     }
 
     if (currentUser?.id && isAuthenticated) {
       fetchConnectionRequests()
     }
-  }, [currentUser?.id, isAuthenticated])
+  }, [currentUser?.id, isAuthenticated, fetchNotifications])
+
+  // Mark notifications as read when user visits the page
+  useEffect(() => {
+    if (currentUser?.id && isAuthenticated && connectionRequests.length > 0) {
+      // Add a small delay to ensure the user actually sees the notifications
+      const timer = setTimeout(() => {
+        markAsRead()
+      }, 2000)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [currentUser?.id, isAuthenticated, connectionRequests.length, markAsRead])
 
   const handleAcceptConnection = async (connectionId: string) => {
     const connection = connectionRequests.find(conn => conn.id === connectionId)
-    if (!connection) return
+    if (!connection || !currentUser?.id) return
     
     setLoadingStates(prev => ({
       ...prev,
@@ -106,7 +91,8 @@ const NotificationsPage = () => {
     
     try {
       await acceptConnection(connection.user1_id)
-      setConnectionRequests(prev => prev.filter(conn => conn.id !== connectionId))
+      // Refetch notifications to update the state
+      await fetchNotifications(currentUser.id)
     } catch (error) {
       console.error('Error accepting connection:', error)
     } finally {
@@ -213,7 +199,7 @@ const NotificationsPage = () => {
         <div className="flex-1">
           <TabsContent value="all" className="">
             <div className="bg-white">
-              {loading ? (
+              {notificationLoading ? (
                 <div className="flex items-center justify-center py-16">
                   <div className="flex flex-col items-center space-y-4">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
@@ -264,7 +250,7 @@ const NotificationsPage = () => {
 
           <TabsContent value="connections" className="">
             <div className="bg-white">
-              {loading ? (
+              {notificationLoading ? (
                 <div className="flex items-center justify-center py-16">
                   <div className="flex flex-col items-center space-y-4">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>

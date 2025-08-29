@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import LeftSidebar from './LeftSidebar'
 import { RightSidebar } from '../app/(home)/home/_components/RightSidebar'
+import { NotificationProvider } from './NotificationProvider'
 import { useUserStore, useInstitutionStore, useChatStore } from '@/store'
 import { getUserType } from '@/lib/api/utils'
 
@@ -48,32 +49,34 @@ export default function LayoutContent({ children }: LayoutContentProps) {
   })();
 
   return (
-    <div className="min-h-screen bg-white font-sans">
-      <div className="max-w-[1300px] w-full mx-auto flex justify-center">
-        <div className="sticky top-0 h-screen flex-shrink-0">
-          <div className="w-16 xl:w-64 transition-all duration-200 h-full">
-            <LeftSidebar user={currentEntity} />
-          </div>
-        </div>
-
-        <div className="flex-1 min-w-0 border-x border-gray-200 pt-3">
-          <main className="w-full h-full">
-            {children}
-          </main>
-        </div>
-
-        {
-          !isMessagesPage && (
-            <div className="hidden lg:block w-80 sticky top-0 h-screen flex-shrink-0">
-              <div className="h-full overflow-y-auto bg-white">
-                <RightSidebar />
-              </div>
+    <NotificationProvider>
+      <div className="min-h-screen bg-white font-sans">
+        <div className="max-w-[1300px] w-full mx-auto flex justify-center">
+          <div className="sticky top-0 h-screen flex-shrink-0">
+            <div className="w-16 xl:w-64 transition-all duration-200 h-full">
+              <LeftSidebar user={currentEntity} />
             </div>
-          )
-        }
+          </div>
+
+          <div className="flex-1 min-w-0 border-x border-gray-200 pt-3">
+            <main className="w-full h-full">
+              {children}
+            </main>
+          </div>
+
+          {
+            !isMessagesPage && (
+              <div className="hidden lg:block w-80 sticky top-0 h-screen flex-shrink-0">
+                <div className="h-full overflow-y-auto bg-white">
+                  <RightSidebar />
+                </div>
+              </div>
+            )
+          }
 
 
+        </div>
       </div>
-    </div>
+    </NotificationProvider>
   )
 }

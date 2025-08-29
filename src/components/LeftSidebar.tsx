@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { User, InstitutionEntity } from "../app/(home)/home/_components/types";
 import Logo from "@/components/logo";
-import { useUserStore, useInstitutionStore, useConnectionsStore } from "@/store";
+import { useUserStore, useInstitutionStore, useConnectionsStore, useNotificationStore } from "@/store";
 import { clearAuthToken, getUserType } from "@/lib/api/utils";
 import { getDisplayHandle, getProfilePicture } from "../app/(home)/home/_utils/utils";
 import { BETA_BUILD_VERSION } from "@/config/constants";
@@ -42,6 +42,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const { clearUser } = useUserStore();
   const { clearInstitution } = useInstitutionStore();
+  const { unreadCount, clearNotifications } = useNotificationStore();
   const userType = getUserType()
   const pathname = usePathname();
   const router = useRouter();
@@ -73,6 +74,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
     clearInstitution();
     clearFollowing();
     clearConnections();
+    clearNotifications();
     router.push('/');
   };
 
@@ -96,9 +98,16 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
           <Link 
             key={href}
             href={href} 
-            className={`group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors`}
+            className={`group xl:flex xl:items-center xl:gap-4 xl:px-4 xl:py-3 xl:rounded-full xl:hover:bg-gray-100 xl:w-fit flex items-center justify-center w-12 h-12 rounded-full hover:bg-gray-100 transition-colors relative`}
           >
-            <Icon className={`h-6 w-6 text-gray-700 group-hover:text-gray-900 ${isActive(href) ? 'text-gray-900 font-bold stroke-2' : ''}`} />
+            <div className="relative">
+              <Icon className={`h-6 w-6 text-gray-700 group-hover:text-gray-900 ${isActive(href) ? 'text-gray-900 font-bold stroke-2' : ''}`} />
+              {href === '/notifications' && unreadCount > 0 && (
+                <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </div>
+              )}
+            </div>
             <span className={`xl:block hidden text-xl text-gray-900 ${isActive(href) ? 'font-semibold' : 'font-normal'}`}>
               {label}
             </span>
