@@ -382,7 +382,7 @@ export const getProfilePicture = async (userId: string): Promise<{
 
     return new Promise((resolve, reject) => {
       stream.on('data', (obj) => {
-        if (obj.name && obj.name.endsWith('.png')) {
+        if (obj.name && (obj.name.endsWith('.png') || obj.name.endsWith('.jpg') || obj.name.endsWith('.jpeg'))) {
           profilePicture = obj.name;
         }
       });
@@ -404,10 +404,15 @@ export const getProfilePicture = async (userId: string): Promise<{
 
           const stat = await client.statObject(BUCKET_NAME, profilePicture);
           const fileName = profilePicture.split('/').pop() || 'profile.png';
+          
+          let contentType = 'image/png';
+          if (profilePicture.endsWith('.jpg') || profilePicture.endsWith('.jpeg')) {
+            contentType = 'image/jpeg';
+          }
 
           resolve({
             buffer,
-            contentType: 'image/png',
+            contentType,
             fileName
           });
         } catch (error) {
