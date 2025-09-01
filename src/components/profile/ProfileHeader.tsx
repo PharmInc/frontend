@@ -23,11 +23,13 @@ import {
   GraduationCap, 
   Link2, 
   CheckCircle,
-  Edit
+  Edit,
+  Share2
 } from "lucide-react";
 import Image from "next/image";
 import { EditProfileModal } from "./EditProfileModal";
 import { EditProfilePictureModal } from "./EditProfilePictureModal";
+import ProfileShareModal from "./ProfileShareModal";
 import { useUserStore, useConnectionsStore } from "@/store";
 import { getProfilePictureUrl, isProfilePictureUrl } from "@/lib/utils";
 import {
@@ -72,6 +74,7 @@ export const ProfileHeader = ({
   const [connectionsCount, setConnectionsCount] = useState(user?.connections || 0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isProfilePictureModalOpen, setIsProfilePictureModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState(user);
   const [isLoading, setIsLoading] = useState({
@@ -320,6 +323,14 @@ export const ProfileHeader = ({
                 variant="outline" 
                 size="sm" 
                 className="rounded-full"
+                onClick={() => setIsShareModalOpen(true)}
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-full"
                 onClick={() => setIsEditModalOpen(true)}
               >
                 <Edit className="h-4 w-4 mr-2" />
@@ -328,6 +339,14 @@ export const ProfileHeader = ({
             </>
           ) : (
             <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-full"
+                onClick={() => setIsShareModalOpen(true)}
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -516,6 +535,15 @@ export const ProfileHeader = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Profile Share Modal */}
+      {displayUser && (
+        <ProfileShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          user={displayUser}
+        />
+      )}
     </div>
   );
 };
