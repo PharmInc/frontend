@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Send, MoreHorizontal, Phone, Video, Info } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -14,6 +14,7 @@ interface ChatInterfaceProps {
   recipientUsername?: string
   recipientVerified?: boolean
   recipientOnline?: boolean
+  initialMessage?: string
 }
 
 export default function ChatInterface({ 
@@ -21,10 +22,13 @@ export default function ChatInterface({
   recipientAvatar = "/api/placeholder/40/40",
   recipientUsername = "sarah_j",
   recipientVerified = true,
-  recipientOnline = true
+  recipientOnline = true,
+  initialMessage = ""
 }: ChatInterfaceProps) {
   const [message, setMessage] = useState("")
+  const [hasSetInitialMessage, setHasSetInitialMessage] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
   
   const { 
@@ -37,9 +41,11 @@ export default function ChatInterface({
   
   const { currentUser } = useUserStore()
   
-  const conversationKey = selectedChat && currentUser 
-    ? [currentUser.id, selectedChat.id].sort().join('_')
-    : ''
+  const conversationKey = useMemo(() => {
+    return selectedChat && currentUser 
+      ? [currentUser.id, selectedChat.id].sort().join('_')
+      : ''
+  }, [selectedChat?.id, currentUser?.id])
     
   const currentMessages = conversationKey ? (messages[conversationKey] || []) : []
 
@@ -50,65 +56,110 @@ export default function ChatInterface({
   }, [selectedChat?.id, currentUser?.id, fetchMessages])
 
   useEffect(() => {
+    if (initialMessage && !hasSetInitialMessage) {
+      setMessage(initialMessage)
+      setHasSetInitialMessage(true)
+    }
+  }, [initialMessage, hasSetInitialMessage])
+
+  useEffect(() => {
+    setHasSetInitialMessage(false)
+  }, [selectedChat?.id])
+
+  useEffect(() => {
     scrollToBottom()
   }, [currentMessages])
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  }, [])
 
-  const handleSendMessage = () => {
+  const handleSendMessage = useCallback(() => {
     if (message.trim() && selectedChat?.id) {
       sendMessage(selectedChat.id, message.trim())
       setMessage("")
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.style.height = '44px'
+        }
+      }, 0)
     }
-  }
+  }, [message, selectedChat?.id, sendMessage])
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSendMessage()
     }
-  }
+  }, [handleSendMessage])
 
-  const formatTimestamp = (timestamp: string) => {
+  const formatTimestamp = useCallback((timestamp: string) => {
     const date = new Date(timestamp)
     return date.toLocaleTimeString('en-US', { 
       hour: 'numeric', 
       minute: '2-digit',
       hour12: true 
     })
-  }
+  }, [])
 
-  const getRecipientProfilePicture = () => {
+  const getRecipientProfilePicture = useMemo(() => {
     const profilePicture = selectedChat?.avatar || recipientAvatar;
     const recipientId = selectedChat?.id || recipientUsername || '';
     
     if (!profilePicture || profilePicture === "/api/placeholder/40/40") return "/pp.png";
     
     if (isProfilePictureUrl(profilePicture)) {
-      console.log('Using existing API URL:', profilePicture)
       return profilePicture;
     }
     
     if (profilePicture.startsWith('http') || profilePicture.startsWith('/')) {
-      console.log('Using legacy/external URL:', profilePicture)
       return profilePicture;
     }
     
-    const constructedUrl = getProfilePictureUrl(recipientId, profilePicture);
-    console.log('Constructed profile URL:', constructedUrl)
-    return constructedUrl;
-  }
+    return getProfilePictureUrl(recipientId, profilePicture);
+  }, [selectedChat?.avatar, recipientAvatar, selectedChat?.id, recipientUsername])
 
-  const isRecipientOnline = selectedChat ? onlineUsers.has(selectedChat.id) : recipientOnline
+  const isRecipientOnline = useMemo(() => {
+    return selectedChat ? onlineUsers.has(selectedChat.id) : recipientOnline
+  }, [selectedChat?.id, onlineUsers, recipientOnline])
 
-  const handleProfileClick = () => {
+  const handleProfileClick = useCallback(() => {
     const recipientId = selectedChat?.id || recipientUsername
     if (recipientId) {
       router.push(`/profile/${recipientId}`)
     }
-  }
+  }, [selectedChat?.id, recipientUsername, router])
+
+  const autoResizeTextarea = useCallback(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`
+    }
+  }, [])
+
+  const handleMessageChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value)
+    // Auto-resize after setting the message
+    setTimeout(autoResizeTextarea, 0)
+  }, [autoResizeTextarea])
+
+  // Auto-resize when message changes (including initial message)
+  useEffect(() => {
+    autoResizeTextarea()
+  }, [message, autoResizeTextarea])
+
+  const buttonClassName = useMemo(() => {
+    const canSend = message.trim() && selectedChat
+    return `p-3 rounded-full transition-colors flex-shrink-0 ${
+      canSend
+        ? 'bg-blue-500 text-white hover:bg-blue-600'
+        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+    }`
+  }, [message, selectedChat])
+
+  const isButtonDisabled = useMemo(() => {
+    return !message.trim() || !selectedChat
+  }, [message, selectedChat])
 
   return (
     <div className="h-full flex flex-1 flex-col bg-white w-full">
@@ -120,7 +171,7 @@ export default function ChatInterface({
           >
             <div className="relative">
               <Avatar className="w-10 h-10">
-                <AvatarImage src={getRecipientProfilePicture()} alt={selectedChat?.name || recipientName} />
+                <AvatarImage src={getRecipientProfilePicture} alt={selectedChat?.name || recipientName} />
                 <AvatarFallback>
                   {(selectedChat?.name || recipientName).split(' ').map((n, i) => n[0]).join('')}
                 </AvatarFallback>
@@ -203,16 +254,22 @@ export default function ChatInterface({
       </div>
 
       <div className="p-4 border-t border-gray-200 bg-white">
-        <div className="flex items-center gap-3">
+        <div className="flex items-end gap-3">
           <div className="flex-1 relative">
             <textarea
+              ref={textareaRef}
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={handleMessageChange}
               onKeyPress={handleKeyPress}
               placeholder="Start a new message"
-              className="w-full py-3 pl-4 pr-12 border border-gray-200 rounded-3xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
+              className="w-full py-3 pl-4 pr-12 border border-gray-200 rounded-3xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent overflow-y-auto"
               rows={1}
-              style={{ maxHeight: '120px' }}
+              style={{ 
+                maxHeight: '120px', 
+                minHeight: '44px',
+                height: 'auto',
+                lineHeight: '1.5'
+              }}
               disabled={!selectedChat}
             />
 
@@ -220,12 +277,8 @@ export default function ChatInterface({
           
           <button
             onClick={handleSendMessage}
-            disabled={!message.trim() || !selectedChat}
-            className={`p-3 rounded-full transition-colors flex-shrink-0 ${
-              message.trim() && selectedChat
-                ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            }`}
+            disabled={isButtonDisabled}
+            className={buttonClassName}
           >
             <Send className="w-4 h-4" />
           </button>

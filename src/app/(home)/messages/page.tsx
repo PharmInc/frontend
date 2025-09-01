@@ -13,10 +13,26 @@ import { getAuthToken } from '@/lib/api/utils'
 function MessagesContent() {
   const searchParams = useSearchParams()
   const userIdFromUrl = searchParams.get('user')
+  const messageFromUrl = searchParams.get('message')
   
   const { selectedChat, setSelectedChat, connect, disconnect, fetchConversations } = useChatStore()
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [decodedMessage, setDecodedMessage] = useState<string>("")
   const { currentUser, fetchCurrentUser, fetchUserById, loading: userLoading } = useUserStore()
+
+  useEffect(() => {
+    if (messageFromUrl) {
+      try {
+        const decoded = atob(messageFromUrl)
+        setDecodedMessage(decoded)
+      } catch (error) {
+        console.error('Failed to decode message parameter:', error)
+        setDecodedMessage("")
+      }
+    } else {
+      setDecodedMessage("")
+    }
+  }, [messageFromUrl])
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -105,7 +121,7 @@ function MessagesContent() {
   return (
     <div className="h-full bg-white flex" style={{ height: 'calc(100vh - 24px)' }}>
       <MessagesList />
-      <div className="flex-1 h-full">
+      <div className="flex-1 h-full border-l border-gray-200">
         {
           selectedChat ? (
                 <ChatInterface
@@ -114,6 +130,7 @@ function MessagesContent() {
                   recipientUsername={selectedChat.username}
                   recipientVerified={selectedChat.verified}
                   recipientOnline={selectedChat.online}
+                  initialMessage={decodedMessage}
                 />
               ) : (
                 <EmptyChatState />

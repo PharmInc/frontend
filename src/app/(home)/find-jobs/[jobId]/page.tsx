@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useJobStore } from '@/store';
 import { Job, Institution } from '@/lib/api/types';
+import JobApplicationModal from './_components/JobApplicationModal';
 
 interface JobWithInstitution extends Job {
   institution?: Institution;
@@ -22,6 +23,7 @@ const JobDetailPage = () => {
   const { fetchSingleJob } = useJobStore();
   const [job, setJob] = useState<JobWithInstitution | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
 
   useEffect(() => {
     const loadJob = async () => {
@@ -57,8 +59,7 @@ const JobDetailPage = () => {
   };
 
   const handleApply = () => {
-    // TODO: Implement job application logic
-    console.log('Apply to job:', job?.id);
+    setShowApplicationModal(true);
   };
 
   if (loading) {
@@ -336,6 +337,15 @@ const JobDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Job Application Modal */}
+      {job && (
+        <JobApplicationModal
+          isOpen={showApplicationModal}
+          onClose={() => setShowApplicationModal(false)}
+          job={job}
+        />
+      )}
     </div>
   );
 };
