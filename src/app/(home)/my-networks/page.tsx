@@ -108,7 +108,7 @@ const MyNetworksContent = () => {
         acceptedConnections.map(async (conn) => {
           try {
             // Get the other user in the connection
-            const otherUserId = conn.user1_id === currentUser.id ? conn.user2_id : conn.user1_id
+            const otherUserId = conn.id1 === currentUser.id ? conn.id2 : conn.id1
             const user = await getUserById(otherUserId)
             return { ...conn, user }
           } catch (error) {
@@ -135,7 +135,7 @@ const MyNetworksContent = () => {
         const connectionsWithUsersData = await Promise.all(
           acceptedConnections.map(async (conn) => {
             try {
-              const otherUserId = conn.user1_id === currentUser.id ? conn.user2_id : conn.user1_id
+              const otherUserId = conn.id1 === currentUser.id ? conn.id2 : conn.id1
               const user = await getUserById(otherUserId)
               return { ...conn, user }
             } catch (error) {
@@ -163,7 +163,7 @@ const MyNetworksContent = () => {
       const followersWithUsers = await Promise.all(
         followers.map(async (follow) => {
           try {
-            const user = await getUserById(follow.user1_id)
+            const user = await getUserById(follow.id1)
             return { ...follow, user }
           } catch (error) {
             console.error(`Error fetching user:`, error)
@@ -202,7 +202,8 @@ const MyNetworksContent = () => {
     setLoadingStates(prev => ({ ...prev, [userId]: true }))
     
     try {
-      await disconnectFromUser(currentUser.id, userId)
+      // In the my-networks context, we're dealing with user connections
+      await disconnectFromUser(currentUser.id, userId, "user")
       setConnectionsWithUsers(prev => prev.filter(conn => conn.user.id !== userId))
     } catch (error) {
       console.error('Error disconnecting user:', error)
@@ -215,7 +216,7 @@ const MyNetworksContent = () => {
     setLoadingStates(prev => ({ ...prev, [userId]: true }))
     
     try {
-      await unfollowUserAction(userId)
+      await unfollowUserAction(userId, "user")
     } catch (error) {
       console.error('Error unfollowing user:', error)
     } finally {

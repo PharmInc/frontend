@@ -26,18 +26,18 @@ interface ConnectionsState {
   fetchConnections: (userId: string) => Promise<void>
   ensureConnectionsLoaded: (userId: string) => Promise<void>
   getConnectionStatus: (currentUserId: string, targetUserId: string) => ConnectionStatus
-  connectToUser: (currentUserId: string, targetUserId: string) => Promise<void>
-  disconnectFromUser: (currentUserId: string, targetUserId: string) => Promise<void>
+  connectToUser: (currentUserId: string, targetUserId: string, id2_poster_type: "user" | "institute") => Promise<void>
+  disconnectFromUser: (currentUserId: string, targetUserId: string, id2_poster_type: "user" | "institute") => Promise<void>
   acceptConnectionRequest: (currentUserId: string, requesterId: string) => Promise<void>
-  rejectConnectionRequest: (currentUserId: string, requesterId: string) => Promise<void>
+  rejectConnectionRequest: (currentUserId: string, requesterId: string, id2_poster_type: "user" | "institute") => Promise<void>
   clearConnections: () => void
 
   // Following Actions
   fetchFollowedUsers: () => Promise<void>
   ensureFollowedUsersLoaded: () => Promise<void>
   getFollowStatus: (targetUserId: string) => FollowStatus
-  followUserAction: (targetUserId: string) => Promise<void>
-  unfollowUserAction: (targetUserId: string) => Promise<void>
+  followUserAction: (targetUserId: string, id2_poster_type: "user" | "institute") => Promise<void>
+  unfollowUserAction: (targetUserId: string, id2_poster_type: "user" | "institute") => Promise<void>
   clearFollowing: () => void
 }
 
@@ -60,14 +60,14 @@ export const useConnectionsStore = create<ConnectionsState>()(
 
             // Build status map for quick lookup
             connections.forEach(conn => {
-              const otherUserId = conn.user1_id === userId ? conn.user2_id : conn.user1_id
+              const otherUserId = conn.id1 === userId ? conn.id2 : conn.id1
               
               if (conn.accepted) {
                 connectionStatusMap[otherUserId] = 'connected'
               } else {
                 // If current user is user1, they sent the request
                 // If current user is user2, they received the request
-                connectionStatusMap[otherUserId] = conn.user1_id === userId 
+                connectionStatusMap[otherUserId] = conn.id1 === userId 
                   ? 'pending_sent' 
                   : 'pending_received'
               }
@@ -101,9 +101,9 @@ export const useConnectionsStore = create<ConnectionsState>()(
           return connectionStatusMap[targetUserId] || 'none'
         },
 
-        connectToUser: async (currentUserId: string, targetUserId: string) => {
+        connectToUser: async (currentUserId: string, targetUserId: string, id2_poster_type: "user" | "institute") => {
           try {
-            const connection = await connectUser({ user2_id: targetUserId })
+            const connection = await connectUser({ id2: targetUserId , id2_poster_type })
             
             // Update local state
             const { connections, connectionStatusMap } = get()
@@ -123,14 +123,14 @@ export const useConnectionsStore = create<ConnectionsState>()(
           }
         },
 
-        disconnectFromUser: async (currentUserId: string, targetUserId: string) => {
+        disconnectFromUser: async (currentUserId: string, targetUserId: string, id2_poster_type: "user" | "institute") => {
           try {
-            await disconnectUser({ user2_id: targetUserId })
+            await disconnectUser({ id2: targetUserId , id2_poster_type})
             
             // Update local state
             const { connections, connectionStatusMap } = get()
             const newConnections = connections.filter(conn => {
-              const otherUserId = conn.user1_id === currentUserId ? conn.user2_id : conn.user1_id
+              const otherUserId = conn.id1 === currentUserId ? conn.id2 : conn.id1
               return otherUserId !== targetUserId
             })
             
@@ -154,8 +154,8 @@ export const useConnectionsStore = create<ConnectionsState>()(
             // Update local state
             const { connections, connectionStatusMap } = get()
             const newConnections = connections.map(conn => {
-              if ((conn.user1_id === requesterId && conn.user2_id === currentUserId) ||
-                  (conn.user1_id === currentUserId && conn.user2_id === requesterId)) {
+              if ((conn.id1 === requesterId && conn.id2 === currentUserId) ||
+                  (conn.id1 === currentUserId && conn.id2 === requesterId)) {
                 return { ...conn, accepted: true }
               }
               return conn
@@ -176,15 +176,15 @@ export const useConnectionsStore = create<ConnectionsState>()(
           }
         },
 
-        rejectConnectionRequest: async (currentUserId: string, requesterId: string) => {
+        rejectConnectionRequest: async (currentUserId: string, requesterId: string , id2_poster_type: "user" | "institute") => {
           try {
-            await disconnectUser({ user2_id: requesterId })
+            await disconnectUser({ id2: requesterId , id2_poster_type})
             
             // Update local state
             const { connections, connectionStatusMap } = get()
             const newConnections = connections.filter(conn => {
-              return !((conn.user1_id === requesterId && conn.user2_id === currentUserId) ||
-                      (conn.user1_id === currentUserId && conn.user2_id === requesterId))
+              return !((conn.id1 === requesterId && conn.id2 === currentUserId) ||
+                      (conn.id1 === currentUserId && conn.id2 === requesterId))
             })
             
             const newStatusMap = { ...connectionStatusMap }
@@ -245,9 +245,9 @@ export const useConnectionsStore = create<ConnectionsState>()(
           return followingStatusMap[targetUserId] || 'not_following'
         },
 
-        followUserAction: async (targetUserId: string) => {
+        followUserAction: async (targetUserId: string, id2_poster_type: "user" | "institute") => {
           try {
-            await followUser({ user2_id: targetUserId })
+            await followUser({ id2: targetUserId, id2_poster_type })
             
             // Update local state
             const { followingStatusMap } = get()
@@ -268,9 +268,9 @@ export const useConnectionsStore = create<ConnectionsState>()(
           }
         },
 
-        unfollowUserAction: async (targetUserId: string) => {
+        unfollowUserAction: async (targetUserId: string, id2_poster_type: "user" | "institute") => {
           try {
-            await unfollowUser({ user2_id: targetUserId })
+            await unfollowUser({ id2: targetUserId, id2_poster_type })
             
             // Update local state
             const { followedUsers, followingStatusMap } = get()

@@ -80,24 +80,26 @@ export interface PaginatedResponse<T> {
 
 // Network types
 export interface FollowParams {
-  user2_id: string;
+  id2: string;
+  id2_poster_type: "user" | "institute";
 }
 
 export interface Follow extends FollowParams {
   id: string;
   created_at: string;
-  user1_id: string;
+  id1: string;
 }
 
 export interface ConnectParams {
-  user2_id: string;
+  id2: string;
+  id2_poster_type: "user" | "institute";
 }
 
 export interface Connect extends ConnectParams {
   id: string;
   created_at: string;
-  user1_id: string;
-  user2_id: string;
+  id1: string;
+  id2: string;
   accepted: boolean;
 }
 
@@ -271,6 +273,7 @@ export interface Post {
   shares?: number;
   saves?: number;
   attachment_id?: string;
+  poster_type: string
 }
 
 export interface PostCreateParams {

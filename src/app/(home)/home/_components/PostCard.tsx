@@ -54,7 +54,9 @@ export default function PostCard({ post }: PostCardProps) {
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (post.authorId) {
-      router.push(`/profile/${post.authorId}`);
+      // Navigate based on poster_type: institute goes to /institute, user goes to /profile
+      const basePath = post.poster_type === "institute" ? "/institute" : "/profile";
+      router.push(`${basePath}/${post.authorId}`);
     }
   };
 

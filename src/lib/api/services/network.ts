@@ -44,8 +44,8 @@ export const disconnectUser = async (params: ConnectParams): Promise<void> => {
   await networkApi.delete("/private/connect", { data: params });
 };
 
-export const acceptConnection = async (user1_id: string): Promise<Connect> => {
-  const response = await networkApi.put("/private/connect/accept", { user1_id });
+export const acceptConnection = async (id1: string): Promise<Connect> => {
+  const response = await networkApi.put("/private/connect/accept", { id1 });
   return response.data;
 };
 

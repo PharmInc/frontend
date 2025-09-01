@@ -90,7 +90,7 @@ const NotificationsPage = () => {
     }))
     
     try {
-      await acceptConnection(connection.user1_id)
+      await acceptConnection(connection.id1)
       // Refetch notifications to update the state
       await fetchNotifications(currentUser.id)
     } catch (error) {

@@ -43,16 +43,16 @@ export const useNotificationStore = create<NotificationState>()(
             const connections = await getUserConnections(userId)
             
             const pendingRequests = connections.filter(
-              conn => !conn.accepted && conn.user2_id === userId
+              conn => !conn.accepted && conn.id2 === userId
             )
             
             const connectionsWithUsers = await Promise.all(
               pendingRequests.map(async (conn) => {
                 try {
-                  const user = await getUserById(conn.user1_id)
+                  const user = await getUserById(conn.id1)
                   return { ...conn, user }
                 } catch (error) {
-                  console.error(`Error fetching user ${conn.user1_id}:`, error)
+                  console.error(`Error fetching user ${conn.id1}:`, error)
                   return null
                 }
               })

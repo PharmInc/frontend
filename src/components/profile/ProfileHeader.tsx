@@ -143,11 +143,13 @@ export const ProfileHeader = ({
 
     setIsLoading((prev) => ({ ...prev, follow: true }));
     try {
+      const poster_type: "user" | "institute" = institution ? "institute" : "user";
+      
       if (isFollowing) {
-        await unfollowUserAction(user.id);
+        await unfollowUserAction(user.id, poster_type);
         setFollowersCount((prev) => prev - 1);
       } else {
-        await followUserAction(user.id);
+        await followUserAction(user.id, poster_type);
         setFollowersCount((prev) => prev + 1);
       }
     } catch (error) {
@@ -167,13 +169,15 @@ export const ProfileHeader = ({
 
     setIsLoading((prev) => ({ ...prev, connect: true }));
     try {
+      const poster_type: "user" | "institute" = institution ? "institute" : "user";
+      
       if (isConnected || hasPendingRequest) {
-        await disconnectFromUser(currentUser.id, user.id);
+        await disconnectFromUser(currentUser.id, user.id, poster_type);
         if (isConnected) {
           setConnectionsCount((prev) => prev - 1);
         }
       } else {
-        await connectToUser(currentUser.id, user.id);
+        await connectToUser(currentUser.id, user.id, poster_type);
       }
     } catch (error) {
       console.error("Error toggling connection:", error);
@@ -201,7 +205,8 @@ export const ProfileHeader = ({
 
     setIsLoading((prev) => ({ ...prev, reject: true }));
     try {
-      await rejectConnectionRequest(currentUser.id, user.id);
+      const poster_type: "user" | "institute" = institution ? "institute" : "user";
+      await rejectConnectionRequest(currentUser.id, user.id, poster_type);
     } catch (error) {
       console.error("Error rejecting connection:", error);
     } finally {

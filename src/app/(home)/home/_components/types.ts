@@ -38,6 +38,7 @@ export interface Post {
   likes: number;
   comments: number;
   shares: number;
+  poster_type?: "user" | "institute";
 }
 
 export interface FileAttachment {

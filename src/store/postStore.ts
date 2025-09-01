@@ -98,6 +98,7 @@ export const usePostStore = create<PostState>()(
               likes: post.reactions || 0,
               comments: post.comments || 0,
               shares: post.shares || 0,
+              poster_type: (post.poster_type as "user" | "institute") || "user", 
               // Store attachment_id for folder-based attachments
               ...(post.attachment_id && { attachment_id: post.attachment_id }),
               // Keep legacy image support
@@ -182,6 +183,7 @@ export const usePostStore = create<PostState>()(
             likes: response.reactions || 0,
             comments: 0,
             shares: response.shares || 0,
+            poster_type: (response.poster_type as "user" | "institute") || "user", // Add poster_type from API
             ...(response.attachment_id && { attachment_id: response.attachment_id }),
             ...(response.attachment_id && !response.attachment_id.includes('-') && {
               image: `https://content.api.pharminc.in/image/${response.attachment_id}`,
@@ -365,6 +367,7 @@ export const usePostStore = create<PostState>()(
             likes: newPost.reactions || 0,
             comments: 0,
             shares: newPost.shares || 0,
+            poster_type: (newPost.poster_type as "user" | "institute") || "user", // Default to user for new posts
             // Store attachment_id for folder-based attachments
             ...(newPost.attachment_id && { attachment_id: newPost.attachment_id }),
             // Keep legacy image support
