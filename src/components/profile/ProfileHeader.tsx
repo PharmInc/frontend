@@ -30,6 +30,7 @@ import Image from "next/image";
 import { EditProfileModal } from "./EditProfileModal";
 import { EditProfilePictureModal } from "./EditProfilePictureModal";
 import ProfileShareModal from "./ProfileShareModal";
+import InstitutionShareModal from "./InstitutionShareModal";
 import { useUserStore, useConnectionsStore } from "@/store";
 import { getProfilePictureUrl, isProfilePictureUrl } from "@/lib/utils";
 import {
@@ -536,8 +537,14 @@ export const ProfileHeader = ({
         </DialogContent>
       </Dialog>
 
-      {/* Profile Share Modal */}
-      {displayUser && (
+      {/* Share Modal - conditionally render for user or institution */}
+      {institution ? (
+        <InstitutionShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          institution={institution}
+        />
+      ) : displayUser && (
         <ProfileShareModal
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
