@@ -23,7 +23,7 @@ export default function ShareModal({ isOpen, onClose, post }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
   
   const postUrl = `${window.location.origin}/post/${post.id}`;
-  const shareText = `Check out this ${post.type.toLowerCase()} by ${post.author}: ${post.content.substring(0, 100)}${post.content.length > 100 ? '...' : ''}`;
+  const shareText = `Check out what ${post.author} is saying on Pharminc : ${post.content.substring(0, 100)}${post.content.length > 100 ? '...' : ''}`;
 
   const handleCopyLink = async () => {
     try {

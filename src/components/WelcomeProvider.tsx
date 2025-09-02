@@ -22,9 +22,11 @@ export function WelcomeProvider() {
     markUserAsReturning()
   }
 
+  // Remove the popup patch.
   return (
     <WelcomeModal
-      isOpen={showWelcomeModal}
+      // isOpen={showWelcomeModal}
+      isOpen={false} 
       onClose={handleCloseModal}
     />
   )
