@@ -1,61 +1,101 @@
-import React from "react";
-import Link from "next/link";
+"use client";
 
-const rightSidebarData = [
-  {
-    section: "Journal Club",
-    items: [
-      {
-        title: "AI in Clinical Diagnosis",
-        doctors: 28,
-        desc: "Latest paper from NEJM on machine learning applications",
-        time: "Today at 2 PM",
-      },
-      {
-        title: "Ethics Lab Case 003",
-        doctors: 24,
-        desc: "Ethical implications of genetic testing in pediatrics",
-        time: "Tomorrow at 3 PM",
-      },
-    ],
-  },
-  {
-    section: "Featured Conferences",
-    items: [
-      {
-        title: "Global Health Summit 2024",
-        date: "March 15-17, 2024 • Boston, MA",
-        cme: 32,
-        mode: "In-Person",
-      },
-    ],
-  },
-  {
-    section: "Upcoming Events",
-    items: [
-      {
-        month: "OCT",
-        day: "15",
-        title: "Advanced Cardiac Imaging Workshop",
-        time: "10:00 AM - 4:00 PM",
-        location: "Mayo Clinic, Rochester",
-        cme: 6,
-        spots: 8,
-      },
-      {
-        month: "OCT",
-        day: "18",
-        title: "Research Methodology Seminar",
-        time: "2:00 PM - 5:00 PM EST",
-        location: "Virtual Event",
-        cme: 0,
-        spots: null,
-      },
-    ],
-  },
-];
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { MapPin, Building2, Clock } from "lucide-react";
+import { listJobs } from "@/lib/api/services/job";
+import { Job, Institution } from "@/lib/api/types";
+
+interface JobWithInstitution extends Job {
+  institution?: Institution;
+}
+
+interface JobCardProps {
+  job: JobWithInstitution;
+}
+
+const JobCard: React.FC<JobCardProps> = ({ job }) => {
+  const router = useRouter();
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return "just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    return `${Math.floor(diffInSeconds / 604800)}w ago`;
+  };
+
+  const handleCardClick = () => {
+    router.push(`/find-jobs/${job.id}`);
+  };
+
+  return (
+    <div 
+      onClick={handleCardClick}
+      className="mb-3 pb-3 last:mb-0 last:pb-0 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
+    >
+      <h4 className="font-medium text-xs text-gray-900 mb-1 font-sans hover:text-blue-600 transition-colors">
+        {job.title}
+      </h4>
+      <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
+        <Building2 size={12} />
+        <span>{job.institution?.name || "Healthcare Institute"}</span>
+      </div>
+      <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
+        <div className="flex items-center gap-1">
+          <MapPin size={10} />
+          <span>{job.location}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Clock size={10} />
+          <span>{formatTimeAgo(job.created_at)}</span>
+        </div>
+      </div>
+      <div className="text-xs text-gray-600">
+        {job.pay_range}
+      </div>
+    </div>
+  );
+};
 
 export function RightSidebar() {
+  const router = useRouter();
+  const [jobs, setJobs] = useState<JobWithInstitution[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [displayedJobs, setDisplayedJobs] = useState<JobWithInstitution[]>([]);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        const response = await listJobs(1, 10, undefined, true); // fetch 10 active jobs
+        const allJobs = response.data;
+        
+        // Shuffle the jobs and take random 5
+        const shuffledJobs = [...allJobs].sort(() => Math.random() - 0.5);
+        const randomFive = shuffledJobs.slice(0, 5);
+        
+        setJobs(allJobs);
+        setDisplayedJobs(randomFive);
+      } catch (error) {
+        console.error('Failed to fetch jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
+  const handleShowMore = () => {
+    router.push('/find-jobs');
+  };
+
   return (
     <aside
       className="w-80 flex-shrink-0 bg-white px-4 font-sans"
@@ -64,72 +104,43 @@ export function RightSidebar() {
       <div className="flex flex-col gap-4 pt-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="font-semibold text-sm text-gray-900 font-sans">Journal Club</h3>
-            <Link href="#" className="text-xs text-blue-600 hover:underline font-sans">
+            <h3 className="font-semibold text-sm text-gray-900 font-sans">Job Suggestions</h3>
+            <button 
+              onClick={handleShowMore}
+              className="text-xs text-blue-600 hover:underline font-sans"
+            >
               See all
-            </Link>
+            </button>
           </div>
-          {rightSidebarData[0].items.map((item, idx) => (
-            <div key={idx} className="mb-3 pb-3 last:mb-0 last:pb-0 border-b border-gray-100 last:border-b-0">
-              <h4 className="font-medium text-xs text-gray-900 mb-1 font-sans">{item.title}</h4>
-              <p className="text-xs text-gray-600 mb-1 font-sans">{item.desc}</p>
-              <p className="text-xs text-gray-500 mb-2 font-sans">{item.doctors} doctors discussing</p>
-              <div className="flex items-center gap-2">
-                <Link href="/journal-club" className="inline-block h-6 text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md font-sans">
-                  Join Discussion
-                </Link>
-                <span className="text-xs text-gray-500 font-sans">{item.time}</span>
-              </div>
+          
+          {loading ? (
+            <div className="space-y-3">
+              {[...Array(5)].map((_, idx) => (
+                <div key={idx} className="mb-3 pb-3 border-b border-gray-100 last:border-b-0 animate-pulse">
+                  <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+                  <div className="h-2 bg-gray-200 rounded w-2/3 mb-2"></div>
+                  <div className="h-2 bg-gray-200 rounded w-1/3"></div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-semibold text-sm text-gray-900 font-sans">Featured Conferences</h3>
-            <Link href="#" className="text-xs text-blue-600 hover:underline font-sans">
-              More
-            </Link>
-          </div>
-          {rightSidebarData[1].items.map((item, idx) => (
-            <div key={idx} className="mb-3 pb-3 last:mb-0 last:pb-0 border-b border-gray-100 last:border-b-0">
-              <h4 className="font-medium text-xs text-gray-900 mb-1 font-sans">{item.title}</h4>
-              <p className="text-xs text-gray-600 mb-1 font-sans">{item.date}</p>
-              <div className="flex gap-2 mb-2">
-                <span className="text-xs bg-green-50 border border-green-200 text-green-700 rounded px-2 font-sans">
-                  {item.mode}
-                </span>
-                <span className="text-xs bg-blue-50 border border-blue-200 text-blue-700 rounded px-2 font-sans">
-                  CME: {item.cme}
-                </span>
-              </div>
-              <Link href="/conferences/register" className="block w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm text-center py-2 px-4 rounded-md text-sm font-sans">
-                Register Now
-              </Link>
+          ) : displayedJobs.length > 0 ? (
+            <>
+              {displayedJobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+              <button
+                onClick={handleShowMore}
+                className="w-full mt-3 py-2 px-4 bg-blue-50 hover:bg-blue-100 text-blue-600 text-sm font-medium rounded-md transition-colors font-sans"
+              >
+                Show More Jobs
+              </button>
+            </>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-xs text-gray-500 font-sans">No jobs available at the moment</p>
             </div>
-          ))}
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-semibold text-sm text-gray-900 font-sans">Upcoming Events</h3>
-            <Link href="#" className="text-xs text-blue-600 hover:underline font-sans">
-              See all
-            </Link>
-          </div>
-          {rightSidebarData[2].items.map((event, idx) => (
-            <div key={idx} className="flex gap-2 mb-3 last:mb-0">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-2 text-center min-w-10 shadow-sm border border-blue-200">
-                <span className="block text-xs text-blue-600 font-medium font-sans">{event.month}</span>
-                <span className="block text-sm font-bold text-blue-700 font-sans">{event.day}</span>
-              </div>
-              <div>
-                <h4 className="font-medium text-xs text-gray-900 mb-1 font-sans">{event.title}</h4>
-                <p className="text-xs text-gray-600 mb-1 font-sans">{event.time}</p>
-                <p className="text-xs text-gray-500 font-sans">{event.location}</p>
-              </div>
-            </div>
-          ))}
+          )}
         </div>
       </div>
     </aside>
