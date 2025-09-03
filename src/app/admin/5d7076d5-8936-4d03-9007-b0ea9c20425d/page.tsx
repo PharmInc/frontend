@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Building, Upload, Loader2, LogIn, UserPlus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -938,4 +938,28 @@ const AdminInstituteOnboardingPage = () => {
   );
 };
 
-export default AdminInstituteOnboardingPage;
+// Wrapper component with Suspense boundary
+const AdminInstituteOnboardingPageWrapper = () => {
+  return (
+    <Suspense fallback={
+      <div className="max-w-4xl mx-auto space-y-8 p-8">
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Building className="h-6 w-6 text-blue-600" />
+              <h2 className="text-xl font-semibold text-blue-900">Loading Admin Panel...</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Please wait while we load the admin interface.</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <AdminInstituteOnboardingPage />
+    </Suspense>
+  );
+};
+
+export default AdminInstituteOnboardingPageWrapper;
