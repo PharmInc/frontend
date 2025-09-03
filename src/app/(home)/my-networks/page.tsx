@@ -8,8 +8,9 @@ import { ConnectionItem } from './_components/ConnectionItem'
 import { FollowerItem } from './_components/FollowerItem'
 import { FollowingItem } from './_components/FollowingItem'
 import { LoginPrompt } from './_components/LoginPrompt'
-import { useUserStore, useConnectionsStore } from '@/store'
+import { useConnectionsStore } from '@/store'
 import { getAuthToken } from '@/lib/api/utils'
+import { useCurrentEntity, getEntityFetchers } from '@/lib/utils/entityUtils'
 import { 
   getUserFollowers, 
   getUserFollowing,
@@ -45,7 +46,8 @@ const MyNetworksContent = () => {
     following: false
   })
   
-  const { currentUser, fetchCurrentUser, loading: userLoading } = useUserStore()
+  const { currentEntity, isLoading, userType } = useCurrentEntity()
+  const { fetchEntity } = getEntityFetchers()
   const { 
     connections, 
     fetchConnections: fetchConnectionsFromStore, 
@@ -70,36 +72,35 @@ const MyNetworksContent = () => {
       
       if (token) {
         setIsAuthenticated(true)
-        if (!currentUser && !userLoading) {
-          console.log('Fetching current user...')
-          await fetchCurrentUser()
+        if (!currentEntity && !isLoading) {
+          await fetchEntity()
         } else {
-          console.log('Current user:', currentUser ? { id: currentUser.id, name: currentUser.name } : 'null')
+          console.log('Current entity:', currentEntity ? { id: currentEntity.id, name: currentEntity.name } : 'null')
         }
       } else {
-        console.log('No auth token, user not authenticated')
+        console.log('No auth token, entity not authenticated')
         setIsAuthenticated(false)
       }
     }
     
     checkAuth()
-  }, [currentUser, fetchCurrentUser, userLoading])
+  }, [currentEntity, fetchEntity, isLoading])
 
   useEffect(() => {
-    if (currentUser?.id && isAuthenticated) {
+    if (currentEntity?.id && isAuthenticated) {
       fetchConnectionsData()
       fetchFollowers()
       fetchFollowing()
     }
-  }, [currentUser?.id, isAuthenticated])
+  }, [currentEntity?.id, isAuthenticated])
 
   const fetchConnectionsData = async () => {
-    if (!currentUser?.id) return
+    if (!currentEntity?.id) return
     
     setLoading(prev => ({ ...prev, connections: true }))
     try {
       // Fetch connections from store
-      await fetchConnectionsFromStore(currentUser.id)
+      await fetchConnectionsFromStore(currentEntity.id)
       
       // Get accepted connections with user data
       const acceptedConnections = connections.filter(conn => conn.accepted)
@@ -108,7 +109,7 @@ const MyNetworksContent = () => {
         acceptedConnections.map(async (conn) => {
           try {
             // Get the other user in the connection
-            const otherUserId = conn.id1 === currentUser.id ? conn.id2 : conn.id1
+            const otherUserId = conn.id1 === currentEntity.id ? conn.id2 : conn.id1
             const user = await getUserById(otherUserId)
             return { ...conn, user }
           } catch (error) {
@@ -128,14 +129,14 @@ const MyNetworksContent = () => {
   }
 
   useEffect(() => {
-    if (currentUser?.id && connections.length > 0) {
+    if (currentEntity?.id && connections.length > 0) {
       const updateConnectionsWithUsers = async () => {
         const acceptedConnections = connections.filter(conn => conn.accepted)
         
         const connectionsWithUsersData = await Promise.all(
           acceptedConnections.map(async (conn) => {
             try {
-              const otherUserId = conn.id1 === currentUser.id ? conn.id2 : conn.id1
+              const otherUserId = conn.id1 === currentEntity.id ? conn.id2 : conn.id1
               const user = await getUserById(otherUserId)
               return { ...conn, user }
             } catch (error) {
@@ -151,14 +152,14 @@ const MyNetworksContent = () => {
       
       updateConnectionsWithUsers()
     }
-  }, [connections, currentUser?.id])
+  }, [connections, currentEntity?.id])
 
   const fetchFollowers = async () => {
-    if (!currentUser?.id) return
+    if (!currentEntity?.id) return
     
     setLoading(prev => ({ ...prev, followers: true }))
     try {
-      const followers = await getUserFollowers(currentUser.id)
+      const followers = await getUserFollowers(currentEntity.id)
       
       const followersWithUsers = await Promise.all(
         followers.map(async (follow) => {
@@ -182,7 +183,7 @@ const MyNetworksContent = () => {
   }
 
   const fetchFollowing = async () => {
-    if (!currentUser?.id) return
+    if (!currentEntity?.id) return
     
     setLoading(prev => ({ ...prev, following: true }))
     try {
@@ -197,13 +198,13 @@ const MyNetworksContent = () => {
   }
 
   const handleDisconnect = async (userId: string) => {
-    if (!currentUser?.id) return
+    if (!currentEntity?.id) return
     
     setLoadingStates(prev => ({ ...prev, [userId]: true }))
     
     try {
       // In the my-networks context, we're dealing with user connections
-      await disconnectFromUser(currentUser.id, userId, "user")
+      await disconnectFromUser(currentEntity.id, userId, "user")
       setConnectionsWithUsers(prev => prev.filter(conn => conn.user.id !== userId))
     } catch (error) {
       console.error('Error disconnecting user:', error)
@@ -228,7 +229,7 @@ const MyNetworksContent = () => {
     router.push(`/messages?user=${userId}`)
   }
 
-  if (isAuthenticated === null) {
+  if (isAuthenticated === null || isLoading) {
     return (
       <div className="flex flex-col bg-white min-h-screen">
         <div className="flex items-center gap-4 p-4 border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">

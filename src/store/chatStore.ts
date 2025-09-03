@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client'
 import { useUserStore } from './userStore'
 import { fetchMessages as fetchMessagesService, fetchConversations as fetchConversationsService, getChatApiUrl } from '@/lib/api/services/chat'
 import { ChatUser, ChatMessage, Conversation } from '@/lib/api/types'
+import { getCurrentEntity } from '@/lib/utils/entityUtils'
 
 function getCookieValue(name: string): string | null {
   if (typeof document === 'undefined') return null;
@@ -189,15 +190,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   sendMessage: (recipientUsername: string, content: string, replyTo?: string) => {
     const { socket } = get()
-    const currentUser = useUserStore.getState().currentUser
+    const currentEntity = getCurrentEntity()
     
     if (!socket?.connected) {
       console.error('Socket not connected')
       return
     }
 
-    if (!currentUser?.id) {
-      console.error('No current user available')
+    if (!currentEntity?.id) {
+      console.error('No current entity available')
       return
     }
 
@@ -205,7 +206,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     const tempMessage = {
       id: tempId,
       content,
-      senderUsername: currentUser.id,
+      senderUsername: currentEntity.id,
       recipientUsername,
       timestamp: new Date().toISOString(),
       replyTo,
@@ -213,7 +214,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       sending: true
     }
 
-    const conversationKey = [currentUser.id, recipientUsername].sort().join('_')
+    const conversationKey = [currentEntity.id, recipientUsername].sort().join('_')
     const currentMessages = get().messages[conversationKey] || []
     get().setMessages(conversationKey, [...currentMessages, tempMessage])
   

@@ -6,10 +6,11 @@ import { Search, MoreHorizontal, MessageCircle, Plus, X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useChatStore } from '@/store'
-import { useUserStore } from '@/store/userStore'
+import { useUserStore } from '@/store'
 import UserSearchBar from './UserSearchBar'
 import ConnectionStatus from './ConnectionStatus'
 import { getProfilePictureUrl, isProfilePictureUrl } from '@/lib/utils'
+import { useCurrentEntity } from '@/lib/utils/entityUtils'
 
 interface Message {
   id: string
@@ -37,7 +38,8 @@ export default function MessagesList() {
     onlineUsers,
     fetchConversations 
   } = useChatStore()
-  const { currentUser, fetchUserById } = useUserStore()
+  const { fetchUserById } = useUserStore()
+  const { currentEntity } = useCurrentEntity()
   const router = useRouter()
 
   // Handle ESC key to close new chat panel
@@ -59,19 +61,19 @@ export default function MessagesList() {
 
   // Fetch conversations on mount and periodically
   useEffect(() => {
-    if (currentUser?.id) {
-      fetchConversations(currentUser.id)
+    if (currentEntity?.id) {
+      fetchConversations(currentEntity.id)
       
       // Refresh conversations every 30 seconds
       const interval = setInterval(() => {
-        if (currentUser?.id) {
-          fetchConversations(currentUser.id)
+        if (currentEntity?.id) {
+          fetchConversations(currentEntity.id)
         }
       }, 30000)
       
       return () => clearInterval(interval)
     }
-  }, [currentUser?.id, fetchConversations])
+  }, [currentEntity?.id, fetchConversations])
 
   // Debug log when conversations change
   useEffect(() => {
@@ -84,7 +86,7 @@ export default function MessagesList() {
   
   useEffect(() => {
     const convertConversationsToMessages = async () => {
-      if (!conversations.length || !currentUser?.id) {
+      if (!conversations.length || !currentEntity?.id) {
         setMessages([])
         return
       }
@@ -93,8 +95,8 @@ export default function MessagesList() {
       
       try {
         const messagePromises = conversations.map(async (conv) => {
-          // Find the other participant (not the current user)
-          const otherUserId = conv.participants.find(p => p !== currentUser.id)
+          // Find the other participant (not the current entity)
+          const otherUserId = conv.participants.find(p => p !== currentEntity.id)
           if (!otherUserId) return null
           
           try {
@@ -141,7 +143,7 @@ export default function MessagesList() {
               },
               lastMessage: conv.lastMessage,
               timestamp,
-              unread: conv.lastSender !== currentUser.id // Simple unread logic - if last sender is not current user
+              unread: conv.lastSender !== currentEntity?.id // Simple unread logic - if last sender is not current entity
             }
           } catch (error) {
             console.error('Error fetching user details for:', otherUserId, error)
@@ -162,7 +164,7 @@ export default function MessagesList() {
                 minute: '2-digit',
                 hour12: true 
               }),
-              unread: conv.lastSender !== currentUser.id
+              unread: conv.lastSender !== currentEntity?.id
             }
           }
         })
@@ -188,7 +190,7 @@ export default function MessagesList() {
     }
     
     convertConversationsToMessages()
-  }, [conversations, currentUser?.id, onlineUsers, fetchUserById])
+  }, [conversations, currentEntity?.id, onlineUsers, fetchUserById])
 
   const filteredMessages = messages.filter(message =>
     message.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

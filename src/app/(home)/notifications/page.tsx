@@ -7,9 +7,10 @@ import { Bell, Users, MessageCircle, ArrowLeft } from "lucide-react"
 import { NotificationItem } from './_components/NotificationItem'
 import { ConnectionRequestItem } from './_components/ConnectionRequestItem'
 import { LoginPrompt } from './_components/LoginPrompt'
-import { useUserStore, useNotificationStore } from '@/store'
+import { useNotificationStore } from '@/store'
 import { getAuthToken } from '@/lib/api/utils'
 import { acceptConnection, disconnectUser, Connect, User } from '@/lib/api'
+import { useCurrentEntity, getEntityFetchers } from '@/lib/utils/entityUtils'
 
 interface ConnectionWithUser extends Connect {
   user: User;
@@ -19,7 +20,8 @@ const NotificationsPage = () => {
   const router = useRouter()
   const [loadingStates, setLoadingStates] = useState<{[key: string]: { accept: boolean; reject: boolean }}>({})
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
-  const { currentUser, fetchCurrentUser, loading: userLoading } = useUserStore()
+  const { currentEntity, isLoading, userType } = useCurrentEntity()
+  const { fetchEntity } = getEntityFetchers()
   const { 
     connectionRequests, 
     loading: notificationLoading, 
@@ -31,46 +33,48 @@ const NotificationsPage = () => {
     const checkAuth = async () => {
       const token = getAuthToken()
       console.log('Auth token:', token ? 'exists' : 'not found')
+      console.log('User type:', userType)
       
       if (token) {
         setIsAuthenticated(true)
-        if (!currentUser && !userLoading) {
-          console.log('Fetching current user...')
-          await fetchCurrentUser()
+        
+        if (!currentEntity && !isLoading) {
+          console.log('Fetching current entity...')
+          await fetchEntity()
         } else {
-          console.log('Current user:', currentUser ? { id: currentUser.id, name: currentUser.name } : 'null')
+          console.log('Current entity:', currentEntity ? { id: currentEntity.id, name: currentEntity.name } : 'null')
         }
       } else {
-        console.log('No auth token, user not authenticated')
+        console.log('No auth token, entity not authenticated')
         setIsAuthenticated(false)
       }
     }
     
     checkAuth()
-  }, [currentUser, fetchCurrentUser, userLoading])
+  }, [currentEntity, fetchEntity, isLoading, userType])
 
   useEffect(() => {
     const fetchConnectionRequests = async () => {
-      if (!currentUser?.id || !isAuthenticated) {
+      if (!currentEntity?.id || !isAuthenticated) {
         console.log('Cannot fetch connections - missing data:', { 
-          currentUserId: currentUser?.id, 
+          currentEntityId: currentEntity?.id, 
           isAuthenticated 
         })
         return
       }
       
-      console.log('Fetching notifications for user:', currentUser.id)
-      await fetchNotifications(currentUser.id)
+      console.log('Fetching notifications for entity:', currentEntity.id)
+      await fetchNotifications(currentEntity.id)
     }
 
-    if (currentUser?.id && isAuthenticated) {
+    if (currentEntity?.id && isAuthenticated) {
       fetchConnectionRequests()
     }
-  }, [currentUser?.id, isAuthenticated, fetchNotifications])
+  }, [currentEntity?.id, isAuthenticated, fetchNotifications])
 
   // Mark notifications as read when user visits the page
   useEffect(() => {
-    if (currentUser?.id && isAuthenticated && connectionRequests.length > 0) {
+    if (currentEntity?.id && isAuthenticated && connectionRequests.length > 0) {
       // Add a small delay to ensure the user actually sees the notifications
       const timer = setTimeout(() => {
         markAsRead()
@@ -78,11 +82,11 @@ const NotificationsPage = () => {
       
       return () => clearTimeout(timer)
     }
-  }, [currentUser?.id, isAuthenticated, connectionRequests.length, markAsRead])
+  }, [currentEntity?.id, isAuthenticated, connectionRequests.length, markAsRead])
 
   const handleAcceptConnection = async (connectionId: string) => {
     const connection = connectionRequests.find(conn => conn.id === connectionId)
-    if (!connection || !currentUser?.id) return
+    if (!connection || !currentEntity?.id) return
     
     setLoadingStates(prev => ({
       ...prev,
@@ -92,7 +96,7 @@ const NotificationsPage = () => {
     try {
       await acceptConnection(connection.id1)
       // Refetch notifications to update the state
-      await fetchNotifications(currentUser.id)
+      await fetchNotifications(currentEntity.id)
     } catch (error) {
       console.error('Error accepting connection:', error)
     } finally {
@@ -123,7 +127,7 @@ const NotificationsPage = () => {
     return date.toLocaleDateString()
   }
 
-  if (isAuthenticated === null) {
+  if (isAuthenticated === null || isLoading) {
     return (
       <div className="flex flex-col bg-white min-h-screen">
         <div className="flex items-center gap-4 p-4 border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">

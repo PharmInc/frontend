@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Send, MoreHorizontal, Phone, Video, Info } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useChatStore } from '@/store/chatStore'
-import { useUserStore } from '@/store/userStore'
 import { getProfilePictureUrl, isProfilePictureUrl } from '@/lib/utils'
+import { useCurrentEntity } from '@/lib/utils/entityUtils'
 
 interface ChatInterfaceProps {
   recipientName?: string
@@ -39,21 +39,21 @@ export default function ChatInterface({
     onlineUsers 
   } = useChatStore()
   
-  const { currentUser } = useUserStore()
+  const { currentEntity } = useCurrentEntity()
   
   const conversationKey = useMemo(() => {
-    return selectedChat && currentUser 
-      ? [currentUser.id, selectedChat.id].sort().join('_')
+    return selectedChat && currentEntity 
+      ? [currentEntity.id, selectedChat.id].sort().join('_')
       : ''
-  }, [selectedChat?.id, currentUser?.id])
+  }, [selectedChat?.id, currentEntity?.id])
     
   const currentMessages = conversationKey ? (messages[conversationKey] || []) : []
 
   useEffect(() => {
-    if (selectedChat?.id && currentUser?.id) {
-      fetchMessages(currentUser.id, selectedChat.id)
+    if (selectedChat?.id && currentEntity?.id) {
+      fetchMessages(currentEntity.id, selectedChat.id)
     }
-  }, [selectedChat?.id, currentUser?.id, fetchMessages])
+  }, [selectedChat?.id, currentEntity?.id, fetchMessages])
 
   useEffect(() => {
     if (initialMessage && !hasSetInitialMessage) {
@@ -223,7 +223,7 @@ export default function ChatInterface({
           </div>
         ) : (
           currentMessages.map((msg) => {
-            const isFromMe = msg.senderUsername === currentUser?.id
+            const isFromMe = msg.senderUsername === currentEntity?.id
             return (
               <div
                 key={msg.id}

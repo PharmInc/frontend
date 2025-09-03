@@ -21,6 +21,7 @@ import { clearAuthToken, getUserType } from "@/lib/api/utils";
 import { getDisplayHandle, getProfilePicture } from "../app/(home)/home/_utils/utils";
 import { BETA_BUILD_VERSION } from "@/config/constants";
 import ShortLogo from "./ShortLogo";
+import { useCurrentEntity } from "@/lib/utils/entityUtils";
 
 interface LeftSidebarProps {
   user?: User | InstitutionEntity | null;
@@ -43,10 +44,13 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
   const { clearUser } = useUserStore();
   const { clearInstitution } = useInstitutionStore();
   const { unreadCount, clearNotifications } = useNotificationStore();
-  const userType = getUserType()
+  const { currentEntity, userType } = useCurrentEntity();
   const pathname = usePathname();
   const router = useRouter();
   const {clearFollowing , clearConnections} = useConnectionsStore();
+
+  // Use the entity from utility or fallback to passed user prop
+  const displayUser = currentEntity || user;
 
   const isActive = (href: string) => {
     if (href === '/home') {
@@ -116,23 +120,23 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
       </nav>
 
       <div className="p-4 pt-0 border-t border-gray-100 flex-shrink-0">
-        {user ? (
+        {displayUser ? (
           <div className="relative" ref={profileMenuRef}>
             <button 
               onClick={handleProfileClick}
               className="flex items-center xl:gap-3 xl:px-3 xl:py-3 rounded-full hover:bg-gray-100 transition-colors w-full text-left"
             >
               <img
-                src={getProfilePicture(user)}
+                src={getProfilePicture(displayUser)}
                 alt="Profile"
                 className="w-10 h-10 rounded-full border border-gray-200 object-cover flex-shrink-0"
               />
               <div className="xl:flex hidden flex-col flex-1 min-w-0">
                 <h3 className="text-base font-bold text-gray-900 truncate">
-                  {user?.name || "User"}
+                  {displayUser?.name || "User"}
                 </h3>
                 <p className="text-sm text-gray-500 truncate capitalize">
-                  {getDisplayHandle(user)}
+                  {getDisplayHandle(displayUser)}
                 </p>
               </div>
             </button>
@@ -140,7 +144,7 @@ export default function LeftSidebar({ user = null }: LeftSidebarProps) {
             {showProfileMenu && (
               <div className="absolute bottom-full left-0 mb-2 w-full min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-[999] animate-in slide-in-from-bottom-2 duration-200">
                 <Link 
-                  href={`/${userType==='institution'?"institute":"profile"}/${user.id}`}
+                  href={`/${userType==='institution'?"institute":"profile"}/${displayUser.id}`}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
                   onClick={() => setShowProfileMenu(false)}
                 >

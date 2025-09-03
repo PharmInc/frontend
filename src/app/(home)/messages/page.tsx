@@ -7,8 +7,9 @@ import EmptyChatState from './_components/EmptyChatState'
 import ChatInterface  from './_components/ChatInterface'
 import { LoginPrompt } from './_components/LoginPrompt'
 import { useChatStore } from '@/store'
-import { useUserStore } from '@/store/userStore'
+import { useUserStore } from '@/store'
 import { getAuthToken } from '@/lib/api/utils'
+import { useCurrentEntity, getEntityFetchers } from '@/lib/utils/entityUtils'
 
 function MessagesContent() {
   const searchParams = useSearchParams()
@@ -18,7 +19,9 @@ function MessagesContent() {
   const { selectedChat, setSelectedChat, connect, disconnect, fetchConversations } = useChatStore()
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [decodedMessage, setDecodedMessage] = useState<string>("")
-  const { currentUser, fetchCurrentUser, fetchUserById, loading: userLoading } = useUserStore()
+  const { fetchUserById } = useUserStore()
+  const { currentEntity, isLoading, userType } = useCurrentEntity()
+  const { fetchEntity } = getEntityFetchers()
 
   useEffect(() => {
     if (messageFromUrl) {
@@ -40,8 +43,9 @@ function MessagesContent() {
       
       if (token) {
         setIsAuthenticated(true)
-        if (!currentUser && !userLoading) {
-          await fetchCurrentUser()
+        
+        if (!currentEntity && !isLoading) {
+          await fetchEntity()
         }
       } else {
         setIsAuthenticated(false)
@@ -49,24 +53,24 @@ function MessagesContent() {
     }
     
     checkAuth()
-  }, [currentUser, fetchCurrentUser, userLoading])
+  }, [currentEntity, fetchEntity, isLoading])
 
-  // Initialize socket connection when user is authenticated
+  // Initialize socket connection when entity is authenticated
   useEffect(() => {
-    if (currentUser?.id) {
-      connect(currentUser.id)
-      fetchConversations(currentUser.id)
+    if (currentEntity?.id) {
+      connect(currentEntity.id)
+      fetchConversations(currentEntity.id)
       
       // Cleanup on unmount
       return () => {
         disconnect()
       }
     }
-  }, [currentUser?.id, connect, disconnect, fetchConversations])
+  }, [currentEntity?.id, connect, disconnect, fetchConversations])
 
   useEffect(() => {
     const selectUserFromUrl = async () => {
-      if (userIdFromUrl && currentUser?.id && isAuthenticated) {
+      if (userIdFromUrl && currentEntity?.id && isAuthenticated) {
         try {
           const userData = await fetchUserById(userIdFromUrl)
           if (userData && userData.id && userData.name) {
@@ -86,24 +90,9 @@ function MessagesContent() {
     }
 
     selectUserFromUrl()
-  }, [userIdFromUrl, currentUser?.id, isAuthenticated, setSelectedChat, fetchUserById])
+  }, [userIdFromUrl, currentEntity?.id, isAuthenticated, setSelectedChat, fetchUserById])
 
-  if (isAuthenticated === null) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <div className="text-lg text-gray-600">Loading...</div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return <LoginPrompt />
-  }
-
-  if (isAuthenticated === null) {
+  if (isAuthenticated === null || isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
