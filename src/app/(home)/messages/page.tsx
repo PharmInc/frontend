@@ -23,7 +23,7 @@ function MessagesContent() {
   useEffect(() => {
     if (messageFromUrl) {
       try {
-        const decoded = atob(messageFromUrl)
+        const decoded = decodeURIComponent(messageFromUrl)
         setDecodedMessage(decoded)
       } catch (error) {
         console.error('Failed to decode message parameter:', error)

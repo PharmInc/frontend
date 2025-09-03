@@ -39,7 +39,7 @@ Thank you for considering my application.
 
 Best regards`;
     
-    const encodedMessage = btoa(applicationMessage);
+    const encodedMessage = encodeURIComponent(applicationMessage);
     
     const instituteId = job.institute_id || job.institution?.id;
     
