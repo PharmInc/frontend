@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Camera, Upload, X, RotateCcw } from "lucide-react";
-import { useUserStore } from "@/store/userStore";
+import { useUserStore, useInstitutionStore } from "@/store";
 import { updateUser } from "@/lib/api/services/user";
 
 interface EditProfilePictureModalProps {
@@ -33,6 +33,7 @@ export function EditProfilePictureModal({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { fetchCurrentUser } = useUserStore();
+  const { updateCurrentInstitution } = useInstitutionStore();
 
   const handleFileSelect = useCallback((file: File) => {
     setUploadMessage(null);
@@ -113,7 +114,16 @@ export function EditProfilePictureModal({
 
       const result = await response.json();
       
-      if (!isInstitute) {
+      if (isInstitute) {
+        try {
+          await updateCurrentInstitution({ profile_picture: result.url });
+          console.log('Institution profile updated in database');
+        } catch (dbError) {
+          console.error('Failed to update institution profile in database:', dbError);
+          setUploadError('Profile picture uploaded but failed to update profile. Please refresh the page.');
+          return;
+        }
+      } else {
         try {
           await updateUser({ profile_picture: result.url });
           console.log('User profile updated in database');

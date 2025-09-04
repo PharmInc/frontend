@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { Institution } from '@/lib/api/types'
-import { getInstitution, getInstitutionById } from '@/lib/api/services/institute'
+import { getInstitution, getInstitutionById, updateInstitution } from '@/lib/api/services/institute'
 
 interface InstitutionState {
   currentInstitution: Institution | null
@@ -11,6 +11,7 @@ interface InstitutionState {
 
   fetchCurrentInstitution: () => Promise<void>
   fetchInstitutionById: (id: string) => Promise<Institution>
+  updateCurrentInstitution: (institutionData: any) => Promise<Institution>
   clearInstitution: () => void
   setInstitution: (institution: Institution) => void
 }
@@ -86,6 +87,31 @@ export const useInstitutionStore = create<InstitutionState>()(
             })
             
             return fallbackInstitution
+          }
+        },
+
+        updateCurrentInstitution: async (institutionData: any): Promise<Institution> => {
+          set({ loading: true, error: null })
+          try {
+            const updatedInstitution = await updateInstitution(institutionData)
+            
+            set({ 
+              currentInstitution: updatedInstitution,
+              institutionCache: { 
+                ...get().institutionCache, 
+                [updatedInstitution.id || '']: updatedInstitution 
+              },
+              loading: false 
+            })
+
+            return updatedInstitution
+          } catch (error) {
+            console.error('Error updating institution:', error)
+            set({ 
+              loading: false, 
+              error: 'Failed to update institution' 
+            })
+            throw error
           }
         },
 

@@ -4,6 +4,7 @@ import { useUserStore } from './userStore'
 import { fetchMessages as fetchMessagesService, fetchConversations as fetchConversationsService, getChatApiUrl } from '@/lib/api/services/chat'
 import { ChatUser, ChatMessage, Conversation } from '@/lib/api/types'
 import { getCurrentEntity } from '@/lib/utils/entityUtils'
+import { getUserType } from '@/lib/api'
 
 function getCookieValue(name: string): string | null {
   if (typeof document === 'undefined') return null;
@@ -191,6 +192,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   sendMessage: (recipientUsername: string, content: string, replyTo?: string) => {
     const { socket } = get()
     const currentEntity = getCurrentEntity()
+    const type = getUserType()==='institution' ? 'institute' : 'user';
     
     if (!socket?.connected) {
       console.error('Socket not connected')
@@ -217,11 +219,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     const conversationKey = [currentEntity.id, recipientUsername].sort().join('_')
     const currentMessages = get().messages[conversationKey] || []
     get().setMessages(conversationKey, [...currentMessages, tempMessage])
-  
+
     socket.emit('send_message', {
       recipientUsername,
       content,
-      replyTo
+      replyTo,
+      type,
     })
   },
 

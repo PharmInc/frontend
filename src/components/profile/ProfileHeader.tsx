@@ -28,10 +28,12 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { EditProfileModal } from "./EditProfileModal";
+import { EditInstituteModal } from "./EditInstituteModal";
 import { EditProfilePictureModal } from "./EditProfilePictureModal";
 import ProfileShareModal from "./ProfileShareModal";
 import InstitutionShareModal from "./InstitutionShareModal";
-import { useUserStore, useConnectionsStore } from "@/store";
+import { useUserStore, useConnectionsStore, useInstitutionStore } from "@/store";
+import { getUserType } from "@/lib/api/utils";
 import { getProfilePictureUrl, isProfilePictureUrl } from "@/lib/utils";
 import {
   followUser,
@@ -47,6 +49,7 @@ interface ProfileHeaderProps {
   institution: Institution | null;
   currentUserId: string;
   onUserUpdate?: (updatedUser: User) => void;
+  onInstituteUpdate?: (updatedInstitution: Institution) => void;
 }
 
 export const ProfileHeader = ({
@@ -54,8 +57,11 @@ export const ProfileHeader = ({
   institution,
   currentUserId,
   onUserUpdate,
+  onInstituteUpdate,
 }: ProfileHeaderProps) => {
   const { currentUser, fetchCurrentUser } = useUserStore();
+  const { currentInstitution } = useInstitutionStore();
+  const userType = getUserType();
   const { 
     getConnectionStatus,
     connectToUser,
@@ -74,10 +80,12 @@ export const ProfileHeader = ({
   const [followersCount, setFollowersCount] = useState(user?.followers || 0);
   const [connectionsCount, setConnectionsCount] = useState(user?.connections || 0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditInstituteModalOpen, setIsEditInstituteModalOpen] = useState(false);
   const [isProfilePictureModalOpen, setIsProfilePictureModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState(user);
+  const [currentInstituteProfile, setCurrentInstituteProfile] = useState(institution);
   const [isLoading, setIsLoading] = useState({
     follow: false,
     connect: false,
@@ -86,6 +94,7 @@ export const ProfileHeader = ({
   });
 
   const isOwnProfile = currentUser?.id === user?.id;
+  const isOwnInstitute = currentInstitution?.id === institution?.id && userType === 'institution';
 
   const connectionStatus = currentUser?.id && user?.id 
     ? getConnectionStatus(currentUser.id, user.id) 
@@ -105,13 +114,13 @@ export const ProfileHeader = ({
   }, [ensureConnectionsLoaded, ensureFollowedUsersLoaded]);
 
   const handleConnectionsClick = () => {
-    if (isOwnProfile) {
+    if (isOwnProfile || isOwnInstitute) {
       router.push('/my-networks?tab=connections');
     }
   };
 
   const handleFollowersClick = () => {
-    if (isOwnProfile) {
+    if (isOwnProfile || isOwnInstitute) {
       router.push('/my-networks?tab=followers');
     }
   };
@@ -239,6 +248,14 @@ export const ProfileHeader = ({
     }
   };
 
+  const handleInstituteUpdate = (updatedInstitution: Institution) => {
+    setCurrentInstituteProfile(updatedInstitution);
+    setFollowersCount(updatedInstitution.followers || 0);
+    if (onInstituteUpdate) {
+      onInstituteUpdate(updatedInstitution);
+    }
+  };
+
   const handleProfilePictureUpdate = (newProfilePictureUrl: string) => {
     const updatedUser = {
       ...currentUserProfile,
@@ -255,24 +272,40 @@ export const ProfileHeader = ({
     fetchCurrentUser();
   };
 
+  const handleInstituteProfilePictureUpdate = (newProfilePictureUrl: string) => {
+    const updatedInstitution = {
+      ...currentInstituteProfile,
+      profile_picture: newProfilePictureUrl
+    } as Institution;
+    
+    setCurrentInstituteProfile(updatedInstitution);
+    
+    if (onInstituteUpdate) {
+      onInstituteUpdate(updatedInstitution);
+    }
+  };
+
   const displayUser = currentUserProfile || user;
+  const displayInstitution = currentInstituteProfile || institution;
 
   // Get the proper profile picture URL
   const getDisplayProfilePicture = () => {
-    if (!displayUser?.profile_picture) return "/pp.png";
+    const entityToDisplay = institution ? displayInstitution : displayUser;
+    
+    if (!entityToDisplay?.profile_picture) return "/pp.png";
     
     // If it's already a profile picture URL from our API, use it as is
-    if (isProfilePictureUrl(displayUser.profile_picture)) {
-      return displayUser.profile_picture;
+    if (isProfilePictureUrl(entityToDisplay.profile_picture)) {
+      return entityToDisplay.profile_picture;
     }
     
     // If it's a legacy URL or external URL, use it as is
-    if (displayUser.profile_picture.startsWith('http') || displayUser.profile_picture.startsWith('/')) {
-      return displayUser.profile_picture;
+    if (entityToDisplay.profile_picture.startsWith('http') || entityToDisplay.profile_picture.startsWith('/')) {
+      return entityToDisplay.profile_picture;
     }
     
     // Otherwise, assume it's just a filename and construct the URL
-    return getProfilePictureUrl(displayUser.id, displayUser.profile_picture);
+    return getProfilePictureUrl(entityToDisplay.id, entityToDisplay.profile_picture);
   };
 
   return (
@@ -298,13 +331,13 @@ export const ProfileHeader = ({
             <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
               <AvatarImage
                 src={getDisplayProfilePicture()}
-                alt={displayUser?.name || "User"}
+                alt={(institution ? displayInstitution?.name : displayUser?.name) || "User"}
               />
               <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 font-bold">
-                {displayUser?.name?.[0] || "U"}
+                {(institution ? displayInstitution?.name?.[0] : displayUser?.name?.[0]) || "U"}
               </AvatarFallback>
             </Avatar>
-            {isOwnProfile && (
+            {(isOwnProfile || isOwnInstitute) && (
               <button
                 onClick={() => setIsProfilePictureModalOpen(true)}
                 className="absolute bottom-2 right-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-sm transition-colors cursor-pointer z-10"
@@ -318,7 +351,7 @@ export const ProfileHeader = ({
 
       <div className="pt-16 pb-4 px-6 relative">
         <div className="absolute top-4 right-6 flex gap-2">
-          {isOwnProfile ? (
+          {(isOwnProfile || isOwnInstitute) ? (
             <>
               <Button 
                 variant="outline" 
@@ -332,10 +365,16 @@ export const ProfileHeader = ({
                 variant="outline" 
                 size="sm" 
                 className="rounded-full"
-                onClick={() => setIsEditModalOpen(true)}
+                onClick={() => {
+                  if (institution && isOwnInstitute) {
+                    setIsEditInstituteModalOpen(true);
+                  } else {
+                    setIsEditModalOpen(true);
+                  }
+                }}
               >
                 <Edit className="h-4 w-4 mr-2" />
-                Edit Profile
+                {institution && isOwnInstitute ? "Edit Institution" : "Edit Profile"}
               </Button>
             </>
           ) : (
@@ -426,35 +465,49 @@ export const ProfileHeader = ({
         </div>
         <div className="mb-2">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2 font-sans mt-4">
-            {displayUser?.name || "Loading..."}
-            {displayUser?.verified && (
+            {(institution ? displayInstitution?.name : displayUser?.name) || "Loading..."}
+            {(institution ? displayInstitution?.verified : displayUser?.verified) && (
               <CheckCircle className="h-5 w-5 text-blue-500" />
             )}
           </h1>
           {/* <p className="text-gray-500 text-sm">@{displayUser?.email?.split('@')[0] || 'username'}</p> */}
         </div>
-        {displayUser?.bio && (
+        {(institution ? displayInstitution?.bio : displayUser?.bio) && (
           <div className="mb-3">
-            <p className="text-gray-900 leading-relaxed">{displayUser.bio}</p>
+            <p className="text-gray-900 leading-relaxed">
+              {institution ? displayInstitution?.bio : displayUser?.bio}
+            </p>
           </div>
         )}
 
         <div className="space-y-2 text-gray-500 text-sm mb-3">
-          {displayUser?.location && (
+          {(institution ? displayInstitution?.location : displayUser?.location) && (
             <div className="flex items-center gap-1">
               <MapPin className="h-4 w-4" />
-              <span>{displayUser.location}</span>
+              <span>{institution ? displayInstitution?.location : displayUser?.location}</span>
             </div>
           )}
 
           <div className="flex items-center gap-1">
             <Briefcase className="h-4 w-4" />
-            <span>{displayUser?.role || "Healthcare Professional"}</span>
-            {displayUser?.specialization && (
+            <span>
+              {institution 
+                ? (displayInstitution?.type || "Institution")
+                : (displayUser?.role || "Healthcare Professional")
+              }
+            </span>
+            {!institution && displayUser?.specialization && (
               <>
                 <span className="mx-1">•</span>
                 <GraduationCap className="h-4 w-4" />
                 <span>{displayUser.specialization}</span>
+              </>
+            )}
+            {institution && displayInstitution?.area_of_expertise && (
+              <>
+                <span className="mx-1">•</span>
+                <GraduationCap className="h-4 w-4" />
+                <span>{displayInstitution.area_of_expertise}</span>
               </>
             )}
           </div>
@@ -469,14 +522,14 @@ export const ProfileHeader = ({
 
         <div className="flex items-center gap-4 text-sm">
           <div 
-            className={`flex items-center gap-1 ${isOwnProfile ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''}`}
+            className={`flex items-center gap-1 ${(isOwnProfile || isOwnInstitute) ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''}`}
             onClick={handleConnectionsClick}
           >
             <span className="font-bold text-gray-900">{connectionsCount}</span>
             <span className="text-gray-500">Connections</span>
           </div>
           <div 
-            className={`flex items-center gap-1 ${isOwnProfile ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''}`}
+            className={`flex items-center gap-1 ${(isOwnProfile || isOwnInstitute) ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''}`}
             onClick={handleFollowersClick}
           >
             <span className="font-bold text-gray-900">{followersCount}</span>
@@ -485,6 +538,7 @@ export const ProfileHeader = ({
         </div>
       </div>
 
+      {/* Profile Picture Modal for Users */}
       {isOwnProfile && displayUser && (
         <EditProfilePictureModal
           isOpen={isProfilePictureModalOpen}
@@ -492,8 +546,21 @@ export const ProfileHeader = ({
           currentProfilePicture={getDisplayProfilePicture()}
           userName={displayUser.name}
           userId={displayUser.id}
-          isInstitute={!!institution}
+          isInstitute={false}
           onUpdate={handleProfilePictureUpdate}
+        />
+      )}
+
+      {/* Profile Picture Modal for Institutions */}
+      {isOwnInstitute && displayInstitution && (
+        <EditProfilePictureModal
+          isOpen={isProfilePictureModalOpen}
+          onClose={() => setIsProfilePictureModalOpen(false)}
+          currentProfilePicture={getDisplayProfilePicture()}
+          userName={displayInstitution.name}
+          userId={displayInstitution.id}
+          isInstitute={true}
+          onUpdate={handleInstituteProfilePictureUpdate}
         />
       )}
 
@@ -504,6 +571,16 @@ export const ProfileHeader = ({
           onClose={() => setIsEditModalOpen(false)}
           user={displayUser as any} // Type cast to handle different User types
           onUpdate={handleUserUpdate}
+        />
+      )}
+
+      {/* Edit Institute Modal */}
+      {isOwnInstitute && currentInstituteProfile && (
+        <EditInstituteModal
+          isOpen={isEditInstituteModalOpen}
+          onClose={() => setIsEditInstituteModalOpen(false)}
+          institution={currentInstituteProfile}
+          onUpdate={handleInstituteUpdate}
         />
       )}
 

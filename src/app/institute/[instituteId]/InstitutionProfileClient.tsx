@@ -10,6 +10,7 @@ import { ProfileActivityTab } from "@/components/profile/internals/ProfileActivi
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
 import { Institution } from "@/lib/api";
+import { useInstitutionStore } from "@/store";
 
 interface InstitutionProfileClientProps {
   institutionData: Institution;
@@ -18,26 +19,34 @@ interface InstitutionProfileClientProps {
 
 export function InstitutionProfileClient({ institutionData, instituteId }: InstitutionProfileClientProps) {
   const [activeTab, setActiveTab] = useState("Posts");
+  const [institutionProfile, setInstitutionProfile] = useState(institutionData);
+  const { setInstitution } = useInstitutionStore();
+
+  const handleInstituteUpdate = (updatedInstitution: Institution) => {
+    setInstitutionProfile(updatedInstitution);
+    // Update the store if it's the current institution
+    setInstitution(updatedInstitution);
+  };
 
   // Convert institution data to user format for compatibility with existing components
   const institutionAsUser = {
-    id: institutionData?.id || "",
-    name: institutionData?.name || "",
-    role: institutionData?.type || "",
-    profile_picture: institutionData?.profile_picture,
-    banner_picture: institutionData?.banner_picture,
-    bio: institutionData?.bio,
-    about: institutionData?.about,
-    followers: institutionData?.followers,
+    id: institutionProfile?.id || "",
+    name: institutionProfile?.name || "",
+    role: institutionProfile?.type || "",
+    profile_picture: institutionProfile?.profile_picture,
+    banner_picture: institutionProfile?.banner_picture,
+    bio: institutionProfile?.bio,
+    about: institutionProfile?.about,
+    followers: institutionProfile?.followers,
     connections: 0,
-    created_at: institutionData?.created_at || "",
-    updated_at: institutionData?.updated_at || "",
+    created_at: institutionProfile?.created_at || "",
+    updated_at: institutionProfile?.updated_at || "",
     email: "",
-    location: institutionData?.location,
-    verified: institutionData?.verified,
+    location: institutionProfile?.location,
+    verified: institutionProfile?.verified,
   };
 
-  if (!institutionData) {
+  if (!institutionProfile) {
     return (
       <div className="space-y-4">
         <div className="flex justify-center items-center py-12">
@@ -53,8 +62,9 @@ export function InstitutionProfileClient({ institutionData, instituteId }: Insti
       <Card className="rounded-xl shadow-lg border-0 overflow-hidden bg-white/90 backdrop-blur-xs hover:shadow-xl transition-shadow duration-300">
         <ProfileHeader 
           user={institutionAsUser}
-          institution={institutionData}
+          institution={institutionProfile}
           currentUserId={instituteId}
+          onInstituteUpdate={handleInstituteUpdate}
         />
       </Card>
 
